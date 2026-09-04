@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Weave sample - the right coding style</title>
+</head>
+<body>
+<script>
+const Weave = {};
+Weave.library = {};
+
+/* composition: pure helpers. No browser, no branching. */
+Weave.library.composition = {};
+Weave.library.composition.pipe = (...fns) => x => fns.reduce((v, f) => f(v), x);
+Weave.library.composition.pairs = obj => Object.entries(obj);
+Weave.library.composition.merge = (a, b) => ({ ...a, ...b });
+Weave.library.composition.pixels = n => n + 'px';
+Weave.library.composition.random = n => Math.floor(Math.random() * n);
+Weave.library.composition.eachPair = f => obj => Weave.library.composition.pairs(obj).forEach(f);
+Weave.library.composition.defineEach = (target, make) => Weave.library.composition.eachPair(([k, v]) => target[k] = make(v, k));
+
+/* predicates: every function returns a boolean. */
+Weave.library.predicates = {};
+Weave.library.predicates.isString = x => typeof x === 'string';
+Weave.library.predicates.isFunction = x => typeof x === 'function';
+Weave.library.predicates.isElement = x => x instanceof Element;
+
+/* control: flow of control. The only place branching lives. */
+Weave.library.control = {};
+Weave.library.control.when = (test, f) => x => test(x) ? f(x) : x;
+Weave.library.control.either = (test, f, g) => x => test(x) ? f(x) : g(x);
+
+/* browser: the only layer that touches the browser API. */
+Weave.library.browser = {};
+Weave.library.browser.body = () => document.body;
+Weave.library.browser.createElement = tag => document.createElement(tag);
+Weave.library.browser.createText = s => document.createTextNode(s);
+Weave.library.browser.setAttribute = (el, [k, v]) => (el.setAttribute(k, v), el);
+Weave.library.browser.setStyle = (el, [k, v]) => (el.style[k] = v, el);
+Weave.library.browser.addListener = (el, [ev, f]) => (el.addEventListener(ev, f), el);
+Weave.library.browser.appendChild = (el, child) => (el.appendChild(child), el);
+Weave.library.browser.viewportWidth = () => innerWidth;
+Weave.library.browser.viewportHeight = () => innerHeight;
+
+/* elements: every builder is generated from two tables (setters, tags). */
+Weave.library.elements = {};
+Weave.library.elements.toNode = Weave.library.control.when(Weave.library.predicates.isString, Weave.library.browser.createText);
+Weave.library.elements.appendNode = (el, [i, child]) => Weave.library.browser.appendChild(el, Weave.library.elements.toNode(child));
+Weave.library.elements.applyAll = setter => obj => el => Weave.library.composition.pairs(obj).reduce(setter, el);
+
+/* One setter per spec part. Adding a part here adds it everywhere. */
+Weave.library.elements.setters = {};
+Weave.library.elements.setters.attributes = Weave.library.browser.setAttribute;
+Weave.library.elements.setters.styles = Weave.library.browser.setStyle;
+Weave.library.elements.setters.listeners = Weave.library.browser.addListener;
+Weave.library.elements.setters.children = Weave.library.elements.appendNode;
+Weave.library.composition.defineEach(Weave.library.elements, Weave.library.elements.applyAll)(Weave.library.elements.setters);
+
+Weave.library.elements.parts = Object.keys(Weave.library.elements.setters);
+Weave.library.elements.applyPart = (spec, defaults) => part => Weave.library.elements[part](Weave.library.composition.merge(defaults[part], spec[part]));
+Weave.library.elements.steps = (spec, defaults) => Weave.library.elements.parts.map(Weave.library.elements.applyPart(spec, defaults));
+Weave.library.elements.assemble = (spec, defaults) => Weave.library.composition.pipe(...Weave.library.elements.steps(spec, defaults));
+Weave.library.elements.build = (defaults, tag) => (spec = {}) => Weave.library.elements.assemble(spec, defaults)(Weave.library.browser.createElement(tag));
+
+/* The only place tag names appear. Edit a default here → every instance changes. */
+Weave.library.elements.tags = {};
+Weave.library.elements.tags.div = {};
+Weave.library.elements.tags.span = {};
+Weave.library.elements.tags.button = { attributes: { type: 'button' } };
+Weave.library.composition.defineEach(Weave.library.elements, Weave.library.elements.build)(Weave.library.elements.tags);
+
+/* application: uses only Weave.library.*, never the browser directly. */
+Weave.application = {};
+Weave.application.count = 0;
+Weave.application.randomCoordinate = extent => Weave.library.composition.pixels(Weave.library.composition.random(extent));
+Weave.application.randomLeft = () => Weave.application.randomCoordinate(Weave.library.browser.viewportWidth() - 120);
+Weave.application.randomTop = () => Weave.application.randomCoordinate(Weave.library.browser.viewportHeight() - 40);
+Weave.application.randomPosition = () => ({ left: Weave.application.randomLeft(), top: Weave.application.randomTop() });
+Weave.application.label = () => 'Click me #' + ++Weave.application.count;
+Weave.application.listeners = () => ({ click: Weave.application.onClick });
+Weave.application.buttonSpec = () => ({ children: [Weave.application.label()], styles: Weave.application.randomPosition(), listeners: Weave.application.listeners() });
+Weave.application.makeButton = () => Weave.library.elements.button(Weave.application.buttonSpec());
+Weave.application.moveButton = el => Weave.library.elements.styles(Weave.application.randomPosition())(el);
+Weave.application.spawnButton = () => Weave.library.browser.appendChild(Weave.library.browser.body(), Weave.application.makeButton());
+Weave.application.onClick = e => (Weave.application.moveButton(e.target), Weave.application.spawnButton());
+Weave.application.spawnButton();
+</script>
+</body>
+</html>
