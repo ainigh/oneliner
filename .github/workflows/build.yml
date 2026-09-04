@@ -1,0 +1,47 @@
+name: build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install jsdom
+        run: npm install --no-package-lock
+
+      - name: Build the single file bundle
+        run: node scripts/build.js
+
+      - name: Style audit
+        run: node audit.js
+
+      - name: Tests
+        run: node scripts/test.js
+
+      - name: Table row removal audit
+        run: node scripts/audit-rows.js
+
+      - name: Reference applications
+        run: node scripts/check-apps.js
+
+      - name: Fail if dist is out of date with src
+        run: git diff --exit-code -- dist catalog.json
+
+      - name: Upload the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: weave-dist
+          path: |
+            dist/weave.js
+            dist/weave.module.js
+            catalog.json
