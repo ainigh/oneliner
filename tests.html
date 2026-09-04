@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave tests</title>
+<style>body { font: 14px ui-monospace, monospace; padding: 16px; } .fail { color: #b00020; } .pass { color: #0a7d33; }</style>
+</head>
+<body>
+<pre id="output">running…</pre>
+<script src="dist/weave.js"></script>
+<script src="tests/tests.js"></script>
+<script>
+/* runner: the browser half of the test contract. Same table, same runner, different host. */
+Weave.tests.output = () => Weave.library.query.byId('output');
+Weave.tests.headline = result => (result.total - result.failures.length) + '/' + result.total + ' passed';
+Weave.tests.lines = result => [Weave.tests.headline(result)].concat(result.failures.map(name => 'FAIL ' + name)).join('\n');
+Weave.tests.paint = result => Weave.library.attributes.addClass(Weave.tests.className(result))(Weave.library.elements.setText(Weave.tests.lines(result))(Weave.tests.output()));
+Weave.tests.className = result => Weave.library.control.either(() => result.failures.length === 0, () => 'pass', () => 'fail')(result);
+Weave.tests.show = () => Weave.tests.paint(Weave.tests.run());
+Weave.library.events.ready(Weave.tests.show);
+</script>
+</body>
+</html>

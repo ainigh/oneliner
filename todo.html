@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave todo — the style past one button</title>
+<style>
+body { font: 15px system-ui, sans-serif; max-width: 34rem; margin: 3rem auto; padding: 0 1rem; color: #16181d; }
+form { display: flex; gap: .5rem; }
+input[type=text] { flex: 1; padding: .5rem; font: inherit; }
+ul { list-style: none; padding: 0; }
+li { display: flex; gap: .5rem; align-items: center; padding: .4rem 0; border-bottom: 1px solid #e6e8ec; }
+li.done label { text-decoration: line-through; opacity: .55; }
+label { flex: 1; }
+nav { display: flex; gap: .75rem; margin: 1rem 0; }
+nav a[aria-current=true] { font-weight: 600; text-decoration: none; }
+button { font: inherit; }
+</style>
+</head>
+<body>
+<h1>Todo</h1>
+<form id="new-item"><input type="text" name="title" aria-label="New item" placeholder="What needs doing?" required><button type="submit">Add</button></form>
+<nav id="filters"><a href="#/">All</a><a href="#/active">Active</a><a href="#/done">Done</a></nav>
+<ul id="list" aria-live="polite"></ul>
+<p id="count"></p>
+<script src="dist/weave.js"></script>
+<script>
+/* application: a todo list rendered from specs, persisted in storage, filtered by the hash router. */
+Weave.application = {};
+Weave.application.storageKey = 'weave.todo.items';
+Weave.application.items = [];
+Weave.application.filter = 'all';
+Weave.application.doneClass = 'done';
+Weave.application.removeClass = 'remove';
+Weave.application.setItems = items => Weave.application.items = items;
+Weave.application.setFilter = filter => Weave.application.filter = filter;
+Weave.application.load = () => Weave.application.setItems(Weave.library.storage.local.getOr(Weave.application.storageKey, []));
+Weave.application.save = () => Weave.library.storage.local.set(Weave.application.storageKey, Weave.application.items);
+Weave.application.nextId = () => Weave.library.composition.randomId('item');
+Weave.application.newItem = title => ({ id: Weave.application.nextId(), title, done: false });
+Weave.application.add = title => Weave.application.commit(Weave.application.items.concat([Weave.application.newItem(title)]));
+Weave.application.commit = items => (Weave.application.setItems(items), Weave.application.save(), Weave.application.render());
+Weave.application.remove = id => Weave.application.commit(Weave.application.items.filter(item => item.id !== id));
+Weave.application.toggled = id => item => Weave.library.control.either(() => item.id === id, () => Weave.library.composition.merge(item, { done: !item.done }), () => item)(item);
+Weave.application.toggle = id => Weave.application.commit(Weave.application.items.map(Weave.application.toggled(id)));
+
+/* filters: one row per view. Adding a row adds a filter and a route. */
+Weave.application.filters = {};
+Weave.application.filters.all = Weave.library.composition.always;
+Weave.application.filters.active = item => !item.done;
+Weave.application.filters.done = item => item.done;
+Weave.application.visible = () => Weave.application.items.filter(Weave.application.filters[Weave.application.filter]);
+Weave.application.checkboxSpec = item => ({ tag: 'input', attributes: { type: 'checkbox' }, properties: { checked: item.done }, aria: { label: item.title } });
+Weave.application.labelSpec = item => ({ tag: 'label', text: item.title });
+Weave.application.removeSpec = () => ({ tag: 'button', classes: [Weave.application.removeClass], text: '✕', aria: { label: 'Remove' } });
+Weave.application.itemClasses = item => Weave.library.control.either(() => item.done, () => [Weave.application.doneClass], () => [])(item);
+Weave.application.itemSpec = item => ({ tag: 'li', classes: Weave.application.itemClasses(item), data: { id: item.id }, children: [Weave.application.checkboxSpec(item), Weave.application.labelSpec(item), Weave.application.removeSpec()] });
+Weave.application.list = () => Weave.library.query.byId('list');
+Weave.application.counter = () => Weave.library.query.byId('count');
+Weave.application.remaining = () => Weave.application.items.filter(Weave.application.filters.active).length;
+Weave.application.countText = () => Weave.application.remaining() + ' left of ' + Weave.application.items.length;
+Weave.application.paintCount = () => Weave.library.elements.setText(Weave.application.countText())(Weave.application.counter());
+Weave.application.paintList = () => Weave.library.elements.append(Weave.application.visible().map(Weave.application.itemSpec))(Weave.library.elements.empty(Weave.application.list()));
+Weave.application.paintFilters = () => Weave.library.query.all('#filters a').forEach(Weave.application.paintFilter);
+Weave.application.paintFilter = link => Weave.library.attributes.setAria('current', Weave.application.isCurrent(link))(link);
+Weave.application.isCurrent = link => Weave.library.attributes.attribute('href')(link) === Weave.application.hashFor(Weave.application.filter);
+Weave.application.hashFor = filter => Weave.library.browser.keywords.hash + Weave.application.patterns[filter];
+Weave.application.render = () => (Weave.application.paintList(), Weave.application.paintCount(), Weave.application.paintFilters());
+Weave.application.idOf = el => Weave.library.attributes.data('id')(Weave.library.query.closest('li')(el));
+Weave.application.onToggle = (event, box) => Weave.application.toggle(Weave.application.idOf(box));
+Weave.application.onRemove = (event, button) => Weave.application.remove(Weave.application.idOf(button));
+Weave.application.onSubmit = values => Weave.application.addAndReset(values.title);
+Weave.application.addAndReset = title => (Weave.application.add(title), Weave.library.forms.clear(Weave.application.form()));
+Weave.application.form = () => Weave.library.query.byId('new-item');
+Weave.application.bindForm = () => Weave.library.forms.onSubmit(Weave.application.onSubmit)(Weave.application.form());
+Weave.application.bindList = () => Weave.library.events.delegateAll({ 'change input': Weave.application.onToggle, 'click .remove': Weave.application.onRemove })(Weave.application.list());
+Weave.application.show = filter => () => (Weave.application.setFilter(filter), Weave.application.render());
+
+/* patterns: one row per filter, naming the hash route that selects it. */
+Weave.application.patterns = {};
+Weave.application.patterns.all = '/';
+Weave.application.patterns.active = '/active';
+Weave.application.patterns.done = '/done';
+Weave.application.hashMode = 'hash';
+Weave.application.routeRow = ([filter, pattern]) => [pattern, Weave.application.show(filter)];
+Weave.application.routes = () => Weave.library.composition.fromPairs(Weave.library.composition.pairs(Weave.application.patterns).map(Weave.application.routeRow));
+Weave.application.router = () => Weave.library.navigation.router(Weave.application.routes(), Weave.application.hashMode);
+Weave.application.start = () => (Weave.application.load(), Weave.application.bindForm(), Weave.application.bindList(), Weave.application.router().start(), Weave.application.render());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

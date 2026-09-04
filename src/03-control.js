@@ -1,0 +1,56 @@
+/* control: branching, looping, errors and promises. The only place ? : && || ?? ?. throw try live. */
+Weave.library.control = {};
+Weave.library.control.and = (a, b) => a && b;
+Weave.library.control.or = (a, b) => a || b;
+Weave.library.control.nullish = (a, b) => a ?? b;
+Weave.library.control.reach = (value, name) => value?.[name];
+Weave.library.control.when = (test, f) => x => test(x) ? f(x) : x;
+Weave.library.control.unless = (test, f) => x => test(x) ? x : f(x);
+Weave.library.control.either = (test, f, g) => x => test(x) ? f(x) : g(x);
+Weave.library.control.select = rows => x => Weave.library.control.applyRow(rows.find(([test]) => test(x)), x);
+Weave.library.control.applyRow = (row, x) => Weave.library.control.either(Weave.library.predicates.isDefined, found => found[1](x), Weave.library.composition.noop)(row);
+Weave.library.control.selectByKey = (table, fallback) => key => Weave.library.control.nullish(table[key], fallback);
+Weave.library.control.dispatch = (table, fallback) => key => (...args) => Weave.library.control.selectByKey(table, fallback)(key)(...args);
+Weave.library.control.defaultTo = fallback => x => Weave.library.control.nullish(x, fallback);
+Weave.library.control.orElse = fallback => x => Weave.library.control.or(x, fallback);
+Weave.library.control.andThen = f => x => Weave.library.control.and(x, f(x));
+Weave.library.control.maybe = f => x => Weave.library.control.either(Weave.library.predicates.isDefined, f, Weave.library.composition.noop)(x);
+Weave.library.control.guard = test => x => Weave.library.control.either(test, Weave.library.composition.identity, Weave.library.composition.noop)(x);
+Weave.library.control.nullable = x => Weave.library.control.nullish(x, null);
+
+/* errors: every rejection value the library produces has a row here. */
+Weave.library.control.errors = {};
+Weave.library.control.errors.timeout = { name: 'TimeoutError', message: 'The operation timed out' };
+Weave.library.control.errors.abort = { name: 'AbortError', message: 'The operation was aborted' };
+Weave.library.control.errors.http = { name: 'HttpError', message: 'The request failed' };
+Weave.library.control.errors.network = { name: 'NetworkError', message: 'The network request could not be made' };
+Weave.library.control.errors.cancelled = { name: 'CancelledError', message: 'The effect was cancelled' };
+Weave.library.control.errors.invalidSpec = { name: 'InvalidSpecError', message: 'The spec names no tag' };
+Weave.library.control.errors.depthExceeded = { name: 'DepthError', message: 'The recursion limit was reached' };
+Weave.library.control.error = (row, details) => Weave.library.composition.merge(row, details);
+Weave.library.control.isError = (row, value) => Weave.library.control.reach(value, 'name') === row.name;
+Weave.library.control.fail = value => { throw Object.assign(new Error(value.message), { cause: value }); };
+Weave.library.control.attempt = (f, onError) => x => { try { return f(x); } catch (error) { return onError(error, x); } };
+Weave.library.control.attemptOr = (f, fallback) => x => Weave.library.control.attempt(f, () => fallback)(x);
+
+/* constants: the bounds the recursive combinators respect. */
+Weave.library.control.constants = {};
+Weave.library.control.constants.maxDepth = 10000;
+Weave.library.control.unfold = step => seed => Weave.library.control.unfoldFrom(step, step(seed), []);
+Weave.library.control.unfoldFrom = (step, value, collected) => Weave.library.control.either(Weave.library.predicates.isDefined, next => Weave.library.control.unfoldFrom(step, step(next), collected.concat([next])), () => collected)(value);
+Weave.library.control.until = (test, step) => seed => Weave.library.control.either(test, Weave.library.composition.identity, next => Weave.library.control.until(test, step)(step(next)))(seed);
+Weave.library.control.times = count => f => Weave.library.composition.range(count).map(f);
+Weave.library.control.loop = (test, body) => seed => Weave.library.control.loopFrom(test, body, seed, Weave.library.control.constants.maxDepth);
+Weave.library.control.loopFrom = (test, body, value, budget) => Weave.library.control.either(() => Weave.library.control.and(test(value), budget > 0), () => Weave.library.control.loopFrom(test, body, body(value), budget - 1), () => value)(value);
+Weave.library.control.after = promise => f => promise.then(f);
+Weave.library.control.recover = promise => f => promise.catch(f);
+Weave.library.control.finally = promise => f => promise.finally(f);
+Weave.library.control.sequence = makers => makers.reduce((chain, make) => chain.then(results => make().then(value => results.concat([value]))), Weave.library.composition.resolved([]));
+Weave.library.control.retry = (count, make) => Weave.library.control.recover(make())(reason => Weave.library.control.either(() => count > 1, () => Weave.library.control.retry(count - 1, make), () => Weave.library.composition.rejected(reason))(reason));
+Weave.library.control.timeout = (ms, promise) => Weave.library.composition.race([promise, Weave.library.control.rejectAfter(ms)]);
+Weave.library.control.rejectAfter = ms => Weave.library.composition.then(() => Weave.library.composition.rejected(Weave.library.control.error(Weave.library.control.errors.timeout, { ms })))(Weave.library.timing.delay(ms));
+Weave.library.control.memoize = f => Weave.library.control.memoizeWith(f, Weave.library.composition.dictionary());
+Weave.library.control.memoizeWith = (f, cache) => x => Weave.library.control.either(() => cache.has(x), () => cache.get(x), () => cache.set(x, f(x)).get(x))(x);
+Weave.library.control.once = f => Weave.library.control.onceWith(f, { done: false, value: undefined });
+Weave.library.control.onceWith = (f, state) => (...args) => Weave.library.control.either(() => state.done, () => state.value, () => Object.assign(state, { done: true, value: f(...args) }).value)(state);
+Weave.library.control.spread = f => args => f(...args);
