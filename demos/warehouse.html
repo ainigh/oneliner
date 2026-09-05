@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — warehouse</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: stock on hand and the wizard that books a shipment. Sorting and paging are the grid's. */
+Weave.application = {};
+Weave.application.names = ['Hex bolt', 'Wing nut', 'Flat washer', 'Cap screw', 'Split pin', 'Spring clip'];
+Weave.application.shelves = ['A1', 'A2', 'B1', 'B2', 'C1'];
+Weave.application.stock = Weave.library.composition.range(23).map(index => ({ sku: 'SKU-' + (100 + index), item: Weave.application.names[index % Weave.application.names.length], shelf: Weave.application.shelves[index % Weave.application.shelves.length], count: (index * 7) % 40 }));
+Weave.application.columns = [{ key: 'sku', label: 'SKU' }, { key: 'item', label: 'Item' }, { key: 'shelf', label: 'Shelf' }, { key: 'count', label: 'On hand' }];
+Weave.application.shelfOptions = () => Weave.application.shelves.map(shelf => ({ label: shelf, value: shelf }));
+Weave.application.whatStep = () => ({ title: 'What is moving', body: [Weave.library.components.field({ label: 'SKU', name: 'sku' }), Weave.library.components.field({ label: 'Quantity', name: 'quantity', type: Weave.library.elements.inputTypes.number })] });
+Weave.application.whereStep = () => ({ title: 'Where from', body: [Weave.library.components.selectBox({ name: 'shelf', options: Weave.application.shelfOptions() })] });
+Weave.application.whenStep = () => ({ title: 'When', body: [Weave.library.components.field({ label: 'Ship date', name: 'when', type: Weave.library.elements.inputTypes.date }), Weave.library.components.checkField({ label: 'Rush this one' })] });
+Weave.application.steps = () => [Weave.application.whatStep(), Weave.application.whereStep(), Weave.application.whenStep()];
+Weave.application.grid = () => Weave.library.patterns.dataGrid({ title: 'Stock on hand', pageSize: 8, columns: Weave.application.columns, rows: Weave.application.stock }).element;
+Weave.application.booking = () => Weave.library.patterns.wizard({ title: 'Book a shipment', steps: Weave.application.steps() }).element;
+Weave.application.panels = () => [{ title: 'Inventory', body: Weave.application.grid() }, { title: 'New shipment', body: Weave.application.booking() }];
+Weave.application.floor = () => Weave.library.patterns.dashboard({ title: 'Warehouse', stats: Weave.application.stats(), panels: Weave.application.panels() });
+Weave.application.stats = () => [{ label: 'Lines', value: Weave.application.stock.length }, { label: 'Units', value: Weave.application.units() }, { label: 'Empty shelves', value: Weave.application.empties() }];
+Weave.application.units = () => Weave.application.stock.reduce((carried, row) => carried + row.count, 0);
+Weave.application.empties = () => Weave.application.stock.filter(row => row.count === 0).length;
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.floor());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

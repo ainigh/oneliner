@@ -34,6 +34,9 @@ jobs:
       - name: Reference applications
         run: node scripts/check-apps.js
 
+      - name: Demo applications
+        run: node scripts/check-demos.js
+
       - name: Fail if dist is out of date with src
         run: git diff --exit-code -- dist catalog.json
 

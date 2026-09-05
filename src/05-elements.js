@@ -225,7 +225,6 @@ Weave.library.elements.svg = {};
 Weave.library.composition.defineEach(Weave.library.elements.svg, Weave.library.elements.buildNamespaced)(Weave.library.elements.svgTags);
 
 /* conversion: everything a caller may hand the library becomes a node exactly here. */
-Weave.library.elements.defaultTag = 'div';
 Weave.library.elements.nodeRules = {};
 Weave.library.elements.nodeRules.fromString = [Weave.library.predicates.isString, value => Weave.library.browser.createText(value)];
 Weave.library.elements.nodeRules.fromNumber = [Weave.library.predicates.isNumber, value => Weave.library.browser.createText(String(value))];
@@ -236,10 +235,12 @@ Weave.library.elements.nodeRules.fromAnything = [Weave.library.composition.alway
 Weave.library.elements.nodeSteps = Object.values(Weave.library.elements.nodeRules);
 Weave.library.elements.toNode = value => Weave.library.control.select(Weave.library.elements.nodeSteps)(value);
 Weave.library.elements.toFragment = list => Weave.library.composition.listOf(list).map(Weave.library.elements.toNode).reduce(Weave.library.browser.appendChild, Weave.library.browser.createFragment());
-Weave.library.elements.tagOf = spec => Weave.library.control.defaultTo(Weave.library.elements.defaultTag)(spec[Weave.library.elements.tagKey]);
+Weave.library.elements.fallbacks = {};
+Weave.library.elements.fallbacks.builder = Weave.library.elements.div;
 Weave.library.elements.rejectTag = tag => () => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.invalidSpec, { tag }));
 Weave.library.elements.builderFor = tag => Weave.library.control.either(() => tag in Weave.library.elements.tags, () => Weave.library.elements[tag], () => Weave.library.elements.rejectTag(tag))(tag);
-Weave.library.elements.fromSpec = spec => Weave.library.elements.builderFor(Weave.library.elements.tagOf(spec))(Weave.library.composition.omit([Weave.library.elements.tagKey])(spec));
+Weave.library.elements.makerOf = spec => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.library.elements.builderFor, () => Weave.library.elements.fallbacks.builder)(spec[Weave.library.elements.tagKey]);
+Weave.library.elements.fromSpec = spec => Weave.library.elements.makerOf(spec)(Weave.library.composition.omit([Weave.library.elements.tagKey])(spec));
 Weave.library.elements.fromHtml = html => Weave.library.browser.childNodesOf(Weave.library.browser.parseHtml(html));
 Weave.library.elements.fromHtmlOne = html => Weave.library.browser.firstChildOf(Weave.library.browser.parseHtml(html));
 

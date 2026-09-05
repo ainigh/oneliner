@@ -60,6 +60,7 @@ Weave.library.composition.json = value => JSON.stringify(value);
 Weave.library.composition.parseJson = text => Weave.library.control.attemptOr(JSON.parse, undefined)(text);
 Weave.library.composition.encode = text => encodeURIComponent(text);
 Weave.library.composition.decode = text => decodeURIComponent(text);
+Weave.library.composition.closeParen = ')';
 Weave.library.composition.querySeparator = '&';
 Weave.library.composition.queryAssign = '=';
 Weave.library.composition.queryPair = key => value => Weave.library.composition.encode(key) + Weave.library.composition.queryAssign + Weave.library.composition.encode(value);

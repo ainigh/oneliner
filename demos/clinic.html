@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — clinic</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: an intake wizard and the day list beside it. The form parts are components, not markup. */
+Weave.application = {};
+Weave.application.appointments = [{ at: '09:00', who: 'R. Franklin', reason: 'Follow up', room: '2' }, { at: '09:30', who: 'J. Goodall', reason: 'New patient', room: '1' }, { at: '10:15', who: 'M. Curie', reason: 'Results', room: '2' }, { at: '11:00', who: 'C. Darwin', reason: 'Referral', room: '3' }];
+Weave.application.columns = [{ key: 'at', label: 'Time' }, { key: 'who', label: 'Patient' }, { key: 'reason', label: 'Reason' }, { key: 'room', label: 'Room' }];
+Weave.application.reasons = () => [{ label: 'New patient', value: 'new' }, { label: 'Follow up', value: 'follow' }, { label: 'Results', value: 'results' }];
+Weave.application.whoStep = () => ({ title: 'Who', body: [Weave.library.components.field({ label: 'Full name', name: 'patient' }), Weave.library.components.field({ label: 'Date of birth', name: 'born', type: Weave.library.elements.inputTypes.date })] });
+Weave.application.whyStep = () => ({ title: 'Why', body: [Weave.library.components.selectBox({ name: 'reason', options: Weave.application.reasons() }), Weave.library.components.textArea({ name: 'notes' })] });
+Weave.application.consentStep = () => ({ title: 'Consent', body: [Weave.library.components.checkField({ label: 'Share records with the referring practice' }), Weave.library.components.note({ text: 'You can withdraw this at any time.' })] });
+Weave.application.intake = () => [Weave.application.whoStep(), Weave.application.whyStep(), Weave.application.consentStep()];
+Weave.application.day = () => Weave.library.patterns.dataGrid({ title: 'Today', pageSize: 6, columns: Weave.application.columns, rows: Weave.application.appointments }).element;
+Weave.application.form = () => Weave.library.patterns.wizard({ title: 'Intake', steps: Weave.application.intake() }).element;
+Weave.application.panels = () => [{ title: 'Schedule', body: Weave.application.day() }, { title: 'Register a patient', body: Weave.application.form() }];
+Weave.application.clinic = () => Weave.library.patterns.dashboard({ title: 'Clinic front desk', stats: Weave.application.stats(), panels: Weave.application.panels() });
+Weave.application.stats = () => [{ label: 'Booked', value: Weave.application.appointments.length }, { label: 'Rooms', value: Weave.application.rooms().length }, { label: 'First slot', value: Weave.library.composition.first(Weave.application.appointments).at }];
+Weave.application.rooms = () => Weave.library.composition.unique(Weave.application.appointments.map(row => row.room));
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.clinic());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

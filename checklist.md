@@ -196,6 +196,58 @@ Every one now has a test that fails against the previous bundle.
       tested at all. `Weave.tests.asyncCases` is a second table of rows resolving to a boolean, and
       `Weave.tests.runAll` runs both. `scripts/test.js` and `tests.html` run the pair.
 
+## Components and patterns
+
+Two layers after `collections`, both table driven, both audited under the same rules with no new
+exemptions and no rule edits.
+
+- [x] **`components`** — a function per widget, one spec in, one element out. `parts` is the only
+      place a component chooses an element builder, so no widget names a tag. A component's key is
+      its class, through `classOf`, so no widget names a class. `handlers` is the only place a spec
+      key becomes a listener. `blueprints` generates every plain container from one row each;
+      the composite widgets (`table`, `menu`, `tabs`, `tree`, `form`, `modal`, `accordion`,
+      `pagination`, `disclosure`, `field`, `selectBox`, `checkField`, `searchBox`, `statTile`,
+      `emptyState`, `toast`, `progressBar`, `breadcrumb`, `toolbar`) are built from those.
+- [x] **Design tokens.** `tokens` is the only place a dimension, colour or duration is written;
+      `values` the only place a bare CSS keyword is; `rules` carries one row per class whose values
+      may only be token references; `states` the only pseudo-classes. `styleText` renders the sheet
+      and `installStyles` injects it once. A test asserts every rule value is a known token.
+- [x] **`patterns`** — `todoList`, `board`, `dataGrid`, `masterDetail`, `wizard`, `commandPalette`,
+      `chat`, `explorer`, `dashboard`. Every one returns `{ element, state, update }` and repaints
+      through the single `patterns.view`, which also restores focus across a repaint — so a search
+      box that re-renders on every keystroke keeps the caret, once, for every pattern.
+- [x] **Six demos** in six domains under `demos/`, plus a gallery. None contains a tag, a class, a
+      colour or a dimension. `scripts/check-demos.js` drives all six with 27 assertions.
+- [x] **Table contracts.** `components.blueprints` and `components.tokens` are rows in
+      `scripts/audit-rows.js`, so deleting either kind of row is asserted to remove exactly the one
+      component or the one custom property it names. 342 row removals, all as predicted.
+
+The audit shaped both layers rather than reviewing them afterwards. R12 (a literal twice in one
+bucket) and R13 (two structurally identical one-liners) failed the build repeatedly, and every one
+of those failures was the same message: *this belongs in a table.* The one-field form shared by the
+todo adder and the chat composer, the split view shared by `masterDetail` and `explorer`, the single
+attribute-selector builder now shared by `query.dataSelector` and the focus restorer — all three
+exist because the audit refused to let them be written twice.
+
+## Gaps the demos uncovered
+
+Building six applications against the library found five things it cannot yet do. None is fixed here.
+
+- [ ] **No date layer.** A calendar pattern is blocked on it. Worse, the boundary already leaks:
+      `composition.now` calls `Date.now()`, and `Date` is not in `Audit.policy.globals`, so the one
+      rule that keeps platform names inside `browser` does not currently cover it. Fixing it means a
+      `browser` date group, the policy row, and a way for `composition` to reach it.
+- [ ] **No number or date formatting.** Both `crm.html` and `warehouse.html` had to write their own
+      currency helper. That is the exact redundancy this project exists to remove, and it belongs in
+      `composition` beside `pixels` and `number`.
+- [ ] **The board cannot be dragged.** `interaction.draggable` and `interaction.droppable` exist and
+      are lifted, but no pattern uses them; `board` moves cards with buttons.
+- [ ] **No virtualisation.** `dataGrid` pages instead, which is honest but caps the row count.
+- [ ] **A pattern repaints wholesale.** `patterns.view` empties and rebuilds. It is one place, so it
+      is one place to fix, but a keyed reconciler would be the fix.
+
+## Not done
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

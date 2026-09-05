@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — course planner</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: a curriculum tree beside its reading, and the assignments list under both. */
+Weave.application = {};
+Weave.application.curriculum = [{ label: 'Foundations', blurb: 'Where every other module starts.', children: [{ label: 'Sets and maps', blurb: 'Membership, images, preimages.' }, { label: 'Induction', blurb: 'Proof by climbing the ladder.' }] }, { label: 'Structures', blurb: 'What the foundations are for.', children: [{ label: 'Groups', blurb: 'One operation, four laws.' }, { label: 'Rings', blurb: 'Two operations that get along.' }] }, { label: 'Analysis', blurb: 'Limits, and everything downstream.' }];
+Weave.application.reading = node => Weave.library.components.stack({ children: [Weave.library.components.subtitle({ text: node.label }), Weave.library.components.note({ text: node.blurb })] });
+Weave.application.syllabus = () => Weave.library.patterns.explorer({ nodes: Weave.application.curriculum, detail: Weave.application.reading }).element;
+Weave.application.homework = () => Weave.library.patterns.todoList({ title: 'Assignments', items: [{ label: 'Read chapter 3' }, { label: 'Problem set 2', done: true }, { label: 'Draft the essay' }] }).element;
+Weave.application.panels = () => [{ title: 'Curriculum', body: Weave.application.syllabus() }, { title: 'This week', body: Weave.application.homework() }];
+Weave.application.planner = () => Weave.library.patterns.dashboard({ title: 'Course planner', stats: Weave.application.stats(), panels: Weave.application.panels() });
+Weave.application.stats = () => [{ label: 'Modules', value: Weave.application.curriculum.length }, { label: 'Topics', value: Weave.application.topics() }, { label: 'Weeks', value: 12 }];
+Weave.application.topics = () => Weave.application.curriculum.reduce((carried, node) => carried + Weave.library.control.defaultTo([])(node.children).length, 0);
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.planner());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

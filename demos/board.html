@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — engineering board</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: an engineering board and the palette that drives it. Two patterns, one shared state. */
+Weave.application = {};
+Weave.application.keys = { backlog: 'backlog', building: 'building', review: 'review', shipped: 'shipped' };
+Weave.application.lanes = [{ key: Weave.application.keys.backlog, label: 'Backlog' }, { key: Weave.application.keys.building, label: 'Building' }, { key: Weave.application.keys.review, label: 'In review' }, { key: Weave.application.keys.shipped, label: 'Shipped' }];
+Weave.application.work = [{ label: 'Split the audit into rules', note: 'Blocked on the table pass.', column: Weave.application.keys.backlog }, { label: 'Curried lifts', note: 'Five kinds, one table.', column: Weave.application.keys.building }, { label: 'Async test table', note: 'Runner takes both.', column: Weave.application.keys.review }, { label: 'Fix the query parser', note: 'Bare keys decoded wrong.', column: Weave.application.keys.shipped }, { label: 'Design tokens', note: 'One place per dimension.', column: Weave.application.keys.building }];
+Weave.application.board = Weave.library.patterns.board({ columns: Weave.application.lanes, cards: Weave.application.work });
+Weave.application.laneNames = () => Weave.application.lanes.map(lane => lane.label);
+Weave.application.sweepTo = lane => () => Weave.application.board.update(state => ({ cards: state.cards.map(card => Weave.library.composition.merge(card, { column: lane.key })) }));
+Weave.application.command = lane => ({ label: Weave.application.sweepLabel + lane.label, onAction: Weave.application.sweepTo(lane) });
+Weave.application.sweepLabel = 'Move everything to ';
+Weave.application.palette = () => Weave.library.patterns.commandPalette({ commands: Weave.application.lanes.map(Weave.application.command) });
+Weave.application.page = () => Weave.library.components.stack({ children: [Weave.library.components.title({ text: 'Engineering board' }), Weave.application.palette().element, Weave.application.board.element] });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>
