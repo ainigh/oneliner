@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — sales desk</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: a sales desk. Every pixel comes from a pattern, so no tag, class or colour lives here. */
+Weave.application = {};
+Weave.application.stages = { won: 'Won', pitch: 'Pitch', trial: 'Trial' };
+Weave.application.headings = { pipeline: 'Pipeline', desk: 'Sales desk', directory: 'Who to call' };
+Weave.application.deals = [{ name: 'Ada Lovelace', company: 'Northwind', stage: Weave.application.stages.won, value: 42000, note: 'Renewal signed in March.' }, { name: 'Grace Hopper', company: 'Initech', stage: Weave.application.stages.pitch, value: 18000, note: 'Waiting on procurement.' }, { name: 'Alan Turing', company: 'Umbrella', stage: Weave.application.stages.trial, value: 9500, note: 'Pilot runs until June.' }, { name: 'Katherine Johnson', company: 'Globex', stage: Weave.application.stages.won, value: 61000, note: 'Expanding to a second team.' }, { name: 'Barbara Liskov', company: 'Soylent', stage: Weave.application.stages.pitch, value: 27500, note: 'Intro call booked.' }, { name: 'Radia Perlman', company: 'Hooli', stage: Weave.application.stages.trial, value: 12000, note: 'Security review pending.' }];
+Weave.application.columns = [{ key: 'name', label: 'Contact' }, { key: 'company', label: 'Company' }, { key: 'stage', label: 'Stage' }, { key: 'value', label: 'Value', format: Weave.application.money }];
+Weave.application.money = amount => Weave.application.currency + amount.toLocaleString();
+Weave.application.currency = '$';
+Weave.application.wonDeals = () => Weave.application.deals.filter(deal => deal.stage === Weave.application.stages.won);
+Weave.application.total = () => Weave.application.deals.reduce((carried, deal) => carried + deal.value, 0);
+Weave.application.stats = () => [{ label: 'Deals in play', value: Weave.application.deals.length }, { label: 'Closed won', value: Weave.application.wonDeals().length }, { label: Weave.application.headings.pipeline, value: Weave.application.money(Weave.application.total()) }];
+Weave.application.profileParts = deal => [Weave.library.components.subtitle({ text: deal.company }), Weave.library.components.pill({ text: deal.stage }), Weave.library.components.note({ text: deal.note }), Weave.library.components.value({ text: Weave.application.money(deal.value) })];
+Weave.application.profile = deal => Weave.library.components.stack({ children: Weave.application.profileParts(deal) });
+Weave.application.people = () => Weave.application.deals.map(deal => Weave.library.composition.merge(deal, { label: deal.name }));
+Weave.application.pipeline = () => Weave.library.patterns.dataGrid({ title: Weave.application.headings.pipeline, pageSize: 4, columns: Weave.application.columns, rows: Weave.application.deals }).element;
+Weave.application.directory = () => Weave.library.patterns.masterDetail({ items: Weave.application.people(), detail: Weave.application.profile }).element;
+Weave.application.panels = () => [{ title: 'Every deal', body: Weave.application.pipeline() }, { title: Weave.application.headings.directory, body: Weave.application.directory() }];
+Weave.application.desk = () => Weave.library.patterns.dashboard({ title: Weave.application.headings.desk, stats: Weave.application.stats(), panels: Weave.application.panels() });
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.desk());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

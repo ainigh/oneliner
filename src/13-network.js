@@ -31,7 +31,13 @@ Weave.library.network.prepare = options => Weave.library.network.encodeOptions(W
 Weave.library.network.send = (url, options) => Weave.library.browser.fetch(Weave.library.network.url(url, options.query), Weave.library.composition.omit(['query', 'timeout'])(options));
 Weave.library.network.checkResponse = response => Weave.library.control.either(Weave.library.predicates.isOk, Weave.library.composition.identity, Weave.library.network.rejectResponse)(Weave.library.network.runHooks(Weave.library.network.hooks.afterReceive, response));
 Weave.library.network.request = (url, options) => Weave.library.network.dispatchRequest(url, Weave.library.network.prepare(options));
-Weave.library.network.dispatchRequest = (url, options) => Weave.library.composition.then(Weave.library.network.checkResponse)(Weave.library.control.timeout(options.timeout, Weave.library.network.send(url, options)));
+Weave.library.network.startRequest = (url, options) => Weave.library.control.attempt(() => Weave.library.network.send(url, options), Weave.library.composition.rejected)(options);
+Weave.library.network.attemptRequest = (url, options) => Weave.library.composition.then(Weave.library.network.checkResponse)(Weave.library.control.timeout(options.timeout, Weave.library.network.startRequest(url, options)));
+Weave.library.network.isTypedError = reason => Weave.library.composition.values(Weave.library.control.errors).some(row => Weave.library.control.isError(row, reason));
+Weave.library.network.asNetworkError = reason => Weave.library.control.either(Weave.library.network.isTypedError, Weave.library.composition.identity, Weave.library.network.wrapNetworkError)(reason);
+Weave.library.network.wrapNetworkError = reason => Weave.library.control.error(Weave.library.control.errors.network, { cause: reason });
+Weave.library.network.reportError = reason => Weave.library.composition.rejected(Weave.library.network.runHooks(Weave.library.network.hooks.onError, Weave.library.network.asNetworkError(reason)));
+Weave.library.network.dispatchRequest = (url, options) => Weave.library.control.recover(Weave.library.network.attemptRequest(url, options))(Weave.library.network.reportError);
 Weave.library.network.withMethod = method => options => Weave.library.composition.merge(Weave.library.control.defaultTo({})(options), { method });
 Weave.library.network.byMethod = method => (url, options) => Weave.library.network.request(url, Weave.library.network.withMethod(method)(options));
 Weave.library.composition.defineEach(Weave.library.network, Weave.library.network.byMethod)(Weave.library.browser.httpMethods);

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — help desk</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: a help desk. The ticket list is a master detail and each ticket detail is a chat. */
+Weave.application = {};
+Weave.application.agent = 'Desk';
+Weave.application.tickets = [{ label: 'Login loop on Safari', who: 'ana@acme.test', said: [{ from: 'Ana', text: 'It bounces me back to the form.' }, { from: Weave.application.agent, text: 'Which Safari version?' }] }, { label: 'Invoice missing tax line', who: 'ben@acme.test', said: [{ from: 'Ben', text: 'The March invoice has no VAT row.' }] }, { label: 'Export times out', who: 'cleo@acme.test', said: [{ from: 'Cleo', text: 'Anything over 20k rows just hangs.' }, { from: Weave.application.agent, text: 'Trying a smaller batch now.' }] }];
+Weave.application.thread = ticket => Weave.library.patterns.chat({ title: ticket.label, author: Weave.application.agent, messages: ticket.said }).element;
+Weave.application.detail = ticket => Weave.library.components.stack({ children: [Weave.library.components.note({ text: ticket.who }), Weave.application.thread(ticket)] });
+Weave.application.queue = () => Weave.library.patterns.masterDetail({ items: Weave.application.tickets, detail: Weave.application.detail });
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.queue());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

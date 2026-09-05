@@ -150,6 +150,104 @@ names cannot collide with the events API itself.
 `scripts/audit-rows.js` and `scripts/check-apps.js` are ordinary node scripts. They are build
 tooling, not library or application code, and are deliberately outside the style and the audit.
 
+## Fixed after the first pass
+
+Each row was a real defect: the check suite passed on all of them, because nothing pinned them down.
+Every one now has a test that fails against the previous bundle.
+
+- [x] **Dashed and camel-cased CSS names.** `style.setCss` accepted either spelling, but `style.css`,
+      `style.removeCss` and `effects.currentValue` went straight to `getPropertyValue` and
+      `removeProperty`, which read only the dashed spelling — so `css('backgroundColor')` returned
+      `''` and `removeCss('backgroundColor')` did nothing. `style.cssName` and `style.styleName` are
+      the one place the two spellings are converted, and every reader goes through them.
+- [x] **`composition.parseQueryString`.** A key with no `=` decoded to the string `'undefined'`, a
+      value containing `=` was truncated at it, `+` stayed a plus instead of a space, and a malformed
+      escape threw. `querySplit` splits at the first `=` only and `decodeQuery` is the one decoder.
+- [x] **`query.dataSelector`.** The value went into the selector unescaped, so any value carrying a
+      quote produced a selector that did not parse. It now goes through `composition.escapeSelector`,
+      the function that already existed for exactly this.
+- [x] **Three error rows nothing produced.** `cancelled`, `invalidSpec` and `depthExceeded` were
+      vocabulary with no speaker. A cancelled animation now rejects with `cancelled` instead of a raw
+      platform `AbortError` nobody could name (`effects.isCancelled` tests it, `effects.ignoreCancelled`
+      opts out), a spec naming no builder fails with `invalidSpec` instead of a bare `TypeError`, and
+      `control.loop` past its budget fails with `depthExceeded` instead of silently returning a
+      half-finished value.
+- [x] **`control.constants.maxDepth`.** It read 10000, but `loopFrom` is a recursion and the call
+      stack gave out around 2670, so the budget could never be reached and the failure was always a
+      `RangeError`. It is 1000 now, under the smallest engine stack, so the named error is the one
+      that actually happens.
+- [x] **`network.hooks.onError`.** The row existed and nothing ever ran it. Every request rejection
+      now passes through it, and a rejection that carries no errors row — a failed fetch, say — is
+      wrapped as `errors.network` first, so the hook always sees a named value.
+- [x] **A request that failed before it was sent.** `network.send` throwing synchronously escaped as a
+      thrown exception, so `network.get` did not always return a promise. It rejects now.
+- [x] **`navigation.router().stop`.** The router shape promised a stop and stop was `noop`; the
+      unsubscribe was only reachable through the value `start()` returned, and `router` copied the
+      object so a later `start()` could not fill it in. The router now holds one state object.
+
+## Closed gaps
+
+- [x] **Curried lifts.** `collections.kinds` had no way to lift a function that takes its arguments
+      before the element, so most of the curried surface had no set version: no `collections.query.find`,
+      no `collections.attributes.attribute`, no `collections.style.css`. Five kinds
+      (`curriedGetter`, `curriedFirst`, `curriedPredicate`, `curriedQuery`, `curriedQueryOne`) and the
+      rows that use them close it, which is what the lifts table is for.
+- [x] **Async tests.** The runner was synchronous, so no promise-returning function in the library was
+      tested at all. `Weave.tests.asyncCases` is a second table of rows resolving to a boolean, and
+      `Weave.tests.runAll` runs both. `scripts/test.js` and `tests.html` run the pair.
+
+## Components and patterns
+
+Two layers after `collections`, both table driven, both audited under the same rules with no new
+exemptions and no rule edits.
+
+- [x] **`components`** — a function per widget, one spec in, one element out. `parts` is the only
+      place a component chooses an element builder, so no widget names a tag. A component's key is
+      its class, through `classOf`, so no widget names a class. `handlers` is the only place a spec
+      key becomes a listener. `blueprints` generates every plain container from one row each;
+      the composite widgets (`table`, `menu`, `tabs`, `tree`, `form`, `modal`, `accordion`,
+      `pagination`, `disclosure`, `field`, `selectBox`, `checkField`, `searchBox`, `statTile`,
+      `emptyState`, `toast`, `progressBar`, `breadcrumb`, `toolbar`) are built from those.
+- [x] **Design tokens.** `tokens` is the only place a dimension, colour or duration is written;
+      `values` the only place a bare CSS keyword is; `rules` carries one row per class whose values
+      may only be token references; `states` the only pseudo-classes. `styleText` renders the sheet
+      and `installStyles` injects it once. A test asserts every rule value is a known token.
+- [x] **`patterns`** — `todoList`, `board`, `dataGrid`, `masterDetail`, `wizard`, `commandPalette`,
+      `chat`, `explorer`, `dashboard`. Every one returns `{ element, state, update }` and repaints
+      through the single `patterns.view`, which also restores focus across a repaint — so a search
+      box that re-renders on every keystroke keeps the caret, once, for every pattern.
+- [x] **Six demos** in six domains under `demos/`, plus a gallery. None contains a tag, a class, a
+      colour or a dimension. `scripts/check-demos.js` drives all six with 27 assertions.
+- [x] **Table contracts.** `components.blueprints` and `components.tokens` are rows in
+      `scripts/audit-rows.js`, so deleting either kind of row is asserted to remove exactly the one
+      component or the one custom property it names. 342 row removals, all as predicted.
+
+The audit shaped both layers rather than reviewing them afterwards. R12 (a literal twice in one
+bucket) and R13 (two structurally identical one-liners) failed the build repeatedly, and every one
+of those failures was the same message: *this belongs in a table.* The one-field form shared by the
+todo adder and the chat composer, the split view shared by `masterDetail` and `explorer`, the single
+attribute-selector builder now shared by `query.dataSelector` and the focus restorer — all three
+exist because the audit refused to let them be written twice.
+
+## Gaps the demos uncovered
+
+Building six applications against the library found five things it cannot yet do. None is fixed here.
+
+- [ ] **No date layer.** A calendar pattern is blocked on it. Worse, the boundary already leaks:
+      `composition.now` calls `Date.now()`, and `Date` is not in `Audit.policy.globals`, so the one
+      rule that keeps platform names inside `browser` does not currently cover it. Fixing it means a
+      `browser` date group, the policy row, and a way for `composition` to reach it.
+- [ ] **No number or date formatting.** Both `crm.html` and `warehouse.html` had to write their own
+      currency helper. That is the exact redundancy this project exists to remove, and it belongs in
+      `composition` beside `pixels` and `number`.
+- [ ] **The board cannot be dragged.** `interaction.draggable` and `interaction.droppable` exist and
+      are lifted, but no pattern uses them; `board` moves cards with buttons.
+- [ ] **No virtualisation.** `dataGrid` pages instead, which is honest but caps the row count.
+- [ ] **A pattern repaints wholesale.** `patterns.view` empties and rebuilds. It is one place, so it
+      is one place to fix, but a keyed reconciler would be the fix.
+
+## Not done
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

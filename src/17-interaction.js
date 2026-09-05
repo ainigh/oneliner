@@ -67,7 +67,7 @@ Weave.library.interaction.endSwipe = (handler, state, event) => Weave.library.co
 Weave.library.interaction.pointerPosition = event => ({ x: Weave.library.browser.clientXOf(event), y: Weave.library.browser.clientYOf(event) });
 Weave.library.interaction.relativePosition = event => el => Weave.library.interaction.positionInRect(Weave.library.interaction.pointerPosition(event), Weave.library.browser.boundingRectOf(el));
 Weave.library.interaction.positionInRect = (point, rect) => ({ x: point.x - rect.left, y: point.y - rect.top });
-Weave.library.interaction.translation = state => 'translate(' + Weave.library.composition.pixels(state.dx) + ', ' + Weave.library.composition.pixels(state.dy) + ')';
+Weave.library.interaction.translation = state => 'translate(' + Weave.library.composition.pixels(state.dx) + ', ' + Weave.library.composition.pixels(state.dy) + Weave.library.composition.closeParen;
 Weave.library.interaction.dragMove = (options, state, el) => event => Weave.library.control.when(() => state.dragging, () => Weave.library.interaction.applyDrag(options, state, el, event))(event);
 Weave.library.interaction.updateDrag = (state, event) => Object.assign(state, { dx: Weave.library.browser.clientXOf(event) - state.x, dy: Weave.library.browser.clientYOf(event) - state.y });
 Weave.library.interaction.moveElement = (state, el) => Weave.library.style.setCss(Weave.library.browser.properties.transform, Weave.library.interaction.translation(state))(el);

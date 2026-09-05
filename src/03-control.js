@@ -33,15 +33,17 @@ Weave.library.control.fail = value => { throw Object.assign(new Error(value.mess
 Weave.library.control.attempt = (f, onError) => x => { try { return f(x); } catch (error) { return onError(error, x); } };
 Weave.library.control.attemptOr = (f, fallback) => x => Weave.library.control.attempt(f, () => fallback)(x);
 
-/* constants: the bounds the recursive combinators respect. */
+/* constants: the bounds the recursive combinators respect. The budget stays under the smallest engine call stack, so a runaway loop fails with a named error and not a RangeError. */
 Weave.library.control.constants = {};
-Weave.library.control.constants.maxDepth = 10000;
+Weave.library.control.constants.maxDepth = 1000;
 Weave.library.control.unfold = step => seed => Weave.library.control.unfoldFrom(step, step(seed), []);
 Weave.library.control.unfoldFrom = (step, value, collected) => Weave.library.control.either(Weave.library.predicates.isDefined, next => Weave.library.control.unfoldFrom(step, step(next), collected.concat([next])), () => collected)(value);
 Weave.library.control.until = (test, step) => seed => Weave.library.control.either(test, Weave.library.composition.identity, next => Weave.library.control.until(test, step)(step(next)))(seed);
 Weave.library.control.times = count => f => Weave.library.composition.range(count).map(f);
 Weave.library.control.loop = (test, body) => seed => Weave.library.control.loopFrom(test, body, seed, Weave.library.control.constants.maxDepth);
-Weave.library.control.loopFrom = (test, body, value, budget) => Weave.library.control.either(() => Weave.library.control.and(test(value), budget > 0), () => Weave.library.control.loopFrom(test, body, body(value), budget - 1), () => value)(value);
+Weave.library.control.loopFrom = (test, body, value, budget) => Weave.library.control.either(() => Weave.library.control.and(test(value), budget > 0), () => Weave.library.control.loopFrom(test, body, body(value), budget - 1), () => Weave.library.control.loopEnd(test, value))(value);
+Weave.library.control.loopEnd = (test, value) => Weave.library.control.either(test, Weave.library.control.exceedDepth, Weave.library.composition.identity)(value);
+Weave.library.control.exceedDepth = () => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.depthExceeded, { limit: Weave.library.control.constants.maxDepth }));
 Weave.library.control.after = promise => f => promise.then(f);
 Weave.library.control.recover = promise => f => promise.catch(f);
 Weave.library.control.finally = promise => f => promise.finally(f);

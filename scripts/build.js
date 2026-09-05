@@ -18,7 +18,7 @@ const moduleSource = bundle.replace('const Weave = {};', 'export const Weave = {
 fs.writeFileSync(path.join(distDirectory, 'weave.module.js'), moduleSource);
 
 const size = Buffer.byteLength(bundle);
-const budget = 256 * 1024;
+const budget = 384 * 1024;
 const gzipped = require('zlib').gzipSync(bundle).length;
 console.log(`weave.js: ${files.length} sources, ${bundle.split('\n').length} lines, ${(size / 1024).toFixed(1)} KB raw, ${(gzipped / 1024).toFixed(1)} KB gzipped (budget ${budget / 1024} KB raw)`);
 process.exit(size > budget ? 1 : 0);

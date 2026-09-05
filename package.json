@@ -11,7 +11,8 @@
     "audit": "node audit.js",
     "audit:rows": "node scripts/audit-rows.js",
     "check:apps": "node scripts/check-apps.js",
-    "check": "npm run build && npm run audit && npm test && npm run audit:rows && npm run check:apps"
+    "check:demos": "node scripts/check-demos.js",
+    "check": "npm run build && npm run audit && npm test && npm run audit:rows && npm run check:apps && npm run check:demos"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"

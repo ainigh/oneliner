@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demos</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: the gallery. One row per demo, and the gallery itself is built from the same tiles. */
+Weave.application = {};
+Weave.application.demos = [{ label: 'Sales desk', href: 'crm.html', note: 'Dashboard, data grid and master detail over a pipeline.' }, { label: 'Engineering board', href: 'board.html', note: 'A kanban board driven by a command palette.' }, { label: 'Help desk', href: 'helpdesk.html', note: 'A ticket queue whose detail pane is a live chat.' }, { label: 'Warehouse', href: 'warehouse.html', note: 'Sorting and paging over stock, plus a booking wizard.' }, { label: 'Course planner', href: 'school.html', note: 'A curriculum tree beside its reading, and a todo list.' }, { label: 'Clinic front desk', href: 'clinic.html', note: 'A day schedule and a three step intake form.' }];
+Weave.application.link = demo => Weave.library.components.anchor({ text: demo.label, attributes: { [Weave.library.browser.keywords.href]: demo.href } });
+Weave.application.tile = demo => Weave.library.components.card({ children: [Weave.application.link(demo), Weave.library.components.note({ text: demo.note })] });
+Weave.application.gallery = () => Weave.library.components.tiles({ children: Weave.application.demos.map(Weave.application.tile) });
+Weave.application.page = () => Weave.library.components.view({ children: [Weave.library.components.title({ text: 'Weave demos' }), Weave.library.components.note({ text: 'Every page below is built only from patterns and components.' }), Weave.application.gallery()] });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>
