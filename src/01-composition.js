@@ -66,9 +66,15 @@ Weave.library.composition.queryPair = key => value => Weave.library.composition.
 Weave.library.composition.queryString = obj => Weave.library.composition.pairs(obj).flatMap(([key, value]) => Weave.library.composition.listOf(value).map(Weave.library.composition.queryPair(key))).join(Weave.library.composition.querySeparator);
 Weave.library.composition.appendValue = (existing, value) => Weave.library.control.either(Weave.library.predicates.isDefined, current => [].concat(current, [value]), Weave.library.composition.constant(value))(existing);
 Weave.library.composition.collectEntry = (accumulator, [key, value]) => Weave.library.composition.merge(accumulator, { [key]: Weave.library.composition.appendValue(accumulator[key], value) });
-Weave.library.composition.collectQueryPair = (accumulator, [key, value]) => Weave.library.composition.collectEntry(accumulator, [Weave.library.composition.decode(key), Weave.library.composition.decode(value)]);
+Weave.library.composition.queryPlus = '+';
+Weave.library.composition.plusToSpace = text => text.split(Weave.library.composition.queryPlus).join(' ');
+Weave.library.composition.decodeSafely = text => Weave.library.control.attemptOr(Weave.library.composition.decode, text)(text);
+Weave.library.composition.decodeQuery = text => Weave.library.composition.decodeSafely(Weave.library.composition.plusToSpace(text));
+Weave.library.composition.collectQueryPair = (accumulator, [key, value]) => Weave.library.composition.collectEntry(accumulator, [Weave.library.composition.decodeQuery(key), Weave.library.composition.decodeQuery(value)]);
 Weave.library.composition.queryParts = text => Weave.library.composition.trim(text).replace(/^[?#]/, '').split(Weave.library.composition.querySeparator).filter(part => part.length > 0);
-Weave.library.composition.queryPairsOf = text => Weave.library.composition.queryParts(text).map(part => part.split(Weave.library.composition.queryAssign));
+Weave.library.composition.queryIndexIn = part => Weave.library.control.either(index => index < 0, () => part.length, Weave.library.composition.identity)(part.indexOf(Weave.library.composition.queryAssign));
+Weave.library.composition.querySplit = part => [part.slice(0, Weave.library.composition.queryIndexIn(part)), part.slice(Weave.library.composition.queryIndexIn(part) + 1)];
+Weave.library.composition.queryPairsOf = text => Weave.library.composition.queryParts(text).map(Weave.library.composition.querySplit);
 Weave.library.composition.parseQueryString = text => Weave.library.composition.queryPairsOf(text).reduce(Weave.library.composition.collectQueryPair, {});
 
 /* htmlEscapes: the only place the five escaped characters appear. Order matters, ampersand first. */

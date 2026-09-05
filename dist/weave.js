@@ -71,9 +71,15 @@ Weave.library.composition.queryPair = key => value => Weave.library.composition.
 Weave.library.composition.queryString = obj => Weave.library.composition.pairs(obj).flatMap(([key, value]) => Weave.library.composition.listOf(value).map(Weave.library.composition.queryPair(key))).join(Weave.library.composition.querySeparator);
 Weave.library.composition.appendValue = (existing, value) => Weave.library.control.either(Weave.library.predicates.isDefined, current => [].concat(current, [value]), Weave.library.composition.constant(value))(existing);
 Weave.library.composition.collectEntry = (accumulator, [key, value]) => Weave.library.composition.merge(accumulator, { [key]: Weave.library.composition.appendValue(accumulator[key], value) });
-Weave.library.composition.collectQueryPair = (accumulator, [key, value]) => Weave.library.composition.collectEntry(accumulator, [Weave.library.composition.decode(key), Weave.library.composition.decode(value)]);
+Weave.library.composition.queryPlus = '+';
+Weave.library.composition.plusToSpace = text => text.split(Weave.library.composition.queryPlus).join(' ');
+Weave.library.composition.decodeSafely = text => Weave.library.control.attemptOr(Weave.library.composition.decode, text)(text);
+Weave.library.composition.decodeQuery = text => Weave.library.composition.decodeSafely(Weave.library.composition.plusToSpace(text));
+Weave.library.composition.collectQueryPair = (accumulator, [key, value]) => Weave.library.composition.collectEntry(accumulator, [Weave.library.composition.decodeQuery(key), Weave.library.composition.decodeQuery(value)]);
 Weave.library.composition.queryParts = text => Weave.library.composition.trim(text).replace(/^[?#]/, '').split(Weave.library.composition.querySeparator).filter(part => part.length > 0);
-Weave.library.composition.queryPairsOf = text => Weave.library.composition.queryParts(text).map(part => part.split(Weave.library.composition.queryAssign));
+Weave.library.composition.queryIndexIn = part => Weave.library.control.either(index => index < 0, () => part.length, Weave.library.composition.identity)(part.indexOf(Weave.library.composition.queryAssign));
+Weave.library.composition.querySplit = part => [part.slice(0, Weave.library.composition.queryIndexIn(part)), part.slice(Weave.library.composition.queryIndexIn(part) + 1)];
+Weave.library.composition.queryPairsOf = text => Weave.library.composition.queryParts(text).map(Weave.library.composition.querySplit);
 Weave.library.composition.parseQueryString = text => Weave.library.composition.queryPairsOf(text).reduce(Weave.library.composition.collectQueryPair, {});
 
 /* htmlEscapes: the only place the five escaped characters appear. Order matters, ampersand first. */
@@ -248,15 +254,17 @@ Weave.library.control.fail = value => { throw Object.assign(new Error(value.mess
 Weave.library.control.attempt = (f, onError) => x => { try { return f(x); } catch (error) { return onError(error, x); } };
 Weave.library.control.attemptOr = (f, fallback) => x => Weave.library.control.attempt(f, () => fallback)(x);
 
-/* constants: the bounds the recursive combinators respect. */
+/* constants: the bounds the recursive combinators respect. The budget stays under the smallest engine call stack, so a runaway loop fails with a named error and not a RangeError. */
 Weave.library.control.constants = {};
-Weave.library.control.constants.maxDepth = 10000;
+Weave.library.control.constants.maxDepth = 1000;
 Weave.library.control.unfold = step => seed => Weave.library.control.unfoldFrom(step, step(seed), []);
 Weave.library.control.unfoldFrom = (step, value, collected) => Weave.library.control.either(Weave.library.predicates.isDefined, next => Weave.library.control.unfoldFrom(step, step(next), collected.concat([next])), () => collected)(value);
 Weave.library.control.until = (test, step) => seed => Weave.library.control.either(test, Weave.library.composition.identity, next => Weave.library.control.until(test, step)(step(next)))(seed);
 Weave.library.control.times = count => f => Weave.library.composition.range(count).map(f);
 Weave.library.control.loop = (test, body) => seed => Weave.library.control.loopFrom(test, body, seed, Weave.library.control.constants.maxDepth);
-Weave.library.control.loopFrom = (test, body, value, budget) => Weave.library.control.either(() => Weave.library.control.and(test(value), budget > 0), () => Weave.library.control.loopFrom(test, body, body(value), budget - 1), () => value)(value);
+Weave.library.control.loopFrom = (test, body, value, budget) => Weave.library.control.either(() => Weave.library.control.and(test(value), budget > 0), () => Weave.library.control.loopFrom(test, body, body(value), budget - 1), () => Weave.library.control.loopEnd(test, value))(value);
+Weave.library.control.loopEnd = (test, value) => Weave.library.control.either(test, Weave.library.control.exceedDepth, Weave.library.composition.identity)(value);
+Weave.library.control.exceedDepth = () => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.depthExceeded, { limit: Weave.library.control.constants.maxDepth }));
 Weave.library.control.after = promise => f => promise.then(f);
 Weave.library.control.recover = promise => f => promise.catch(f);
 Weave.library.control.finally = promise => f => promise.finally(f);
@@ -926,7 +934,9 @@ Weave.library.elements.nodeSteps = Object.values(Weave.library.elements.nodeRule
 Weave.library.elements.toNode = value => Weave.library.control.select(Weave.library.elements.nodeSteps)(value);
 Weave.library.elements.toFragment = list => Weave.library.composition.listOf(list).map(Weave.library.elements.toNode).reduce(Weave.library.browser.appendChild, Weave.library.browser.createFragment());
 Weave.library.elements.tagOf = spec => Weave.library.control.defaultTo(Weave.library.elements.defaultTag)(spec[Weave.library.elements.tagKey]);
-Weave.library.elements.fromSpec = spec => Weave.library.elements[Weave.library.elements.tagOf(spec)](Weave.library.composition.omit([Weave.library.elements.tagKey])(spec));
+Weave.library.elements.rejectTag = tag => () => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.invalidSpec, { tag }));
+Weave.library.elements.builderFor = tag => Weave.library.control.either(() => tag in Weave.library.elements.tags, () => Weave.library.elements[tag], () => Weave.library.elements.rejectTag(tag))(tag);
+Weave.library.elements.fromSpec = spec => Weave.library.elements.builderFor(Weave.library.elements.tagOf(spec))(Weave.library.composition.omit([Weave.library.elements.tagKey])(spec));
 Weave.library.elements.fromHtml = html => Weave.library.browser.childNodesOf(Weave.library.browser.parseHtml(html));
 Weave.library.elements.fromHtmlOne = html => Weave.library.browser.firstChildOf(Weave.library.browser.parseHtml(html));
 
@@ -975,7 +985,9 @@ Weave.library.query.byClass = name => Weave.library.query.all(Weave.library.brow
 Weave.library.query.byTag = name => Weave.library.query.all(name);
 Weave.library.query.byName = name => Weave.library.browser.getElementsByName(name);
 Weave.library.query.byData = (key, value) => Weave.library.query.all(Weave.library.query.dataSelector(key, value));
-Weave.library.query.dataSelector = (key, value) => '[' + Weave.library.browser.keywords.dataPrefix + Weave.library.composition.kebabCase(key) + '="' + value + '"]';
+Weave.library.query.dataSelector = (key, value) => Weave.library.query.openBracket + Weave.library.browser.keywords.dataPrefix + Weave.library.composition.kebabCase(key) + Weave.library.composition.queryAssign + Weave.library.composition.escapeSelector(value) + Weave.library.query.closeBracket;
+Weave.library.query.openBracket = '[';
+Weave.library.query.closeBracket = ']';
 Weave.library.query.find = selector => el => Weave.library.browser.querySelectorAll(el, selector);
 Weave.library.query.findOne = selector => el => Weave.library.browser.querySelector(el, selector);
 Weave.library.query.closest = selector => el => Weave.library.browser.closest(el, selector);
@@ -1117,14 +1129,16 @@ Weave.library.style.unitlessProperties.animationIterationCount = true;
 Weave.library.style.unitlessProperties.gridRow = true;
 Weave.library.style.unitlessProperties.gridColumn = true;
 Weave.library.style.unitlessProperties.tabSize = true;
-Weave.library.style.needsPixels = (property, value) => Weave.library.control.and(Weave.library.predicates.isNumber(value), !Weave.library.predicates.isUnitless(Weave.library.composition.camelCase(property)));
+Weave.library.style.cssName = property => Weave.library.composition.kebabCase(property);
+Weave.library.style.styleName = property => Weave.library.composition.camelCase(property);
+Weave.library.style.needsPixels = (property, value) => Weave.library.control.and(Weave.library.predicates.isNumber(value), !Weave.library.predicates.isUnitless(Weave.library.style.styleName(property)));
 Weave.library.style.toCssValue = (property, value) => Weave.library.control.either(() => Weave.library.style.needsPixels(property, value), () => Weave.library.composition.pixels(value), () => value)(value);
-Weave.library.style.css = property => el => Weave.library.browser.computedValueOf(el, property);
+Weave.library.style.css = property => el => Weave.library.browser.computedValueOf(el, Weave.library.style.cssName(property));
 Weave.library.style.setCss = (property, value) => el => Weave.library.elements.setStylePair(el, [property, value]);
 Weave.library.style.setCssAll = obj => el => Weave.library.elements.apply.styles(obj)(el);
-Weave.library.style.removeCss = property => el => Weave.library.browser.removeStyle(el, property);
+Weave.library.style.removeCss = property => el => Weave.library.browser.removeStyle(el, Weave.library.style.cssName(property));
 Weave.library.style.cssAll = properties => el => Weave.library.composition.fromPairs(properties.map(property => [property, Weave.library.style.css(property)(el)]));
-Weave.library.style.inlineCss = property => el => Weave.library.browser.styleOf(el)[property];
+Weave.library.style.inlineCss = property => el => Weave.library.browser.styleOf(el)[Weave.library.style.styleName(property)];
 Weave.library.style.cssVariable = name => el => Weave.library.browser.cssVariableOf(el, name);
 Weave.library.style.setCssVariable = (name, value) => el => Weave.library.browser.setCssVariable(el, [name, value]);
 Weave.library.style.matchesMedia = query => Weave.library.predicates.matchesMedia(query);
@@ -1436,8 +1450,11 @@ Weave.library.effects.instant = 0;
 Weave.library.effects.durationOf = options => Weave.library.control.either(Weave.library.accessibility.reducedMotion, () => Weave.library.effects.instant, () => Weave.library.control.defaultTo(Weave.library.effects.defaults.duration)(options.duration))(options);
 Weave.library.effects.optionsFrom = (options = {}) => Weave.library.composition.merge(Weave.library.composition.merge({}, Weave.library.effects.defaults), Weave.library.composition.merge(options, { duration: Weave.library.effects.durationOf(options) }));
 Weave.library.effects.animate = (keyframes, options) => el => Weave.library.effects.awaitAnimation(el, Weave.library.browser.animate(el, Weave.library.composition.listOf(keyframes), Weave.library.effects.optionsFrom(options)));
-Weave.library.effects.awaitAnimation = (el, animation) => Weave.library.composition.then(() => el)(Weave.library.browser.finished(animation));
-Weave.library.effects.currentValue = (property, el) => Weave.library.browser.computedValueOf(el, property);
+Weave.library.effects.awaitAnimation = (el, animation) => Weave.library.control.recover(Weave.library.composition.then(() => el)(Weave.library.browser.finished(animation)))(Weave.library.effects.rejectCancelled(el));
+Weave.library.effects.rejectCancelled = el => () => Weave.library.composition.rejected(Weave.library.control.error(Weave.library.control.errors.cancelled, { element: el }));
+Weave.library.effects.isCancelled = value => Weave.library.control.isError(Weave.library.control.errors.cancelled, value);
+Weave.library.effects.ignoreCancelled = promise => Weave.library.control.recover(promise)(Weave.library.composition.noop);
+Weave.library.effects.currentValue = (property, el) => Weave.library.browser.computedValueOf(el, Weave.library.style.cssName(property));
 Weave.library.effects.toKeyframes = styles => el => [Weave.library.composition.mapValues((value, property) => Weave.library.effects.currentValue(property, el))(styles), styles];
 Weave.library.effects.transition = (styles, options) => el => Weave.library.effects.animate(Weave.library.effects.toKeyframes(styles)(el), options)(el);
 Weave.library.effects.transitionPart = options => property => [property, Weave.library.effects.durationOf(options) + Weave.library.effects.msSuffix, Weave.library.control.defaultTo(Weave.library.effects.defaults.easing)(options.easing)].join(Weave.library.browser.keywords.space);
@@ -1581,7 +1598,13 @@ Weave.library.network.prepare = options => Weave.library.network.encodeOptions(W
 Weave.library.network.send = (url, options) => Weave.library.browser.fetch(Weave.library.network.url(url, options.query), Weave.library.composition.omit(['query', 'timeout'])(options));
 Weave.library.network.checkResponse = response => Weave.library.control.either(Weave.library.predicates.isOk, Weave.library.composition.identity, Weave.library.network.rejectResponse)(Weave.library.network.runHooks(Weave.library.network.hooks.afterReceive, response));
 Weave.library.network.request = (url, options) => Weave.library.network.dispatchRequest(url, Weave.library.network.prepare(options));
-Weave.library.network.dispatchRequest = (url, options) => Weave.library.composition.then(Weave.library.network.checkResponse)(Weave.library.control.timeout(options.timeout, Weave.library.network.send(url, options)));
+Weave.library.network.startRequest = (url, options) => Weave.library.control.attempt(() => Weave.library.network.send(url, options), Weave.library.composition.rejected)(options);
+Weave.library.network.attemptRequest = (url, options) => Weave.library.composition.then(Weave.library.network.checkResponse)(Weave.library.control.timeout(options.timeout, Weave.library.network.startRequest(url, options)));
+Weave.library.network.isTypedError = reason => Weave.library.composition.values(Weave.library.control.errors).some(row => Weave.library.control.isError(row, reason));
+Weave.library.network.asNetworkError = reason => Weave.library.control.either(Weave.library.network.isTypedError, Weave.library.composition.identity, Weave.library.network.wrapNetworkError)(reason);
+Weave.library.network.wrapNetworkError = reason => Weave.library.control.error(Weave.library.control.errors.network, { cause: reason });
+Weave.library.network.reportError = reason => Weave.library.composition.rejected(Weave.library.network.runHooks(Weave.library.network.hooks.onError, Weave.library.network.asNetworkError(reason)));
+Weave.library.network.dispatchRequest = (url, options) => Weave.library.control.recover(Weave.library.network.attemptRequest(url, options))(Weave.library.network.reportError);
 Weave.library.network.withMethod = method => options => Weave.library.composition.merge(Weave.library.control.defaultTo({})(options), { method });
 Weave.library.network.byMethod = method => (url, options) => Weave.library.network.request(url, Weave.library.network.withMethod(method)(options));
 Weave.library.composition.defineEach(Weave.library.network, Weave.library.network.byMethod)(Weave.library.browser.httpMethods);
@@ -1786,11 +1809,11 @@ Weave.library.navigation.currentPath = mode => Weave.library.control.selectByKey
 Weave.library.navigation.matchedRoute = (routes, path) => Weave.library.composition.keys(routes).map(pattern => [pattern, Weave.library.navigation.route(pattern)(path)]).find(([pattern, parameters]) => Weave.library.predicates.isDefined(parameters));
 Weave.library.navigation.dispatchRoute = (routes, path) => Weave.library.control.maybe(([pattern, parameters]) => routes[pattern](parameters, path))(Weave.library.navigation.matchedRoute(routes, path));
 Weave.library.navigation.routerGo = (routes, mode) => url => (Weave.library.navigation.push(url), Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)));
-Weave.library.navigation.routerFor = (routes, mode) => ({ start: () => Weave.library.navigation.startRouter(routes, mode), go: Weave.library.navigation.routerGo(routes, mode), stop: Weave.library.composition.noop });
-Weave.library.navigation.startRouter = (routes, mode) => Weave.library.navigation.holdRouter(routes, mode, Weave.library.navigation.listenRoute(routes, mode));
+Weave.library.navigation.routerFor = (routes, mode, state) => Object.assign(state, { start: () => Weave.library.navigation.startRouter(routes, mode, state), go: Weave.library.navigation.routerGo(routes, mode) });
+Weave.library.navigation.startRouter = (routes, mode, state) => Weave.library.navigation.holdRouter(routes, mode, Object.assign(state, { stop: Weave.library.navigation.listenRoute(routes, mode) }));
 Weave.library.navigation.listenRoute = (routes, mode) => Weave.library.events.onTypes([Weave.library.events.types.popstate, Weave.library.events.types.hashchange], () => Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)))(Weave.library.browser.window());
-Weave.library.navigation.holdRouter = (routes, mode, unsubscribe) => (Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)), unsubscribe);
-Weave.library.navigation.router = (routes, mode) => Weave.library.composition.merge(Weave.library.navigation.routerFor(routes, mode), {});
+Weave.library.navigation.holdRouter = (routes, mode, state) => (Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)), state.stop);
+Weave.library.navigation.router = (routes, mode) => Weave.library.navigation.routerFor(routes, mode, { stop: Weave.library.composition.noop });
 Weave.library.navigation.interceptLinks = router => root => Weave.library.events.delegate(Weave.library.events.types.click, Weave.library.browser.selectors.anchor, Weave.library.navigation.linkHandler(router))(root);
 Weave.library.navigation.linkHandler = router => (event, link) => Weave.library.control.when(() => Weave.library.predicates.isSameOrigin(Weave.library.attributes.attribute(Weave.library.browser.keywords.href)(link)), () => Weave.library.navigation.followLink(router, event, link))(event);
 Weave.library.navigation.followLink = (router, event, link) => (Weave.library.browser.preventDefault(event), router.go(Weave.library.attributes.attribute(Weave.library.browser.keywords.href)(link)));
@@ -2073,6 +2096,11 @@ Weave.library.collections.liftEffect = f => nodes => Weave.library.composition.a
 Weave.library.collections.liftCurriedEffect = f => (...args) => nodes => Weave.library.composition.all(nodes.map(f(...args)));
 Weave.library.collections.liftSubscriber = f => nodes => Weave.library.events.combine(nodes.map(f));
 Weave.library.collections.liftCurriedSubscriber = f => (...args) => nodes => Weave.library.events.combine(nodes.map(f(...args)));
+Weave.library.collections.liftCurriedGetter = f => (...args) => nodes => nodes.map(f(...args));
+Weave.library.collections.liftCurriedFirst = f => (...args) => nodes => Weave.library.control.maybe(f(...args))(Weave.library.composition.first(nodes));
+Weave.library.collections.liftCurriedPredicate = f => (...args) => nodes => nodes.every(f(...args));
+Weave.library.collections.liftCurriedQuery = f => (...args) => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(nodes.flatMap(f(...args))));
+Weave.library.collections.liftCurriedQueryOne = f => (...args) => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(Weave.library.composition.compact(nodes.map(f(...args)))));
 
 /* kinds: one row per lift. A lifts row names the kind, so adding a kind adds a way to lift. */
 Weave.library.collections.kinds = {};
@@ -2087,19 +2115,24 @@ Weave.library.collections.kinds.effect = Weave.library.collections.liftEffect;
 Weave.library.collections.kinds.curriedEffect = Weave.library.collections.liftCurriedEffect;
 Weave.library.collections.kinds.subscriber = Weave.library.collections.liftSubscriber;
 Weave.library.collections.kinds.curriedSubscriber = Weave.library.collections.liftCurriedSubscriber;
+Weave.library.collections.kinds.curriedGetter = Weave.library.collections.liftCurriedGetter;
+Weave.library.collections.kinds.curriedFirst = Weave.library.collections.liftCurriedFirst;
+Weave.library.collections.kinds.curriedPredicate = Weave.library.collections.liftCurriedPredicate;
+Weave.library.collections.kinds.curriedQuery = Weave.library.collections.liftCurriedQuery;
+Weave.library.collections.kinds.curriedQueryOne = Weave.library.collections.liftCurriedQueryOne;
 
 /* lifts: one row per layer, naming which functions are lifted and how. This table is the whole layer. */
 Weave.library.collections.lifts = {};
 Weave.library.collections.lifts.elements = { action: ['remove', 'empty', 'clone', 'cloneWithListeners', 'unwrap'], setter: ['append', 'prepend', 'before', 'after', 'appendTo', 'prependTo', 'insertBefore', 'insertAfter', 'replaceWith', 'replaceAll', 'wrap', 'wrapInner', 'setText', 'setHtml'], getter: ['textOf', 'outerHtmlOf'], first: ['htmlOf'] };
-Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'parents', 'contents', 'walk'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], setter: [], getter: ['indexOf'] };
-Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'] };
-Weave.library.collections.lifts.style = { action: ['show', 'hide'], setter: ['setCss', 'setCssAll', 'removeCss', 'setCssVariable', 'setWidth', 'setHeight', 'setOffset', 'setScrollTop', 'setScrollLeft', 'scrollIntoView', 'toggle'], getter: ['width', 'height', 'outerWidth', 'outerHeight', 'offset', 'position', 'rect', 'dimensions'], predicate: ['isShown'] };
+Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'parents', 'contents', 'walk', 'nextAll', 'previousAll'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], curriedQuery: ['find', 'allWithin', 'childrenMatching', 'parentsMatching', 'parentsUntil', 'nextUntil', 'previousUntil', 'descendantsMatching'], curriedQueryOne: ['findOne', 'oneWithin', 'closest', 'nextMatching', 'previousMatching'], getter: ['indexOf'] };
+Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'], curriedFirst: ['attribute', 'property', 'data', 'aria'], curriedPredicate: ['hasClass', 'booleanAttribute'] };
+Weave.library.collections.lifts.style = { action: ['show', 'hide'], setter: ['setCss', 'setCssAll', 'removeCss', 'setCssVariable', 'setWidth', 'setHeight', 'setOffset', 'setScrollTop', 'setScrollLeft', 'scrollIntoView', 'toggle'], getter: ['width', 'height', 'outerWidth', 'outerHeight', 'offset', 'position', 'rect', 'dimensions'], curriedFirst: ['css', 'inlineCss', 'cssVariable', 'cssAll'], predicate: ['isShown'] };
 Weave.library.collections.lifts.events = { action: ['offAll'], curriedSubscriber: ['on', 'once', 'delegate', 'onAll', 'onTypes', 'delegateAll', 'onKey', 'hover', 'onWithOptions'], setter: ['off', 'trigger', 'triggerNative'] };
 Weave.library.collections.lifts.effects = { action: ['stop', 'finish', 'pause', 'resume'], effect: ['whenAnimationEnds', 'whenTransitionEnds'], curriedEffect: ['animate', 'transition', 'fadeIn', 'fadeOut', 'fadeToggle', 'fadeTo', 'slideDown', 'slideUp', 'slideToggle', 'showAnimated', 'hideAnimated', 'toggleAnimated', 'pulse', 'shake', 'flash', 'delay', 'queue', 'parallel'], predicate: ['isAnimating'] };
 Weave.library.collections.lifts.forms = { action: ['reset', 'clear', 'snapshot', 'disable', 'enable', 'focusFirstInvalid'], setter: ['fill'], getter: ['values', 'serialize', 'serializeArray'], predicate: ['isValid'], curriedSubscriber: ['onSubmit', 'onSubmitAsync', 'onChange'] };
 Weave.library.collections.lifts.observers = { curriedSubscriber: ['onMutation', 'onChildren', 'onSubtree', 'onAttributes', 'onText', 'onAdded', 'onRemoved', 'onIntersect', 'onEnterViewport', 'onLeaveViewport', 'lazy', 'onResize', 'onScroll'], effect: ['onceVisible'] };
 Weave.library.collections.lifts.interaction = { action: ['focus', 'blur', 'disable', 'enable', 'inert', 'uninert', 'selectText'], curriedSubscriber: ['onKey', 'onKeys', 'shortcut', 'onOutsideClick', 'onLongPress', 'onDoubleTap', 'onSwipe', 'draggable', 'droppable', 'resizable'], subscriber: ['preventContextMenu'], curriedEffect: ['scrollTo'] };
-Weave.library.collections.lifts.accessibility = { action: ['expand', 'collapse', 'toggleExpanded', 'hideFromTree', 'showInTree', 'hideVisually'], setter: ['setState', 'setLabel'], getter: ['label', 'audit'], subscriber: ['trapFocus', 'modal'] };
+Weave.library.collections.lifts.accessibility = { action: ['expand', 'collapse', 'toggleExpanded', 'hideFromTree', 'showInTree', 'hideVisually'], setter: ['setState', 'setLabel'], getter: ['label', 'audit'], curriedFirst: ['state'], predicate: ['isExpanded'], subscriber: ['trapFocus', 'modal'] };
 Weave.library.collections.lifts.network = { curriedEffect: ['load', 'loadInto'] };
 Weave.library.collections.unlifted = {};
 Weave.library.collections.unlifted.ready = 'takes no element';

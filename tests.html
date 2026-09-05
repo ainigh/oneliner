@@ -16,7 +16,7 @@ Weave.tests.headline = result => (result.total - result.failures.length) + '/' +
 Weave.tests.lines = result => [Weave.tests.headline(result)].concat(result.failures.map(name => 'FAIL ' + name)).join('\n');
 Weave.tests.paint = result => Weave.library.attributes.addClass(Weave.tests.className(result))(Weave.library.elements.setText(Weave.tests.lines(result))(Weave.tests.output()));
 Weave.tests.className = result => Weave.library.control.either(() => result.failures.length === 0, () => 'pass', () => 'fail')(result);
-Weave.tests.show = () => Weave.tests.paint(Weave.tests.run());
+Weave.tests.show = () => Weave.library.composition.then(Weave.tests.paint)(Weave.tests.runAll());
 Weave.library.events.ready(Weave.tests.show);
 </script>
 </body>

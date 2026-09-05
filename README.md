@@ -57,7 +57,7 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `dist/weave.module.js` | The generated ESM wrapper. |
 | `audit.js` | The style checker, written in the style it enforces and audited by itself. |
 | `catalog.json` | Every path in the bundle, emitted by the audit. |
-| `tests/tests.js` | One table row per test case, in the same style. |
+| `tests/tests.js` | One table row per test case, in the same style. `cases` are synchronous, `asyncCases` resolve to a boolean. |
 | `tests.html` | The browser half of the test contract. |
 | `sample.html`, `todo.html` | The two reference applications. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
@@ -67,7 +67,7 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 ```
 npm run build       # src/ → dist/weave.js and dist/weave.module.js
 npm run audit       # the style rules, plus catalog.json
-npm test            # the test table, in node with jsdom
+npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
 npm run check:apps  # drive sample.html, todo.html and tests.html in jsdom
 npm run check       # all of the above
@@ -78,4 +78,16 @@ npm run check       # all of the above
 There is no plugin API. Extending Weave means adding lines: a row to a table
 (`Weave.library.elements.tags.myWidget = {...}` adds a builder) or a new layer after `collections`
 that honours the dependency direction. `Weave.library.collections.lifts` takes rows for new layers,
-so lifting extends too.
+so lifting extends too, and `Weave.library.collections.kinds` says how: a `curried*` kind lifts a
+function that takes its arguments before the element, so `Weave.library.collections.query.find('.row')`
+and `Weave.library.collections.style.css('display')` read the same way as their single-element twins.
+
+## Failure
+
+Every rejection and every throw carries a row from `Weave.library.control.errors`, so failures are
+named rather than guessed at: `control.loop` past `control.constants.maxDepth` fails with
+`depthExceeded`, a spec naming no builder fails with `invalidSpec`, a request that never reached the
+network rejects with `network`, and an animation cut short by `effects.stop` rejects with `cancelled`
+— `Weave.library.effects.ignoreCancelled` turns that back into a resolved promise when you do not
+care. `Weave.library.control.isError(row, value)` is the one test; `network.hooks.onError` sees every
+request rejection on its way out.

@@ -23,6 +23,11 @@ Weave.library.collections.liftEffect = f => nodes => Weave.library.composition.a
 Weave.library.collections.liftCurriedEffect = f => (...args) => nodes => Weave.library.composition.all(nodes.map(f(...args)));
 Weave.library.collections.liftSubscriber = f => nodes => Weave.library.events.combine(nodes.map(f));
 Weave.library.collections.liftCurriedSubscriber = f => (...args) => nodes => Weave.library.events.combine(nodes.map(f(...args)));
+Weave.library.collections.liftCurriedGetter = f => (...args) => nodes => nodes.map(f(...args));
+Weave.library.collections.liftCurriedFirst = f => (...args) => nodes => Weave.library.control.maybe(f(...args))(Weave.library.composition.first(nodes));
+Weave.library.collections.liftCurriedPredicate = f => (...args) => nodes => nodes.every(f(...args));
+Weave.library.collections.liftCurriedQuery = f => (...args) => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(nodes.flatMap(f(...args))));
+Weave.library.collections.liftCurriedQueryOne = f => (...args) => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(Weave.library.composition.compact(nodes.map(f(...args)))));
 
 /* kinds: one row per lift. A lifts row names the kind, so adding a kind adds a way to lift. */
 Weave.library.collections.kinds = {};
@@ -37,19 +42,24 @@ Weave.library.collections.kinds.effect = Weave.library.collections.liftEffect;
 Weave.library.collections.kinds.curriedEffect = Weave.library.collections.liftCurriedEffect;
 Weave.library.collections.kinds.subscriber = Weave.library.collections.liftSubscriber;
 Weave.library.collections.kinds.curriedSubscriber = Weave.library.collections.liftCurriedSubscriber;
+Weave.library.collections.kinds.curriedGetter = Weave.library.collections.liftCurriedGetter;
+Weave.library.collections.kinds.curriedFirst = Weave.library.collections.liftCurriedFirst;
+Weave.library.collections.kinds.curriedPredicate = Weave.library.collections.liftCurriedPredicate;
+Weave.library.collections.kinds.curriedQuery = Weave.library.collections.liftCurriedQuery;
+Weave.library.collections.kinds.curriedQueryOne = Weave.library.collections.liftCurriedQueryOne;
 
 /* lifts: one row per layer, naming which functions are lifted and how. This table is the whole layer. */
 Weave.library.collections.lifts = {};
 Weave.library.collections.lifts.elements = { action: ['remove', 'empty', 'clone', 'cloneWithListeners', 'unwrap'], setter: ['append', 'prepend', 'before', 'after', 'appendTo', 'prependTo', 'insertBefore', 'insertAfter', 'replaceWith', 'replaceAll', 'wrap', 'wrapInner', 'setText', 'setHtml'], getter: ['textOf', 'outerHtmlOf'], first: ['htmlOf'] };
-Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'parents', 'contents', 'walk'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], setter: [], getter: ['indexOf'] };
-Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'] };
-Weave.library.collections.lifts.style = { action: ['show', 'hide'], setter: ['setCss', 'setCssAll', 'removeCss', 'setCssVariable', 'setWidth', 'setHeight', 'setOffset', 'setScrollTop', 'setScrollLeft', 'scrollIntoView', 'toggle'], getter: ['width', 'height', 'outerWidth', 'outerHeight', 'offset', 'position', 'rect', 'dimensions'], predicate: ['isShown'] };
+Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'parents', 'contents', 'walk', 'nextAll', 'previousAll'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], curriedQuery: ['find', 'allWithin', 'childrenMatching', 'parentsMatching', 'parentsUntil', 'nextUntil', 'previousUntil', 'descendantsMatching'], curriedQueryOne: ['findOne', 'oneWithin', 'closest', 'nextMatching', 'previousMatching'], getter: ['indexOf'] };
+Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'], curriedFirst: ['attribute', 'property', 'data', 'aria'], curriedPredicate: ['hasClass', 'booleanAttribute'] };
+Weave.library.collections.lifts.style = { action: ['show', 'hide'], setter: ['setCss', 'setCssAll', 'removeCss', 'setCssVariable', 'setWidth', 'setHeight', 'setOffset', 'setScrollTop', 'setScrollLeft', 'scrollIntoView', 'toggle'], getter: ['width', 'height', 'outerWidth', 'outerHeight', 'offset', 'position', 'rect', 'dimensions'], curriedFirst: ['css', 'inlineCss', 'cssVariable', 'cssAll'], predicate: ['isShown'] };
 Weave.library.collections.lifts.events = { action: ['offAll'], curriedSubscriber: ['on', 'once', 'delegate', 'onAll', 'onTypes', 'delegateAll', 'onKey', 'hover', 'onWithOptions'], setter: ['off', 'trigger', 'triggerNative'] };
 Weave.library.collections.lifts.effects = { action: ['stop', 'finish', 'pause', 'resume'], effect: ['whenAnimationEnds', 'whenTransitionEnds'], curriedEffect: ['animate', 'transition', 'fadeIn', 'fadeOut', 'fadeToggle', 'fadeTo', 'slideDown', 'slideUp', 'slideToggle', 'showAnimated', 'hideAnimated', 'toggleAnimated', 'pulse', 'shake', 'flash', 'delay', 'queue', 'parallel'], predicate: ['isAnimating'] };
 Weave.library.collections.lifts.forms = { action: ['reset', 'clear', 'snapshot', 'disable', 'enable', 'focusFirstInvalid'], setter: ['fill'], getter: ['values', 'serialize', 'serializeArray'], predicate: ['isValid'], curriedSubscriber: ['onSubmit', 'onSubmitAsync', 'onChange'] };
 Weave.library.collections.lifts.observers = { curriedSubscriber: ['onMutation', 'onChildren', 'onSubtree', 'onAttributes', 'onText', 'onAdded', 'onRemoved', 'onIntersect', 'onEnterViewport', 'onLeaveViewport', 'lazy', 'onResize', 'onScroll'], effect: ['onceVisible'] };
 Weave.library.collections.lifts.interaction = { action: ['focus', 'blur', 'disable', 'enable', 'inert', 'uninert', 'selectText'], curriedSubscriber: ['onKey', 'onKeys', 'shortcut', 'onOutsideClick', 'onLongPress', 'onDoubleTap', 'onSwipe', 'draggable', 'droppable', 'resizable'], subscriber: ['preventContextMenu'], curriedEffect: ['scrollTo'] };
-Weave.library.collections.lifts.accessibility = { action: ['expand', 'collapse', 'toggleExpanded', 'hideFromTree', 'showInTree', 'hideVisually'], setter: ['setState', 'setLabel'], getter: ['label', 'audit'], subscriber: ['trapFocus', 'modal'] };
+Weave.library.collections.lifts.accessibility = { action: ['expand', 'collapse', 'toggleExpanded', 'hideFromTree', 'showInTree', 'hideVisually'], setter: ['setState', 'setLabel'], getter: ['label', 'audit'], curriedFirst: ['state'], predicate: ['isExpanded'], subscriber: ['trapFocus', 'modal'] };
 Weave.library.collections.lifts.network = { curriedEffect: ['load', 'loadInto'] };
 Weave.library.collections.unlifted = {};
 Weave.library.collections.unlifted.ready = 'takes no element';
