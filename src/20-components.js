@@ -55,6 +55,7 @@ Weave.library.components.handlers.onPress = Weave.library.events.types.keydown;
 Weave.library.components.handlers.onEnter = Weave.library.events.types.mouseenter;
 Weave.library.components.handlers.onLeave = Weave.library.events.types.mouseleave;
 Weave.library.components.handlers.onOpen = Weave.library.events.types.toggle;
+Weave.library.components.handlers.onScroll = Weave.library.events.types.scroll;
 Weave.library.components.handlerRows = spec => Weave.library.composition.pairs(Weave.library.components.handlers).filter(([key]) => Weave.library.predicates.isDefined(spec[key]));
 Weave.library.components.listenersFor = spec => Weave.library.composition.fromPairs(Weave.library.components.handlerRows(spec).map(([key, type]) => [type, spec[key]]));
 
@@ -93,6 +94,7 @@ Weave.library.components.blueprints.pageFooter = Weave.library.components.parts.
 Weave.library.components.blueprints.rail = Weave.library.components.parts.sidebar;
 Weave.library.components.blueprints.body = Weave.library.components.parts.main;
 Weave.library.components.blueprints.timestamp = Weave.library.components.parts.moment;
+Weave.library.components.blueprints.listRow = Weave.library.components.parts.box;
 Weave.library.composition.defineEach(Weave.library.components, Weave.library.components.fromBlueprint)(Weave.library.components.blueprints);
 
 /* text and status: the small widgets every other one is assembled from. */
@@ -295,6 +297,7 @@ Weave.library.components.rules.pageButton = { minWidth: Weave.library.components
 Weave.library.components.rules.rail = { width: Weave.library.components.vars.railWidth, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space };
 Weave.library.components.rules.pageHeader = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.between, gap: Weave.library.components.vars.space, paddingBottom: Weave.library.components.vars.space, borderBottom: Weave.library.components.hairline };
 Weave.library.components.rules.body = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceLoose, flexGrow: Weave.library.components.values.full };
+Weave.library.components.rules.listRow = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.space };
 Weave.library.components.rules.timestamp = { color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall };
 
 /* states: the only place a pseudo class or a state attribute is written. One row, one selector suffix. */

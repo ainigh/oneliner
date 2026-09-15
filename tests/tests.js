@@ -246,6 +246,33 @@ Weave.tests.sameAfterUpdate = (handle, before) => (handle.update(state => ({ fil
 Weave.tests.cases.patternsRepaintKeepsTheHostNode = () => Weave.tests.withPattern(Weave.library.patterns.todoList({ title: 'T', items: Weave.tests.sampleRows }), Weave.tests.keepsTheHost);
 Weave.tests.keepsTheHost = handle => (handle.update(() => ({})), Weave.library.predicates.isConnected(handle.element));
 
+/* virtual list: a window over ten thousand rows, the maths behind it, and the grid that reuses it. */
+Weave.tests.virtualItems = () => Weave.library.composition.range(10000).map(index => ({ label: index }));
+Weave.tests.virtualSpec = { items: Weave.tests.virtualItems(), rowHeight: 20, height: 200, row: item => Weave.library.components.note({ text: String(item.label) }) };
+Weave.tests.virtualRowsIn = handle => Weave.library.query.allWithin(Weave.tests.selectorFor('listRow'))(handle.element);
+Weave.tests.virtualScrollerIn = handle => Weave.library.query.oneWithin(Weave.tests.selectorFor('scroller'))(handle.element);
+Weave.tests.virtualPartIn = (handle, key) => Weave.library.query.oneWithin(Weave.library.query.dataSelector(Weave.library.elements.keyName, key))(handle.element);
+Weave.tests.virtualPattern = () => Weave.library.patterns.virtualList(Weave.tests.virtualSpec);
+Weave.tests.cases.patternsVirtualListRendersAWindow = () => Weave.tests.withPattern(Weave.tests.virtualPattern(), handle => Weave.tests.virtualRowsIn(handle).length < 100);
+Weave.tests.cases.patternsVirtualListSizesTheInnerBox = () => Weave.tests.withPattern(Weave.tests.virtualPattern(), Weave.tests.measuresTheInnerBox);
+Weave.tests.measuresTheInnerBox = handle => Weave.library.style.inlineCss(Weave.library.browser.properties.height)(Weave.tests.virtualPartIn(handle, Weave.library.patterns.virtualInnerKey)) === '200000px';
+Weave.tests.cases.patternsVirtualListKeysEveryRow = () => Weave.tests.withPattern(Weave.tests.virtualPattern(), Weave.tests.keysEveryRow);
+Weave.tests.keysEveryRow = handle => Weave.tests.virtualRowsIn(handle).every(Weave.library.elements.hasKey);
+Weave.tests.cases.patternsVirtualFirstCountsFromTheOffset = () => Weave.library.patterns.virtualFirst(Weave.tests.virtualSpec, { offset: 100000 }) === 4996;
+Weave.tests.cases.patternsVirtualFirstClampsAtTheTop = () => Weave.library.patterns.virtualFirst(Weave.tests.virtualSpec, { offset: 0 }) === 0;
+Weave.tests.cases.patternsVirtualWindowComesFromTheDefaultsRow = () => Weave.library.patterns.virtualWindow(Weave.tests.virtualSpec) === 10 + 2 * Weave.library.patterns.defaults.overscan;
+Weave.tests.virtualGridSpec = { title: 'Ledger', columns: Weave.tests.sampleColumns, rows: Weave.tests.sampleRows, rowHeight: 20, height: 200 };
+Weave.tests.cases.patternsVirtualGridNarrowsTheRows = () => Weave.tests.withPattern(Weave.library.patterns.virtualGrid(Weave.tests.virtualGridSpec), Weave.tests.narrowsTheLedger);
+Weave.tests.narrowsTheLedger = handle => (Weave.tests.typeInto(handle, Weave.library.patterns.queryField, 'two'), Weave.tests.virtualRowsIn(handle).length === 1);
+Weave.tests.cases.patternsVirtualGridScrolls = () => Weave.tests.withPattern(Weave.library.patterns.virtualGrid(Weave.tests.virtualGridSpec), handle => Weave.tests.countIn(handle, Weave.tests.selectorFor('scroller')) === 1);
+Weave.tests.scrolledTo = (handle, offset) => Weave.library.events.trigger(Weave.library.events.types.scroll)(Weave.library.browser.setScrollTop(Weave.tests.virtualScrollerIn(handle), offset));
+Weave.tests.afterFrames = ignored => Weave.library.timing.delay(30);
+Weave.tests.afterScroll = (handle, offset, f) => Weave.library.composition.then(() => f(handle))(Weave.tests.afterFrames(Weave.tests.scrolledTo(handle, offset)));
+Weave.tests.readLater = (handle, f) => Weave.library.composition.then(result => Weave.tests.reportFixture(result, handle.element))(f(handle));
+Weave.tests.scrolledVirtual = f => Weave.tests.readLater(Weave.tests.spawn(Weave.tests.virtualPattern()), handle => Weave.tests.afterScroll(handle, 100000, f));
+Weave.tests.firstKeyAfterScroll = handle => Weave.library.elements.keyOf(Weave.library.composition.first(Weave.tests.virtualRowsIn(handle))) === '4996';
+Weave.tests.keepsItsScrollTop = handle => Weave.library.browser.scrollTopOf(Weave.tests.virtualScrollerIn(handle)) === 100000;
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);
@@ -262,6 +289,8 @@ Weave.tests.asyncCases.networkRejectsNonOkResponse = () => Weave.tests.rejectsWi
 Weave.tests.asyncCases.networkRunsErrorHook = () => Weave.library.composition.then(reason => reason.seen === true)(Weave.tests.recovered(Weave.tests.withErrorHook()));
 Weave.tests.asyncCases.networkWrapsUntypedRejection = () => Weave.tests.rejectsWith(Weave.library.control.errors.network, Weave.library.network.reportError({ name: 'Whatever' }));
 Weave.tests.asyncCases.effectsIgnoreCancelledResolves = () => Weave.library.composition.then(Weave.library.predicates.isNil)(Weave.library.effects.ignoreCancelled(Weave.tests.cancelledEffect()));
+Weave.tests.asyncCases.patternsVirtualListScrollsToTheMiddle = () => Weave.tests.scrolledVirtual(Weave.tests.firstKeyAfterScroll);
+Weave.tests.asyncCases.patternsVirtualListKeepsItsScrollTop = () => Weave.tests.scrolledVirtual(Weave.tests.keepsItsScrollTop);
 Weave.tests.asyncCases.effectsCancelledRejectionIsNamed = () => Weave.tests.rejectsWith(Weave.library.control.errors.cancelled, Weave.tests.cancelledEffect());
 
 /* async helpers: the fixtures the async rows share, kept out of the rows themselves. */

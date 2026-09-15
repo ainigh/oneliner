@@ -15,6 +15,16 @@ function settle(dom) {
   return new Promise(resolve => setTimeout(() => resolve(dom), 250));
 }
 
+function finished(dom) {
+  const started = Date.now();
+  return new Promise(resolve => {
+    const timer = setInterval(() => {
+      const running = dom.window.document.querySelector('#output').textContent === 'running…';
+      if (!running || Date.now() - started > 10000) { clearInterval(timer); resolve(dom); }
+    }, 20);
+  });
+}
+
 function expect(name, ok, detail) {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok ? '' : ` — ${detail}`}`);
   if (!ok) failures.push(name);
@@ -42,7 +52,7 @@ open('sample.html').then(settle).then(dom => {
   document.querySelector('#list li button.remove').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
   expect('todo removes', Weave.application.items.length === 1, `saw ${Weave.application.items.length}`);
   expect('todo passes its own accessibility audit', Weave.library.accessibility.audit(document.body).length === 0, JSON.stringify(Weave.library.accessibility.audit(document.body).map(row => row.message)));
-  return open('tests.html').then(settle);
+  return open('tests.html').then(finished);
 }).then(dom => {
   const text = dom.window.document.querySelector('#output').textContent;
   expect('tests.html runs the same table', /^\d+\/\d+ passed$/.test(text.split('\n')[0]) && !text.includes('FAIL'), text.slice(0, 200));
