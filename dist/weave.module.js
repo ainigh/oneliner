@@ -3201,7 +3201,6 @@ Weave.library.patterns.notificationPush = (handle, spec) => (message, tone) => W
 Weave.library.patterns.notificationState = () => ({ toasts: [] });
 Weave.library.patterns.notificationHandle = (spec, handle) => Object.assign(handle, { push: Weave.library.patterns.notificationPush(handle, spec) });
 Weave.library.patterns.notifications = (spec = {}) => Weave.library.patterns.notificationHandle(spec, Weave.library.patterns.view(Weave.library.patterns.notificationList, Weave.library.patterns.notificationState()));
-
 /* store: state that outlives a single pattern. Many handles watch one store, so two patterns can hold the same data without either owning it. */
 Weave.library.patterns.storeFrom = holder => Object.assign(holder, { update: Weave.library.patterns.storeUpdater(holder), watch: Weave.library.patterns.storeWatcher(holder) });
 Weave.library.patterns.store = value => Weave.library.patterns.storeFrom({ state: value, watchers: [] });
