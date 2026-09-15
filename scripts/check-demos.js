@@ -91,6 +91,8 @@ open('index.html').then(dom => {
   expect('warehouse shows the last page', count(dom, '.weave-table tbody tr') === 7, `saw ${count(dom, '.weave-table tbody tr')}`);
   document.querySelectorAll('.weave-table-header')[3].click();
   expect('warehouse sorts on a header', document.querySelector('.weave-table tbody td:last-child').textContent === '0', document.querySelector('.weave-table tbody td:last-child').textContent);
+  expect('warehouse windows the ledger', count(dom, '.weave-list-row') < 100, `saw ${count(dom, '.weave-list-row')}`);
+  expect('warehouse scrolls the ledger', count(dom, '.weave-scroller') === 1, `saw ${count(dom, '.weave-scroller')}`);
   expect('warehouse starts the wizard', document.querySelector('.weave-breadcrumb').children.length === 3, 'no trail');
   return open('school.html');
 }).then(dom => {

@@ -180,3 +180,53 @@ Weave.library.patterns.dashboardPanels = spec => Weave.library.components.tiles(
 Weave.library.patterns.dashboardParts = spec => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.dashboardTiles(spec), Weave.library.patterns.dashboardPanels(spec)];
 Weave.library.patterns.dashboardBody = spec => () => Weave.library.components.stack({ children: Weave.library.patterns.dashboardParts(spec) });
 Weave.library.patterns.dashboard = spec => Weave.library.patterns.view(Weave.library.patterns.dashboardBody(spec), Weave.library.patterns.wizardState());
+
+/* defaults: the only place a pattern's default measurement is written. One row, one default. */
+Weave.library.patterns.defaults = {};
+Weave.library.patterns.defaults.overscan = 4;
+
+/* virtualList: only the rows the window can show exist. A spacer above them keeps the scrollbar honest. */
+Weave.library.patterns.virtualInnerKey = 'virtualInner';
+Weave.library.patterns.virtualSpacerKey = 'virtualSpacer';
+Weave.library.patterns.virtualScrollerKey = 'virtualScroller';
+Weave.library.patterns.virtualKeyFor = key => ({ [Weave.library.elements.keyName]: key });
+Weave.library.patterns.virtualInnerData = () => Weave.library.patterns.virtualKeyFor(Weave.library.patterns.virtualInnerKey);
+Weave.library.patterns.virtualSpacerData = () => Weave.library.patterns.virtualKeyFor(Weave.library.patterns.virtualSpacerKey);
+Weave.library.patterns.virtualScrollerData = () => Weave.library.patterns.virtualKeyFor(Weave.library.patterns.virtualScrollerKey);
+Weave.library.patterns.virtualHeight = value => ({ [Weave.library.browser.properties.height]: value });
+Weave.library.patterns.virtualOverscan = spec => Weave.library.control.defaultTo(Weave.library.patterns.defaults.overscan)(spec.overscan);
+Weave.library.patterns.virtualWindow = spec => Math.ceil(spec.height / spec.rowHeight) + 2 * Weave.library.patterns.virtualOverscan(spec);
+Weave.library.patterns.virtualFirst = (spec, state) => Weave.library.composition.clamp(0, spec.items.length)(Math.floor(state.offset / spec.rowHeight) - Weave.library.patterns.virtualOverscan(spec));
+Weave.library.patterns.virtualSlice = (spec, state) => spec.items.slice(Weave.library.patterns.virtualFirst(spec, state), Weave.library.patterns.virtualFirst(spec, state) + Weave.library.patterns.virtualWindow(spec));
+Weave.library.patterns.virtualTotal = spec => spec.items.length * spec.rowHeight;
+Weave.library.patterns.virtualLead = (spec, state) => Weave.library.patterns.virtualFirst(spec, state) * spec.rowHeight;
+Weave.library.patterns.virtualSpacerBox = (spec, state) => Weave.library.components.view({ styles: Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualLead(spec, state)), data: Weave.library.patterns.virtualSpacerData() });
+Weave.library.patterns.virtualIdOf = (item, index) => Weave.library.control.defaultTo(index)(item[Weave.library.patterns.idKey]);
+Weave.library.patterns.virtualRowKey = (spec, state, item, index) => Weave.library.patterns.virtualKeyFor(Weave.library.patterns.virtualIdOf(item, Weave.library.patterns.virtualFirst(spec, state) + index));
+Weave.library.patterns.virtualRow = (spec, state) => (item, index) => Weave.library.components.listRow({ children: [spec.row(item)], styles: Weave.library.patterns.virtualHeight(spec.rowHeight), data: Weave.library.patterns.virtualRowKey(spec, state, item, index) });
+Weave.library.patterns.virtualRows = (spec, state) => Weave.library.patterns.virtualSlice(spec, state).map(Weave.library.patterns.virtualRow(spec, state));
+Weave.library.patterns.virtualChildren = (spec, state) => [Weave.library.patterns.virtualSpacerBox(spec, state)].concat(Weave.library.patterns.virtualRows(spec, state));
+Weave.library.patterns.virtualInnerSpec = (spec, state) => ({ styles: Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualTotal(spec)), data: Weave.library.patterns.virtualInnerData(), children: Weave.library.patterns.virtualChildren(spec, state) });
+Weave.library.patterns.virtualInnerBox = (spec, state) => Weave.library.components.view(Weave.library.patterns.virtualInnerSpec(spec, state));
+Weave.library.patterns.virtualUpdater = update => Weave.library.timing.throttleFrame(offset => update(() => ({ offset })));
+Weave.library.patterns.virtualScrolled = throttled => event => throttled(Weave.library.browser.scrollTopOf(Weave.library.events.currentTarget(event)));
+Weave.library.patterns.virtualListener = update => Weave.library.patterns.virtualScrolled(Weave.library.patterns.virtualUpdater(update));
+Weave.library.patterns.virtualRestore = state => el => Weave.library.browser.setScrollTop(el, state.offset);
+Weave.library.patterns.virtualStyles = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(spec.height), { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto });
+Weave.library.patterns.virtualBoxPart = (spec, state) => ({ ref: Weave.library.patterns.virtualRestore(state), children: [Weave.library.patterns.virtualInnerBox(spec, state)] });
+Weave.library.patterns.virtualBoxHead = (spec, update) => ({ styles: Weave.library.patterns.virtualStyles(spec), data: Weave.library.patterns.virtualScrollerData(), onScroll: Weave.library.patterns.virtualListener(update) });
+Weave.library.patterns.virtualBoxSpec = (spec, state, update) => Weave.library.composition.merge(Weave.library.patterns.virtualBoxHead(spec, update), Weave.library.patterns.virtualBoxPart(spec, state));
+Weave.library.patterns.virtualBox = (spec, state, update) => Weave.library.components.scroller(Weave.library.patterns.virtualBoxSpec(spec, state, update));
+Weave.library.patterns.virtualState = () => ({ offset: 0 });
+Weave.library.patterns.virtualBody = spec => (state, update) => Weave.library.patterns.virtualBox(spec, state, update);
+Weave.library.patterns.virtualList = spec => Weave.library.patterns.view(Weave.library.patterns.virtualBody(spec), Weave.library.patterns.virtualState());
+
+/* virtualGrid: the search box of the data grid over a virtual list, so no query ever draws the whole table. */
+Weave.library.patterns.virtualCell = row => column => Weave.library.components.note({ text: String(Weave.library.components.cellValue(row, column)) });
+Weave.library.patterns.virtualGridRow = spec => row => Weave.library.components.row({ children: spec.columns.map(Weave.library.patterns.virtualCell(row)) });
+Weave.library.patterns.virtualGridSpec = (spec, state) => Weave.library.composition.merge(spec, { items: Weave.library.patterns.gridFound(spec, state), row: Weave.library.patterns.virtualGridRow(spec) });
+Weave.library.patterns.virtualGridList = (spec, state, update) => Weave.library.patterns.virtualBox(Weave.library.patterns.virtualGridSpec(spec, state), state, update);
+Weave.library.patterns.virtualGridParts = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.queryBox(state, update), Weave.library.patterns.virtualGridList(spec, state, update)];
+Weave.library.patterns.virtualGridBody = spec => (state, update) => Weave.library.components.panel({ children: Weave.library.patterns.virtualGridParts(spec, state, update) });
+Weave.library.patterns.virtualGridState = () => Weave.library.composition.merge(Weave.library.patterns.queryState(), Weave.library.patterns.virtualState());
+Weave.library.patterns.virtualGrid = spec => Weave.library.patterns.view(Weave.library.patterns.virtualGridBody(spec), Weave.library.patterns.virtualGridState());
