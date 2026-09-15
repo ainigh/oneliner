@@ -1962,6 +1962,7 @@ Weave.library.accessibility.roles.listbox = 'listbox';
 Weave.library.accessibility.roles.option = 'option';
 Weave.library.accessibility.roles.tooltip = 'tooltip';
 Weave.library.accessibility.roles.progressbar = 'progressbar';
+Weave.library.accessibility.roles.switch = 'switch';
 Weave.library.accessibility.states = {};
 Weave.library.accessibility.states.expanded = 'expanded';
 Weave.library.accessibility.states.selected = 'selected';
@@ -2391,6 +2392,12 @@ Weave.library.components.tokens.shadow = '0 1px 2px rgba(17, 24, 39, 0.08)';
 Weave.library.components.tokens.tileTrack = 'repeat(auto-fill, minmax(200px, 1fr))';
 Weave.library.components.tokens.railWidth = '220px';
 Weave.library.components.tokens.controlHeight = '32px';
+Weave.library.components.tokens.dotSize = '10px';
+Weave.library.components.tokens.toneInfo = Weave.library.components.tokens.accent;
+Weave.library.components.tokens.toneSuccess = '#127a56';
+Weave.library.components.tokens.toneWarning = '#8a5a00';
+Weave.library.components.tokens.toneDanger = Weave.library.components.tokens.danger;
+Weave.library.components.tokens.pulse = 'pulse 1s ease-in-out infinite alternate';
 Weave.library.components.variablePrefix = '--weave-';
 Weave.library.components.variableName = name => Weave.library.components.variablePrefix + Weave.library.composition.kebabCase(name);
 Weave.library.components.variableOpen = 'var(';
@@ -2418,6 +2425,8 @@ Weave.library.components.values.bold = '600';
 Weave.library.components.values.solid = ' solid ';
 Weave.library.components.values.transparent = 'transparent';
 Weave.library.components.values.hidden = 'auto hidden';
+Weave.library.components.values.faded = '0.4';
+Weave.library.components.values.opaque = '1';
 Weave.library.components.hairline = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.edge;
 Weave.library.components.accentLine = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.accent;
 
@@ -2495,9 +2504,147 @@ Weave.library.components.tokenStyle = () => Weave.library.composition.mapKeys(We
 Weave.library.components.rootText = () => Weave.library.components.blockFor(Weave.library.components.rootSelector, Weave.library.components.tokenStyle());
 Weave.library.components.ruleTexts = () => Weave.library.composition.pairs(Weave.library.components.rules).map(Weave.library.components.ruleText);
 Weave.library.components.stateTexts = () => Weave.library.composition.values(Weave.library.components.stateRules).map(Weave.library.components.stateText);
-Weave.library.components.styleText = () => [Weave.library.components.rootText()].concat(Weave.library.components.ruleTexts(), Weave.library.components.stateTexts()).join('\n');
+Weave.library.components.styleText = () => [Weave.library.components.rootText()].concat(Weave.library.components.ruleTexts(), Weave.library.components.stateTexts(), Weave.library.components.extraTexts()).join('\n');
 Weave.library.components.addStyleSheet = () => Weave.library.elements.append([Weave.library.elements.style({ text: Weave.library.components.styleText() })])(Weave.library.browser.head());
 Weave.library.components.installStyles = Weave.library.control.once(Weave.library.components.addStyleSheet);
+
+/* themes: one row per theme, each a table of token overrides. A theme row may only name token keys. */
+Weave.library.components.themes = {};
+Weave.library.components.themes.dark = { ink: '#e8ecf3', muted: '#9aa4b2', edge: '#2b3442', surface: '#0f1722', sunken: '#172130', accent: '#7aa2ff', accentInk: '#0b1220', shadow: '0 1px 2px rgba(0, 0, 0, 0.5)' };
+
+/* themeNames: the only place a theme name is written. Every theme call takes a row from here. */
+Weave.library.components.themeNames = {};
+Weave.library.components.themeNames.dark = 'dark';
+Weave.library.components.themeNames.light = 'light';
+
+/* theming: the attribute, the two selectors it feeds and the three calls a page uses to switch. */
+Weave.library.components.themeAttribute = 'data-theme';
+Weave.library.components.themeSelector = name => Weave.library.components.rootSelector + Weave.library.query.attributeSelector(Weave.library.components.themeAttribute, name);
+Weave.library.components.themeStyle = overrides => Weave.library.composition.mapKeys(Weave.library.components.variableName)(overrides);
+Weave.library.components.themeText = ([name, overrides]) => Weave.library.components.blockFor(Weave.library.components.themeSelector(name), Weave.library.components.themeStyle(overrides));
+Weave.library.components.themeTexts = () => Weave.library.composition.pairs(Weave.library.components.themes).map(Weave.library.components.themeText);
+Weave.library.components.notOpen = ':not(';
+Weave.library.components.braceOpen = '{';
+Weave.library.components.braceClose = '}';
+Weave.library.components.mediaOpen = '@media ';
+Weave.library.components.mediaText = (query, body) => Weave.library.components.mediaOpen + query + Weave.library.components.braceOpen + body + Weave.library.components.braceClose;
+Weave.library.components.schemeSelector = () => Weave.library.components.rootSelector + Weave.library.components.notOpen + Weave.library.query.attributeSelector(Weave.library.components.themeAttribute, Weave.library.components.themeNames.light) + Weave.library.composition.closeParen;
+Weave.library.components.schemeBlock = () => Weave.library.components.blockFor(Weave.library.components.schemeSelector(), Weave.library.components.themeStyle(Weave.library.components.themes.dark));
+Weave.library.components.schemeText = () => Weave.library.components.mediaText(Weave.library.browser.mediaQueries.darkScheme, Weave.library.components.schemeBlock());
+Weave.library.components.setTheme = name => Weave.library.attributes.setAttribute(Weave.library.components.themeAttribute, name)(Weave.library.browser.documentElement());
+Weave.library.components.theme = () => Weave.library.attributes.attribute(Weave.library.components.themeAttribute)(Weave.library.browser.documentElement());
+Weave.library.components.nextTheme = current => Weave.library.control.either(() => current === Weave.library.components.themeNames.dark, () => Weave.library.components.themeNames.light, () => Weave.library.components.themeNames.dark)(current);
+Weave.library.components.toggleTheme = () => Weave.library.components.setTheme(Weave.library.components.nextTheme(Weave.library.components.theme()));
+Weave.library.components.schemeName = isDark => Weave.library.control.either(Weave.library.composition.identity, () => Weave.library.components.themeNames.dark, () => Weave.library.components.themeNames.light)(isDark);
+Weave.library.components.schemeTheme = isDark => Weave.library.components.setTheme(Weave.library.components.schemeName(isDark));
+Weave.library.components.followScheme = () => Weave.library.observers.onColorScheme(Weave.library.components.schemeTheme);
+
+/* keyframes: the only place an animation timeline is written. One row per name, one block per row. */
+Weave.library.components.keyframes = {};
+Weave.library.components.keyframes.pulse = { from: { opacity: Weave.library.components.values.faded }, to: { opacity: Weave.library.components.values.opaque } };
+Weave.library.components.keyframesOpen = '@keyframes ';
+Weave.library.components.stopText = ([stop, style]) => Weave.library.components.blockFor(stop, style);
+Weave.library.components.stopsText = frames => Weave.library.composition.pairs(frames).map(Weave.library.components.stopText).join(Weave.library.browser.keywords.space);
+Weave.library.components.keyframesText = ([name, frames]) => Weave.library.components.keyframesOpen + name + Weave.library.components.braceOpen + Weave.library.components.stopsText(frames) + Weave.library.components.braceClose;
+Weave.library.components.keyframesTexts = () => Weave.library.composition.pairs(Weave.library.components.keyframes).map(Weave.library.components.keyframesText);
+Weave.library.components.extraTexts = () => Weave.library.components.themeTexts().concat([Weave.library.components.schemeText()], Weave.library.components.toneTexts(), Weave.library.components.keyframesTexts());
+
+/* tones: one row per tone, holding the colour it spends. A tone is a data attribute, never a class. */
+Weave.library.components.tones = {};
+Weave.library.components.tones.info = Weave.library.components.vars.toneInfo;
+Weave.library.components.tones.success = Weave.library.components.vars.toneSuccess;
+Weave.library.components.tones.warning = Weave.library.components.vars.toneWarning;
+Weave.library.components.tones.danger = Weave.library.components.vars.toneDanger;
+
+/* toneRules: one row per toned class, saying how that class spends the tone colour it is given. */
+Weave.library.components.toneRules = {};
+Weave.library.components.toneRules.alert = colour => ({ borderColor: colour, color: colour });
+Weave.library.components.toneRules.statusDot = colour => ({ background: colour });
+Weave.library.components.toneKey = 'tone';
+Weave.library.components.defaultTone = () => Weave.library.composition.first(Weave.library.composition.keys(Weave.library.components.tones));
+Weave.library.components.toneOf = spec => Weave.library.control.defaultTo(Weave.library.components.defaultTone())(spec.tone);
+Weave.library.components.toneData = spec => ({ [Weave.library.components.toneKey]: Weave.library.components.toneOf(spec) });
+Weave.library.components.toneSelector = tone => Weave.library.query.dataSelector(Weave.library.components.toneKey, tone);
+Weave.library.components.toneBlock = ([name, style]) => ([tone, colour]) => Weave.library.components.blockFor(Weave.library.components.classSelector(name) + Weave.library.components.toneSelector(tone), style(colour));
+Weave.library.components.toneTexts = () => Weave.library.composition.pairs(Weave.library.components.toneRules).flatMap(row => Weave.library.composition.pairs(Weave.library.components.tones).map(Weave.library.components.toneBlock(row)));
+
+/* parts, second wave: the builders the widgets below name, one row each, tags still written once. */
+Weave.library.components.parts.keyCap = Weave.library.elements.kbd;
+Weave.library.components.parts.slider = Weave.library.elements.inputs.range;
+
+/* feedback: the widgets that say what just happened. Every one carries its tone as a data attribute. */
+Weave.library.components.textKey = 'text';
+Weave.library.components.alertClose = spec => Weave.library.control.maybe(() => Weave.library.components.closeButton(spec))(spec.onClose);
+Weave.library.components.alertTitle = spec => Weave.library.components.subtitle({ text: Weave.library.components.titleOf(spec) });
+Weave.library.components.alertNote = spec => Weave.library.components.note({ text: Weave.library.components.textOf(spec, Weave.library.components.textKey) });
+Weave.library.components.alertBody = spec => Weave.library.composition.compact([Weave.library.components.alertTitle(spec), Weave.library.components.alertNote(spec), Weave.library.components.alertClose(spec)]);
+Weave.library.components.alertSpec = spec => Weave.library.composition.mergeDeep(spec, { children: Weave.library.components.alertBody(spec), data: Weave.library.components.toneData(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.alert) });
+Weave.library.components.alert = spec => Weave.library.components.build(Weave.library.components.parts.box, 'alert', Weave.library.components.alertSpec(spec));
+Weave.library.components.statusDot = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'statusDot', { data: Weave.library.components.toneData(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
+Weave.library.components.countKey = 'count';
+Weave.library.components.countText = spec => String(Weave.library.components.textOf(spec, Weave.library.components.countKey));
+Weave.library.components.badge = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'badge', { text: Weave.library.components.countText(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
+Weave.library.components.keysKey = 'keys';
+Weave.library.components.keyCap = key => Weave.library.components.build(Weave.library.components.parts.keyCap, 'keyCap', { text: key });
+Weave.library.components.kbd = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'kbd', { children: Weave.library.components.childrenOf(spec, Weave.library.components.keysKey).map(Weave.library.components.keyCap) });
+Weave.library.components.linesKey = 'lines';
+Weave.library.components.skeletonLine = () => Weave.library.components.build(Weave.library.components.parts.box, 'skeletonLine', {});
+Weave.library.components.skeletonLines = spec => Weave.library.control.times(Weave.library.control.defaultTo(1)(spec.lines))(Weave.library.components.skeletonLine);
+Weave.library.components.skeleton = spec => Weave.library.components.build(Weave.library.components.parts.box, 'skeleton', { children: Weave.library.components.skeletonLines(spec), aria: { busy: Weave.library.browser.keywords.true } });
+Weave.library.components.namesKey = 'names';
+Weave.library.components.avatarFor = name => Weave.library.components.portrait({ name });
+Weave.library.components.avatarGroup = spec => Weave.library.components.build(Weave.library.components.parts.box, 'avatarGroup', { children: Weave.library.components.childrenOf(spec, Weave.library.components.namesKey).map(Weave.library.components.avatarFor) });
+
+/* controls, second wave: a switch, a slider and a stepper, each still one spec in and one element out. */
+Weave.library.components.checkedValue = spec => String(Weave.library.control.defaultTo(false)(spec.checked));
+Weave.library.components.switchAria = spec => ({ checked: Weave.library.components.checkedValue(spec), label: spec.label });
+Weave.library.components.switchSpec = spec => ({ attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.switch), aria: Weave.library.components.switchAria(spec), onAction: spec.onChoose });
+Weave.library.components.switchControl = spec => Weave.library.components.build(Weave.library.components.parts.button, 'switchControl', Weave.library.components.switchSpec(spec));
+Weave.library.components.switchField = spec => Weave.library.components.build(Weave.library.components.parts.box, 'switchField', { children: [Weave.library.components.fieldLabel(spec), Weave.library.components.switchControl(spec)] });
+Weave.library.components.rangeAttributes = spec => ({ min: spec.min, max: spec.max, step: spec.step, [Weave.library.browser.keywords.value]: spec.value });
+Weave.library.components.sliderAttributes = spec => Weave.library.composition.merge(Weave.library.components.namedAttribute(spec), Weave.library.components.rangeAttributes(spec));
+Weave.library.components.sliderControl = spec => Weave.library.components.build(Weave.library.components.parts.slider, 'sliderControl', { attributes: Weave.library.components.sliderAttributes(spec), onEdit: spec.onEdit });
+Weave.library.components.sliderField = spec => Weave.library.components.build(Weave.library.components.parts.label, 'sliderField', { children: [Weave.library.components.fieldLabel(spec), Weave.library.components.sliderControl(spec)] });
+Weave.library.components.stepperSteps = {};
+Weave.library.components.stepperSteps.decrement = { label: 'Less', step: -1 };
+Weave.library.components.stepperSteps.increment = { label: 'More', step: 1 };
+Weave.library.components.stepperValue = spec => Weave.library.control.defaultTo(spec.min)(spec.value);
+Weave.library.components.stepperNext = (spec, step) => Weave.library.composition.clamp(spec.min, spec.max)(Weave.library.components.stepperValue(spec) + step);
+Weave.library.components.stepperMove = spec => row => Weave.library.components.actionButton({ label: row.label, onAction: () => spec.onChange(Weave.library.components.stepperNext(spec, row.step)) });
+Weave.library.components.stepperControl = spec => Weave.library.components.control(Weave.library.composition.merge(spec, { type: Weave.library.elements.inputTypes.number, value: Weave.library.components.stepperValue(spec) }));
+Weave.library.components.stepperRow = spec => [Weave.library.components.stepperMove(spec)(Weave.library.components.stepperSteps.decrement), Weave.library.components.stepperControl(spec), Weave.library.components.stepperMove(spec)(Weave.library.components.stepperSteps.increment)];
+Weave.library.components.stepperField = spec => Weave.library.components.build(Weave.library.components.parts.box, 'stepperField', { children: [Weave.library.components.fieldLabel(spec), Weave.library.components.row({ children: Weave.library.components.stepperRow(spec) })] });
+
+/* disclosure widgets: a dropdown and a tooltip, both assembled from parts that already exist. */
+Weave.library.components.dropdownSummary = spec => Weave.library.components.disclosureSummary({ title: spec.label });
+Weave.library.components.dropdown = spec => Weave.library.components.build(Weave.library.components.parts.details, 'dropdown', { children: [Weave.library.components.dropdownSummary(spec), Weave.library.components.menu(spec)] });
+Weave.library.components.tooltipPrefix = 'weave-tip-';
+Weave.library.components.tooltipId = () => Weave.library.composition.randomId(Weave.library.components.tooltipPrefix);
+Weave.library.components.hintKey = 'hint';
+Weave.library.components.tooltipNoteAttributes = id => Weave.library.composition.merge(Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tooltip), { [Weave.library.browser.keywords.id]: id });
+Weave.library.components.tooltipNoteSpec = (spec, id) => ({ text: Weave.library.components.textOf(spec, Weave.library.components.hintKey), attributes: Weave.library.components.tooltipNoteAttributes(id), styles: Weave.library.accessibility.visuallyHidden });
+Weave.library.components.tooltipNote = (spec, id) => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltipNote', Weave.library.components.tooltipNoteSpec(spec, id));
+Weave.library.components.tooltipTarget = (spec, id) => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltipTarget', { text: Weave.library.components.textOf(spec, Weave.library.components.textKey), aria: { [Weave.library.accessibility.states.describedby]: id } });
+Weave.library.components.tooltipParts = (spec, id) => [Weave.library.components.tooltipTarget(spec, id), Weave.library.components.tooltipNote(spec, id)];
+Weave.library.components.tooltip = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltip', { children: Weave.library.components.tooltipParts(spec, Weave.library.components.tooltipId()) });
+
+/* rules, second wave: one row per class added above, values still token references and nothing else. */
+Weave.library.components.rules.alert = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight, padding: Weave.library.components.vars.spaceLoose, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radius, background: Weave.library.components.vars.surface };
+Weave.library.components.rules.statusDot = { display: Weave.library.components.values.inlineFlex, width: Weave.library.components.vars.dotSize, height: Weave.library.components.vars.dotSize, borderRadius: Weave.library.components.values.full, background: Weave.library.components.vars.muted };
+Weave.library.components.rules.badge = { display: Weave.library.components.values.inlineFlex, justifyContent: Weave.library.components.values.center, minWidth: Weave.library.components.vars.spaceLoose, padding: Weave.library.components.vars.spaceTight, borderRadius: Weave.library.components.values.full, background: Weave.library.components.vars.accent, color: Weave.library.components.vars.accentInk, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.rules.kbd = { display: Weave.library.components.values.inlineFlex, gap: Weave.library.components.vars.spaceTight, alignItems: Weave.library.components.values.center };
+Weave.library.components.rules.keyCap = { padding: Weave.library.components.vars.spaceTight, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.sunken, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.rules.skeleton = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.skeletonLine = { height: Weave.library.components.vars.space, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.sunken, animation: Weave.library.components.vars.pulse };
+Weave.library.components.rules.avatarGroup = { display: Weave.library.components.values.inlineFlex, gap: Weave.library.components.vars.spaceTight, alignItems: Weave.library.components.values.center };
+Weave.library.components.rules.switchField = { display: Weave.library.components.values.flex, gap: Weave.library.components.vars.spaceTight, alignItems: Weave.library.components.values.center };
+Weave.library.components.rules.switchControl = { width: Weave.library.components.vars.spaceWide, height: Weave.library.components.vars.spaceLoose, border: Weave.library.components.hairline, borderRadius: Weave.library.components.values.full, background: Weave.library.components.vars.sunken, cursor: Weave.library.components.values.pointer };
+Weave.library.components.rules.sliderField = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.sliderControl = { width: Weave.library.components.values.full };
+Weave.library.components.rules.stepperField = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.dropdown = { border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radiusSmall, padding: Weave.library.components.vars.space };
+Weave.library.components.rules.tooltip = { display: Weave.library.components.values.inlineFlex, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.tooltipTarget = { borderBottom: Weave.library.components.hairline, cursor: Weave.library.components.values.pointer };
 
 /* patterns: a pattern is a component with state. One view repaints every one of them, the same way. */
 Weave.library.patterns = {};
@@ -2666,5 +2813,23 @@ Weave.library.patterns.dashboardPanels = spec => Weave.library.components.tiles(
 Weave.library.patterns.dashboardParts = spec => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.dashboardTiles(spec), Weave.library.patterns.dashboardPanels(spec)];
 Weave.library.patterns.dashboardBody = spec => () => Weave.library.components.stack({ children: Weave.library.patterns.dashboardParts(spec) });
 Weave.library.patterns.dashboard = spec => Weave.library.patterns.view(Weave.library.patterns.dashboardBody(spec), Weave.library.patterns.wizardState());
+
+/* defaults: the numbers a pattern falls back on, one row each, so no pattern spells a duration. */
+Weave.library.patterns.defaults = {};
+Weave.library.patterns.defaults.timeout = 4000;
+
+/* notifications: a toast stack. The handle carries push, and every toast expires on its own. */
+Weave.library.patterns.keyName = 'key';
+Weave.library.patterns.notificationTimeout = spec => Weave.library.control.defaultTo(Weave.library.patterns.defaults.timeout)(spec.timeout);
+Weave.library.patterns.notificationRow = (message, tone) => Weave.library.patterns.withId({ message, tone });
+Weave.library.patterns.notificationDrop = (update, row) => () => update(state => ({ toasts: Weave.library.patterns.without(state.toasts, row) }));
+Weave.library.patterns.notificationToast = update => row => Weave.library.components.alert({ tone: row.tone, title: row.message, onClose: Weave.library.patterns.notificationDrop(update, row), data: { [Weave.library.patterns.keyName]: row[Weave.library.patterns.idKey] } });
+Weave.library.patterns.notificationList = (state, update) => Weave.library.components.stack({ children: state.toasts.map(Weave.library.patterns.notificationToast(update)) });
+Weave.library.patterns.notificationExpire = (handle, spec, row) => Weave.library.composition.then(Weave.library.patterns.notificationDrop(handle.update, row))(Weave.library.timing.delay(Weave.library.patterns.notificationTimeout(spec)));
+Weave.library.patterns.notificationAdd = (handle, spec, row) => (handle.update(state => ({ toasts: state.toasts.concat([row]) })), Weave.library.patterns.notificationExpire(handle, spec, row), handle);
+Weave.library.patterns.notificationPush = (handle, spec) => (message, tone) => Weave.library.patterns.notificationAdd(handle, spec, Weave.library.patterns.notificationRow(message, tone));
+Weave.library.patterns.notificationState = () => ({ toasts: [] });
+Weave.library.patterns.notificationHandle = (spec, handle) => Object.assign(handle, { push: Weave.library.patterns.notificationPush(handle, spec) });
+Weave.library.patterns.notifications = (spec = {}) => Weave.library.patterns.notificationHandle(spec, Weave.library.patterns.view(Weave.library.patterns.notificationList, Weave.library.patterns.notificationState()));
 
 export default Weave;

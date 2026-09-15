@@ -165,3 +165,21 @@ Weave.library.patterns.dashboardPanels = spec => Weave.library.components.tiles(
 Weave.library.patterns.dashboardParts = spec => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.dashboardTiles(spec), Weave.library.patterns.dashboardPanels(spec)];
 Weave.library.patterns.dashboardBody = spec => () => Weave.library.components.stack({ children: Weave.library.patterns.dashboardParts(spec) });
 Weave.library.patterns.dashboard = spec => Weave.library.patterns.view(Weave.library.patterns.dashboardBody(spec), Weave.library.patterns.wizardState());
+
+/* defaults: the numbers a pattern falls back on, one row each, so no pattern spells a duration. */
+Weave.library.patterns.defaults = {};
+Weave.library.patterns.defaults.timeout = 4000;
+
+/* notifications: a toast stack. The handle carries push, and every toast expires on its own. */
+Weave.library.patterns.keyName = 'key';
+Weave.library.patterns.notificationTimeout = spec => Weave.library.control.defaultTo(Weave.library.patterns.defaults.timeout)(spec.timeout);
+Weave.library.patterns.notificationRow = (message, tone) => Weave.library.patterns.withId({ message, tone });
+Weave.library.patterns.notificationDrop = (update, row) => () => update(state => ({ toasts: Weave.library.patterns.without(state.toasts, row) }));
+Weave.library.patterns.notificationToast = update => row => Weave.library.components.alert({ tone: row.tone, title: row.message, onClose: Weave.library.patterns.notificationDrop(update, row), data: { [Weave.library.patterns.keyName]: row[Weave.library.patterns.idKey] } });
+Weave.library.patterns.notificationList = (state, update) => Weave.library.components.stack({ children: state.toasts.map(Weave.library.patterns.notificationToast(update)) });
+Weave.library.patterns.notificationExpire = (handle, spec, row) => Weave.library.composition.then(Weave.library.patterns.notificationDrop(handle.update, row))(Weave.library.timing.delay(Weave.library.patterns.notificationTimeout(spec)));
+Weave.library.patterns.notificationAdd = (handle, spec, row) => (handle.update(state => ({ toasts: state.toasts.concat([row]) })), Weave.library.patterns.notificationExpire(handle, spec, row), handle);
+Weave.library.patterns.notificationPush = (handle, spec) => (message, tone) => Weave.library.patterns.notificationAdd(handle, spec, Weave.library.patterns.notificationRow(message, tone));
+Weave.library.patterns.notificationState = () => ({ toasts: [] });
+Weave.library.patterns.notificationHandle = (spec, handle) => Object.assign(handle, { push: Weave.library.patterns.notificationPush(handle, spec) });
+Weave.library.patterns.notifications = (spec = {}) => Weave.library.patterns.notificationHandle(spec, Weave.library.patterns.view(Weave.library.patterns.notificationList, Weave.library.patterns.notificationState()));

@@ -13,7 +13,9 @@ Weave.application.demos = [{ label: 'Sales desk', href: 'crm.html', note: 'Dashb
 Weave.application.link = demo => Weave.library.components.anchor({ text: demo.label, attributes: { [Weave.library.browser.keywords.href]: demo.href } });
 Weave.application.tile = demo => Weave.library.components.card({ children: [Weave.application.link(demo), Weave.library.components.note({ text: demo.note })] });
 Weave.application.gallery = () => Weave.library.components.tiles({ children: Weave.application.demos.map(Weave.application.tile) });
-Weave.application.page = () => Weave.library.components.view({ children: [Weave.library.components.title({ text: 'Weave demos' }), Weave.library.components.note({ text: 'Every page below is built only from patterns and components.' }), Weave.application.gallery()] });
+Weave.application.themeToggle = () => Weave.library.components.button({ text: 'Theme', onAction: Weave.library.components.toggleTheme });
+Weave.application.heading = () => Weave.library.components.spread({ children: [Weave.library.components.title({ text: 'Weave demos' }), Weave.application.themeToggle()] });
+Weave.application.page = () => Weave.library.components.view({ children: [Weave.application.heading(), Weave.library.components.note({ text: 'Every page below is built only from patterns and components.' }), Weave.application.gallery()] });
 Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
 Weave.library.events.ready(Weave.application.start);
 </script>

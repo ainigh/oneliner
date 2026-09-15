@@ -14,6 +14,7 @@ Weave.library.accessibility.roles.listbox = 'listbox';
 Weave.library.accessibility.roles.option = 'option';
 Weave.library.accessibility.roles.tooltip = 'tooltip';
 Weave.library.accessibility.roles.progressbar = 'progressbar';
+Weave.library.accessibility.roles.switch = 'switch';
 Weave.library.accessibility.states = {};
 Weave.library.accessibility.states.expanded = 'expanded';
 Weave.library.accessibility.states.selected = 'selected';
