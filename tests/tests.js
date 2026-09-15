@@ -442,6 +442,16 @@ Weave.tests.stepsAMonth = handle => (Weave.tests.clickIn(handle, 'button', 1), W
 Weave.tests.cases.patternsCalendarStepsToTheNextMonth = () => Weave.tests.withPattern(Weave.tests.calendarPattern(), Weave.tests.stepsAMonth);
 Weave.tests.tallyText = handle => Weave.library.elements.textOf(Weave.library.query.oneWithin(Weave.tests.selectorFor('tag'))(handle.element));
 Weave.tests.cases.patternsCalendarCountsTheDaysEvents = () => Weave.tests.withPattern(Weave.tests.calendarPattern(), handle => Weave.tests.tallyText(handle) === '2');
+/* repaint cost: the morph rewires listeners every time, so a repaint must not leave the old ones behind. */
+Weave.tests.formIn = handle => Weave.library.query.oneWithin(Weave.tests.selectorFor('form'))(handle.element);
+Weave.tests.listenerCount = handle => Weave.library.events.recordsOf(Weave.tests.formIn(handle)).length;
+Weave.tests.repaintOften = handle => (Weave.library.control.times(20)(() => handle.update(state => ({ filter: state.filter }))), handle);
+Weave.tests.todoPattern = () => Weave.library.patterns.todoList({ title: 'T', items: Weave.tests.sampleRows });
+Weave.tests.cases.patternsRepaintDoesNotStackListeners = () => Weave.tests.withPattern(Weave.tests.todoPattern(), handle => Weave.tests.listenerCount(Weave.tests.repaintOften(handle)) === 1);
+Weave.tests.cases.patternsRepaintKeepsTheSameForm = () => Weave.tests.withPattern(Weave.tests.todoPattern(), Weave.tests.keepsTheForm);
+Weave.tests.keepsTheForm = handle => Weave.tests.sameFormAfter(handle, Weave.tests.formIn(handle));
+Weave.tests.sameFormAfter = (handle, before) => Weave.tests.formIn(Weave.tests.repaintOften(handle)) === before;
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);
