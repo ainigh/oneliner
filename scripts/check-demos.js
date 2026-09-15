@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo', count(dom, '.weave-card') === 6, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo', count(dom, '.weave-card') === 7, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -113,4 +113,17 @@ open('index.html').then(dom => {
   next.click();
   expect('clinic steps forward', document.querySelectorAll('.weave-panel .weave-title')[1].textContent === 'Why', document.querySelectorAll('.weave-panel .weave-title')[1].textContent);
   expect('clinic renders a select', count(dom, '.weave-select-box option') === 3, `saw ${count(dom, '.weave-select-box option')}`);
+  return open('agenda.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const month = () => document.querySelector('.weave-toolbar + .weave-subtitle').textContent;
+  expect('agenda draws a whole month', count(dom, '.weave-day-button') === 42, `saw ${count(dom, '.weave-day-button')}`);
+  expect('agenda prices a ticket', [...document.querySelectorAll('.weave-stat-tile')].some(tile => tile.textContent.includes('349')), 'no ticket price');
+  expect('agenda counts down to the doors', [...document.querySelectorAll('.weave-stat-tile')].some(tile => tile.textContent.includes('in 3')), 'no countdown');
+  const busy = [...document.querySelectorAll('.weave-day-button')].find(button => button.parentElement.querySelector('.weave-tag'));
+  busy.click();
+  expect('agenda lists the sessions of a day', count(dom, '.weave-item-list .weave-item') === 2, `saw ${count(dom, '.weave-item-list .weave-item')}`);
+  const before = month();
+  [...document.querySelectorAll('.weave-toolbar .weave-button')].find(button => button.textContent === 'Next month').click();
+  expect('agenda steps to the next month', month() !== before, `${before} then ${month()}`);
 }).then(() => process.exit(failures.length === 0 ? 0 : 1)).catch(error => { console.error(error); process.exit(1); });
