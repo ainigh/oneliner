@@ -53,3 +53,30 @@ Weave.library.patterns.persistIn = (view, key) => holder => (Weave.library.patte
 Weave.library.patterns.persist = key => holder => Weave.library.patterns.persistIn(Weave.library.storage.local, key)(holder);
 Weave.library.patterns.forgetIn = (view, key) => view.remove(key);
 Weave.library.patterns.forget = key => Weave.library.patterns.forgetIn(Weave.library.storage.local, key);
+
+/* resource: a pattern whose state is a request. Loading, failed and loaded are three rows of one table, so no application writes that branch again. */
+Weave.library.patterns.phases = {};
+Weave.library.patterns.phases.loading = 'loading';
+Weave.library.patterns.phases.failed = 'failed';
+Weave.library.patterns.phases.ready = 'ready';
+Weave.library.patterns.updaterOf = handle => change => handle.update(change);
+Weave.library.patterns.resolvedInto = update => value => update(() => ({ phase: Weave.library.patterns.phases.ready, value }));
+Weave.library.patterns.failedInto = update => reason => update(() => ({ phase: Weave.library.patterns.phases.failed, reason }));
+Weave.library.patterns.request = (spec, update) => Weave.library.control.recover(Weave.library.control.after(spec.load())(Weave.library.patterns.resolvedInto(update)))(Weave.library.patterns.failedInto(update));
+Weave.library.patterns.reload = (spec, update) => (update(() => ({ phase: Weave.library.patterns.phases.loading })), Weave.library.patterns.request(spec, update));
+Weave.library.patterns.reloader = (spec, update) => () => Weave.library.patterns.reload(spec, update);
+Weave.library.patterns.busyNote = () => Weave.library.components.note({ text: Weave.library.patterns.labels.loading });
+Weave.library.patterns.retryButton = retry => Weave.library.components.actionButton({ label: Weave.library.patterns.labels.retry, onAction: retry });
+Weave.library.patterns.failedNote = (reason, retry) => Weave.library.components.stack({ children: [Weave.library.components.note({ text: Weave.library.patterns.labels.failed }), Weave.library.patterns.retryButton(retry)] });
+
+/* panes: one row per phase, so which render a state gets is a lookup and never a branch. */
+Weave.library.patterns.panes = {};
+Weave.library.patterns.panes.loading = (spec, state, update) => Weave.library.control.defaultTo(Weave.library.patterns.busyNote)(spec.loading)(state, update);
+Weave.library.patterns.panes.failed = (spec, state, update) => Weave.library.control.defaultTo(Weave.library.patterns.failedNote)(spec.failed)(state.reason, Weave.library.patterns.reloader(spec, update));
+Weave.library.patterns.panes.ready = (spec, state, update) => spec.ready(state.value, Weave.library.patterns.reloader(spec, update));
+Weave.library.patterns.paneFor = (spec, state, update) => Weave.library.control.selectByKey(Weave.library.patterns.panes, Weave.library.patterns.panes.loading)(state.phase)(spec, state, update);
+Weave.library.patterns.resourceParts = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.paneFor(spec, state, update)];
+Weave.library.patterns.resourceBody = spec => (state, update) => Weave.library.components.panel({ children: Weave.library.patterns.resourceParts(spec, state, update) });
+Weave.library.patterns.resourceState = () => ({ phase: Weave.library.patterns.phases.loading });
+Weave.library.patterns.started = (spec, handle) => (Weave.library.patterns.request(spec, Weave.library.patterns.updaterOf(handle)), handle);
+Weave.library.patterns.resource = spec => Weave.library.patterns.started(spec, Weave.library.patterns.view(Weave.library.patterns.resourceBody(spec), Weave.library.patterns.resourceState()));

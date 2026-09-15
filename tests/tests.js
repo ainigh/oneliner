@@ -291,6 +291,19 @@ Weave.tests.repaintsRestored = handle => (Weave.tests.bump(handle), Weave.tests.
 Weave.tests.cases.patternsForgetClearsTheKey = () => Weave.tests.clearsTheKey(Weave.tests.freshPersisted());
 Weave.tests.clearsTheKey = handle => (Weave.tests.bump(handle), Weave.library.patterns.forgetIn(Weave.library.storage.memory, Weave.tests.stateKey), Weave.library.predicates.isNil(Weave.library.storage.memory.get(Weave.tests.stateKey)));
 
+/* resource: a pattern whose state is a request, driven through a deferred the case resolves by hand. */
+Weave.tests.pending = () => Weave.library.composition.deferred();
+Weave.tests.resourceOf = gate => Weave.library.patterns.resource({ title: 'R', load: () => gate.promise, ready: value => Weave.library.components.note({ text: value }) });
+Weave.tests.resourceText = handle => Weave.library.elements.textOf(handle.element);
+Weave.tests.cases.patternsResourceStartsBusy = () => Weave.tests.resourceText(Weave.tests.resourceOf(Weave.tests.pending())).includes(Weave.library.patterns.labels.loading);
+Weave.tests.cases.patternsResourceStartsInTheLoadingPhase = () => Weave.tests.resourceOf(Weave.tests.pending()).state.phase === Weave.library.patterns.phases.loading;
+Weave.tests.settledResource = gate => (gate.resolve('landed'), gate.promise);
+Weave.tests.readResource = (handle, gate) => Weave.library.composition.then(() => Weave.tests.resourceText(handle))(Weave.tests.settledResource(gate));
+Weave.tests.withResource = gate => Weave.tests.readResource(Weave.tests.resourceOf(gate), gate);
+Weave.tests.brokenResource = gate => (gate.reject(Weave.library.control.error(Weave.library.control.errors.network, {})), Weave.tests.resourceOf(gate));
+Weave.tests.afterFailure = handle => Weave.library.composition.then(() => handle)(Weave.library.timing.delay(1));
+Weave.tests.retried = handle => (Weave.library.browser.click(Weave.library.query.oneWithin(Weave.tests.selectorFor('button'))(handle.element)), handle.state.phase === Weave.library.patterns.phases.loading);
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);
@@ -320,6 +333,12 @@ Weave.tests.withErrorHook = () => Weave.tests.releaseHook(Weave.library.network.
 Weave.tests.pushHook = () => (Weave.library.network.hooks.onError.push(Weave.tests.markHook), { name: 'Whatever' });
 Weave.tests.releaseHook = promise => (Weave.library.network.hooks.onError.pop(), promise);
 Weave.tests.cancelledEffect = () => Weave.library.composition.rejected(Weave.library.control.error(Weave.library.control.errors.cancelled, {}));
+/* resource rows: the async half of the request pattern, resolved by hand through a deferred. */
+Weave.tests.asyncCases.patternsResourceShowsWhatItLoaded = () => Weave.library.composition.then(text => text.includes('landed'))(Weave.tests.withResource(Weave.tests.pending()));
+Weave.tests.asyncCases.patternsResourceOffersARetry = () => Weave.library.composition.then(handle => Weave.tests.resourceText(handle).includes(Weave.library.patterns.labels.retry))(Weave.tests.afterFailure(Weave.tests.brokenResource(Weave.tests.pending())));
+Weave.tests.asyncCases.patternsResourceRemembersWhyItFailed = () => Weave.library.composition.then(handle => Weave.library.control.isError(Weave.library.control.errors.network, handle.state.reason))(Weave.tests.afterFailure(Weave.tests.brokenResource(Weave.tests.pending())));
+Weave.tests.asyncCases.patternsResourceRetriesOnDemand = () => Weave.library.composition.then(handle => Weave.tests.retried(handle))(Weave.tests.afterFailure(Weave.tests.brokenResource(Weave.tests.pending())));
+
 Weave.tests.asyncCheck = ([name, test]) => Weave.library.composition.then(ok => Weave.tests.report(name, ok === true))(Weave.tests.settled(test));
 Weave.tests.settled = test => Weave.library.control.recover(Weave.library.composition.resolved(Weave.library.control.attemptOr(test, false)()))(Weave.library.composition.never);
 Weave.tests.runAsync = () => Weave.library.composition.all(Weave.library.composition.pairs(Weave.tests.asyncCases).map(Weave.tests.asyncCheck));

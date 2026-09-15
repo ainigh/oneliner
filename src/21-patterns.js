@@ -24,6 +24,9 @@ Weave.library.patterns.labels.left = 'Move left';
 Weave.library.patterns.labels.right = 'Move right';
 Weave.library.patterns.labels.empty = 'Nothing to show';
 Weave.library.patterns.labels.hint = 'Add something, or widen the search';
+Weave.library.patterns.labels.loading = 'Loading';
+Weave.library.patterns.labels.failed = 'That did not load';
+Weave.library.patterns.labels.retry = 'Try again';
 
 /* shared: the helpers every pattern below reuses, so no two patterns solve the same problem twice. */
 Weave.library.patterns.idKey = 'id';

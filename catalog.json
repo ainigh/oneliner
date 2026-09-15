@@ -14254,1017 +14254,1173 @@
     "line": 2576
   },
   {
-    "path": "Weave.library.patterns.idKey",
+    "path": "Weave.library.patterns.labels.loading",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2577
+  },
+  {
+    "path": "Weave.library.patterns.labels.failed",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2578
+  },
+  {
+    "path": "Weave.library.patterns.labels.retry",
     "layer": "patterns",
     "shape": "row",
     "line": 2579
   },
   {
+    "path": "Weave.library.patterns.idKey",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2582
+  },
+  {
     "path": "Weave.library.patterns.idPrefix",
     "layer": "patterns",
     "shape": "row",
-    "line": 2580
+    "line": 2583
   },
   {
     "path": "Weave.library.patterns.identify",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2581
+    "line": 2584
   },
   {
     "path": "Weave.library.patterns.withId",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2582
+    "line": 2585
   },
   {
     "path": "Weave.library.patterns.rowsOf",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2583
+    "line": 2586
   },
   {
     "path": "Weave.library.patterns.wordsOf",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2584
+    "line": 2587
   },
   {
     "path": "Weave.library.patterns.matches",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2585
+    "line": 2588
   },
   {
     "path": "Weave.library.patterns.search",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2586
+    "line": 2589
   },
   {
     "path": "Weave.library.patterns.emptyNote",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2587
+    "line": 2590
   },
   {
     "path": "Weave.library.patterns.listOrEmpty",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2588
+    "line": 2591
   },
   {
     "path": "Weave.library.patterns.queryField",
     "layer": "patterns",
     "shape": "row",
-    "line": 2589
+    "line": 2592
   },
   {
     "path": "Weave.library.patterns.queryState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2590
+    "line": 2593
   },
   {
     "path": "Weave.library.patterns.queryHandler",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2591
+    "line": 2594
   },
   {
     "path": "Weave.library.patterns.queryBox",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2592
+    "line": 2595
   },
   {
     "path": "Weave.library.patterns.oneFieldForm",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2593
+    "line": 2596
   },
   {
     "path": "Weave.library.patterns.splitView",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2594
+    "line": 2597
   },
   {
     "path": "Weave.library.patterns.stepBack",
     "layer": "patterns",
     "shape": "row",
-    "line": 2595
+    "line": 2598
   },
   {
     "path": "Weave.library.patterns.stepForward",
     "layer": "patterns",
     "shape": "row",
-    "line": 2596
+    "line": 2599
   },
   {
     "path": "Weave.library.patterns.stepper",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2597
+    "line": 2600
   },
   {
     "path": "Weave.library.patterns.sameId",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2598
+    "line": 2601
   },
   {
     "path": "Weave.library.patterns.replaced",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2599
+    "line": 2602
   },
   {
     "path": "Weave.library.patterns.without",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2600
+    "line": 2603
   },
   {
     "path": "Weave.library.patterns.titleOf",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2601
+    "line": 2604
   },
   {
     "path": "Weave.library.patterns.todoFilters",
     "layer": "patterns",
     "shape": "namespace",
-    "line": 2604
+    "line": 2607
   },
   {
     "path": "Weave.library.patterns.todoFilters.all",
     "layer": "patterns",
     "shape": "row",
-    "line": 2605
+    "line": 2608
   },
   {
     "path": "Weave.library.patterns.todoFilters.open",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2606
+    "line": 2609
   },
   {
     "path": "Weave.library.patterns.todoFilters.done",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2607
+    "line": 2610
   },
   {
     "path": "Weave.library.patterns.defaultFilter",
     "layer": "patterns",
     "shape": "row",
-    "line": 2608
+    "line": 2611
   },
   {
     "path": "Weave.library.patterns.taskField",
     "layer": "patterns",
     "shape": "row",
-    "line": 2609
+    "line": 2612
   },
   {
     "path": "Weave.library.patterns.todoVisible",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2610
+    "line": 2613
   },
   {
     "path": "Weave.library.patterns.todoFlip",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2611
+    "line": 2614
   },
   {
     "path": "Weave.library.patterns.todoToggle",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2612
+    "line": 2615
   },
   {
     "path": "Weave.library.patterns.todoDrop",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2613
+    "line": 2616
   },
   {
     "path": "Weave.library.patterns.todoCheck",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2614
+    "line": 2617
   },
   {
     "path": "Weave.library.patterns.todoRemove",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2615
+    "line": 2618
   },
   {
     "path": "Weave.library.patterns.todoRow",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2616
+    "line": 2619
   },
   {
     "path": "Weave.library.patterns.todoNew",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2617
+    "line": 2620
   },
   {
     "path": "Weave.library.patterns.todoAdd",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2618
+    "line": 2621
   },
   {
     "path": "Weave.library.patterns.todoForm",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2619
+    "line": 2622
   },
   {
     "path": "Weave.library.patterns.todoTab",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2620
+    "line": 2623
   },
   {
     "path": "Weave.library.patterns.todoTabs",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2621
+    "line": 2624
   },
   {
     "path": "Weave.library.patterns.todoItems",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2622
+    "line": 2625
   },
   {
     "path": "Weave.library.patterns.todoParts",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2623
+    "line": 2626
   },
   {
     "path": "Weave.library.patterns.todoBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2624
+    "line": 2627
   },
   {
     "path": "Weave.library.patterns.todoState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2625
+    "line": 2628
   },
   {
     "path": "Weave.library.patterns.todoList",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2626
+    "line": 2629
   },
   {
     "path": "Weave.library.patterns.columnKey",
     "layer": "patterns",
     "shape": "row",
-    "line": 2629
+    "line": 2632
   },
   {
     "path": "Weave.library.patterns.boardKeys",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2630
+    "line": 2633
   },
   {
     "path": "Weave.library.patterns.boardIndex",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2631
+    "line": 2634
   },
   {
     "path": "Weave.library.patterns.boardTarget",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2632
+    "line": 2635
   },
   {
     "path": "Weave.library.patterns.boardChange",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2633
+    "line": 2636
   },
   {
     "path": "Weave.library.patterns.boardShift",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2634
+    "line": 2637
   },
   {
     "path": "Weave.library.patterns.boardMove",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2635
+    "line": 2638
   },
   {
     "path": "Weave.library.patterns.boardSteps",
     "layer": "patterns",
     "shape": "row",
-    "line": 2636
+    "line": 2639
   },
   {
     "path": "Weave.library.patterns.boardMoves",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2637
+    "line": 2640
   },
   {
     "path": "Weave.library.patterns.boardCard",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2638
+    "line": 2641
   },
   {
     "path": "Weave.library.patterns.boardCards",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2639
+    "line": 2642
   },
   {
     "path": "Weave.library.patterns.boardColumn",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2640
+    "line": 2643
   },
   {
     "path": "Weave.library.patterns.boardBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2641
+    "line": 2644
   },
   {
     "path": "Weave.library.patterns.boardState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2642
+    "line": 2645
   },
   {
     "path": "Weave.library.patterns.board",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2643
+    "line": 2646
   },
   {
     "path": "Weave.library.patterns.gridFound",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2646
+    "line": 2649
   },
   {
     "path": "Weave.library.patterns.gridOrder",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2647
+    "line": 2650
   },
   {
     "path": "Weave.library.patterns.gridSorted",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2648
+    "line": 2651
   },
   {
     "path": "Weave.library.patterns.gridStart",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2649
+    "line": 2652
   },
   {
     "path": "Weave.library.patterns.gridRows",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2650
+    "line": 2653
   },
   {
     "path": "Weave.library.patterns.gridPages",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2651
+    "line": 2654
   },
   {
     "path": "Weave.library.patterns.gridColumn",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2652
+    "line": 2655
   },
   {
     "path": "Weave.library.patterns.gridTable",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2653
+    "line": 2656
   },
   {
     "path": "Weave.library.patterns.gridPager",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2654
+    "line": 2657
   },
   {
     "path": "Weave.library.patterns.gridParts",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2655
+    "line": 2658
   },
   {
     "path": "Weave.library.patterns.gridBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2656
+    "line": 2659
   },
   {
     "path": "Weave.library.patterns.dataGrid",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2657
+    "line": 2660
   },
   {
     "path": "Weave.library.patterns.detailPick",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2660
+    "line": 2663
   },
   {
     "path": "Weave.library.patterns.detailItem",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2661
+    "line": 2664
   },
   {
     "path": "Weave.library.patterns.detailChosen",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2662
+    "line": 2665
   },
   {
     "path": "Weave.library.patterns.detailPane",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2663
+    "line": 2666
   },
   {
     "path": "Weave.library.patterns.detailMenu",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2664
+    "line": 2667
   },
   {
     "path": "Weave.library.patterns.detailBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2665
+    "line": 2668
   },
   {
     "path": "Weave.library.patterns.detailState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2666
+    "line": 2669
   },
   {
     "path": "Weave.library.patterns.detailFirst",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2667
+    "line": 2670
   },
   {
     "path": "Weave.library.patterns.masterDetail",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2668
+    "line": 2671
   },
   {
     "path": "Weave.library.patterns.wizardStep",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2671
+    "line": 2674
   },
   {
     "path": "Weave.library.patterns.wizardGo",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2672
+    "line": 2675
   },
   {
     "path": "Weave.library.patterns.wizardMove",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2673
+    "line": 2676
   },
   {
     "path": "Weave.library.patterns.wizardSteps",
     "layer": "patterns",
     "shape": "row",
-    "line": 2674
+    "line": 2677
   },
   {
     "path": "Weave.library.patterns.wizardNav",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2675
+    "line": 2678
   },
   {
     "path": "Weave.library.patterns.wizardTrail",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2676
+    "line": 2679
   },
   {
     "path": "Weave.library.patterns.wizardPane",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2677
+    "line": 2680
   },
   {
     "path": "Weave.library.patterns.wizardParts",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2678
+    "line": 2681
   },
   {
     "path": "Weave.library.patterns.wizardBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2679
+    "line": 2682
   },
   {
     "path": "Weave.library.patterns.wizardState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2680
+    "line": 2683
   },
   {
     "path": "Weave.library.patterns.wizard",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2681
+    "line": 2684
   },
   {
     "path": "Weave.library.patterns.paletteItems",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2684
+    "line": 2687
   },
   {
     "path": "Weave.library.patterns.paletteMenu",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2685
+    "line": 2688
   },
   {
     "path": "Weave.library.patterns.paletteResults",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2686
+    "line": 2689
   },
   {
     "path": "Weave.library.patterns.paletteBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2687
+    "line": 2690
   },
   {
     "path": "Weave.library.patterns.commandPalette",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2688
+    "line": 2691
   },
   {
     "path": "Weave.library.patterns.messageField",
     "layer": "patterns",
     "shape": "row",
-    "line": 2691
+    "line": 2694
   },
   {
     "path": "Weave.library.patterns.chatBubble",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2692
+    "line": 2695
   },
   {
     "path": "Weave.library.patterns.chatLog",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2693
+    "line": 2696
   },
   {
     "path": "Weave.library.patterns.chatNew",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2694
+    "line": 2697
   },
   {
     "path": "Weave.library.patterns.chatSend",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2695
+    "line": 2698
   },
   {
     "path": "Weave.library.patterns.chatComposer",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2696
+    "line": 2699
   },
   {
     "path": "Weave.library.patterns.chatParts",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2697
+    "line": 2700
   },
   {
     "path": "Weave.library.patterns.chatBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2698
+    "line": 2701
   },
   {
     "path": "Weave.library.patterns.chatState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2699
+    "line": 2702
   },
   {
     "path": "Weave.library.patterns.chat",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2700
+    "line": 2703
   },
   {
     "path": "Weave.library.patterns.explorerPick",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2703
+    "line": 2706
   },
   {
     "path": "Weave.library.patterns.explorerNode",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2704
+    "line": 2707
   },
   {
     "path": "Weave.library.patterns.explorerKids",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2705
+    "line": 2708
   },
   {
     "path": "Weave.library.patterns.explorerTree",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2706
+    "line": 2709
   },
   {
     "path": "Weave.library.patterns.explorerPane",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2707
+    "line": 2710
   },
   {
     "path": "Weave.library.patterns.explorerBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2708
+    "line": 2711
   },
   {
     "path": "Weave.library.patterns.explorer",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2709
+    "line": 2712
   },
   {
     "path": "Weave.library.patterns.dashboardTiles",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2712
+    "line": 2715
   },
   {
     "path": "Weave.library.patterns.dashboardPanel",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2713
+    "line": 2716
   },
   {
     "path": "Weave.library.patterns.dashboardPanels",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2714
+    "line": 2717
   },
   {
     "path": "Weave.library.patterns.dashboardParts",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2715
+    "line": 2718
   },
   {
     "path": "Weave.library.patterns.dashboardBody",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2716
+    "line": 2719
   },
   {
     "path": "Weave.library.patterns.dashboard",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2717
+    "line": 2720
   },
   {
     "path": "Weave.library.patterns.storeFrom",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2720
+    "line": 2723
   },
   {
     "path": "Weave.library.patterns.store",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2721
+    "line": 2724
   },
   {
     "path": "Weave.library.patterns.storeUpdater",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2722
+    "line": 2725
   },
   {
     "path": "Weave.library.patterns.storeMerged",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2723
+    "line": 2726
   },
   {
     "path": "Weave.library.patterns.storeNotify",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2724
+    "line": 2727
   },
   {
     "path": "Weave.library.patterns.storeWatcher",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2725
+    "line": 2728
   },
   {
     "path": "Weave.library.patterns.storeForget",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2726
+    "line": 2729
   },
   {
     "path": "Weave.library.patterns.followStore",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2727
+    "line": 2730
   },
   {
     "path": "Weave.library.patterns.joined",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2728
+    "line": 2731
   },
   {
     "path": "Weave.library.patterns.connect",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2729
+    "line": 2732
   },
   {
     "path": "Weave.library.patterns.releasesOf",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2732
+    "line": 2735
   },
   {
     "path": "Weave.library.patterns.holding",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2733
+    "line": 2736
   },
   {
     "path": "Weave.library.patterns.stop",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2734
+    "line": 2737
   },
   {
     "path": "Weave.library.patterns.detach",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2735
+    "line": 2738
   },
   {
     "path": "Weave.library.patterns.stacks",
     "layer": "patterns",
     "shape": "namespace",
-    "line": 2738
+    "line": 2741
   },
   {
     "path": "Weave.library.patterns.stacks.past",
     "layer": "patterns",
     "shape": "row",
-    "line": 2739
+    "line": 2742
   },
   {
     "path": "Weave.library.patterns.stacks.future",
     "layer": "patterns",
     "shape": "row",
-    "line": 2740
+    "line": 2743
   },
   {
     "path": "Weave.library.patterns.timeTravel",
     "layer": "patterns",
     "shape": "namespace",
-    "line": 2741
+    "line": 2744
   },
   {
     "path": "Weave.library.patterns.timeTravel.undo",
     "layer": "patterns",
     "shape": "row",
-    "line": 2742
+    "line": 2745
   },
   {
     "path": "Weave.library.patterns.timeTravel.redo",
     "layer": "patterns",
     "shape": "row",
-    "line": 2743
+    "line": 2746
   },
   {
     "path": "Weave.library.patterns.emptyLog",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2744
+    "line": 2747
   },
   {
     "path": "Weave.library.patterns.popped",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2745
+    "line": 2748
   },
   {
     "path": "Weave.library.patterns.isStore",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2746
+    "line": 2749
   },
   {
     "path": "Weave.library.patterns.storeShow",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2747
+    "line": 2750
   },
   {
     "path": "Weave.library.patterns.showState",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2748
+    "line": 2751
   },
   {
     "path": "Weave.library.patterns.rotated",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2749
+    "line": 2752
   },
   {
     "path": "Weave.library.patterns.travelWith",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2750
+    "line": 2753
   },
   {
     "path": "Weave.library.patterns.travelTo",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2751
+    "line": 2754
   },
   {
     "path": "Weave.library.patterns.hasSteps",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2752
+    "line": 2755
   },
   {
     "path": "Weave.library.patterns.traveller",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2753
+    "line": 2756
   },
   {
     "path": "Weave.library.patterns.checker",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2754
+    "line": 2757
   },
   {
     "path": "Weave.library.patterns.canPrefix",
     "layer": "patterns",
     "shape": "row",
-    "line": 2755
+    "line": 2758
   },
   {
     "path": "Weave.library.patterns.canName",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2756
+    "line": 2759
   },
   {
     "path": "Weave.library.patterns.travellers",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2757
+    "line": 2760
   },
   {
     "path": "Weave.library.patterns.checkers",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2758
+    "line": 2761
   },
   {
     "path": "Weave.library.patterns.recorded",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2759
+    "line": 2762
   },
   {
     "path": "Weave.library.patterns.recorder",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2760
+    "line": 2763
   },
   {
     "path": "Weave.library.patterns.record",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2761
+    "line": 2764
   },
   {
     "path": "Weave.library.patterns.withHistory",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2762
+    "line": 2765
   },
   {
     "path": "Weave.library.patterns.historyWired",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2763
+    "line": 2766
   },
   {
     "path": "Weave.library.patterns.saved",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2766
+    "line": 2769
   },
   {
     "path": "Weave.library.patterns.saving",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2767
+    "line": 2770
   },
   {
     "path": "Weave.library.patterns.reloaded",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2768
+    "line": 2771
   },
   {
     "path": "Weave.library.patterns.persistWired",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2769
+    "line": 2772
   },
   {
     "path": "Weave.library.patterns.persistIn",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2770
+    "line": 2773
   },
   {
     "path": "Weave.library.patterns.persist",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2771
+    "line": 2774
   },
   {
     "path": "Weave.library.patterns.forgetIn",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2772
+    "line": 2775
   },
   {
     "path": "Weave.library.patterns.forget",
     "layer": "patterns",
     "shape": "arrow",
-    "line": 2773
+    "line": 2776
+  },
+  {
+    "path": "Weave.library.patterns.phases",
+    "layer": "patterns",
+    "shape": "namespace",
+    "line": 2779
+  },
+  {
+    "path": "Weave.library.patterns.phases.loading",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2780
+  },
+  {
+    "path": "Weave.library.patterns.phases.failed",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2781
+  },
+  {
+    "path": "Weave.library.patterns.phases.ready",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2782
+  },
+  {
+    "path": "Weave.library.patterns.updaterOf",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2783
+  },
+  {
+    "path": "Weave.library.patterns.resolvedInto",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2784
+  },
+  {
+    "path": "Weave.library.patterns.failedInto",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2785
+  },
+  {
+    "path": "Weave.library.patterns.request",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2786
+  },
+  {
+    "path": "Weave.library.patterns.reload",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2787
+  },
+  {
+    "path": "Weave.library.patterns.reloader",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2788
+  },
+  {
+    "path": "Weave.library.patterns.busyNote",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2789
+  },
+  {
+    "path": "Weave.library.patterns.retryButton",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2790
+  },
+  {
+    "path": "Weave.library.patterns.failedNote",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2791
+  },
+  {
+    "path": "Weave.library.patterns.panes",
+    "layer": "patterns",
+    "shape": "namespace",
+    "line": 2794
+  },
+  {
+    "path": "Weave.library.patterns.panes.loading",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2795
+  },
+  {
+    "path": "Weave.library.patterns.panes.failed",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2796
+  },
+  {
+    "path": "Weave.library.patterns.panes.ready",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2797
+  },
+  {
+    "path": "Weave.library.patterns.paneFor",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2798
+  },
+  {
+    "path": "Weave.library.patterns.resourceParts",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2799
+  },
+  {
+    "path": "Weave.library.patterns.resourceBody",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2800
+  },
+  {
+    "path": "Weave.library.patterns.resourceState",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2801
+  },
+  {
+    "path": "Weave.library.patterns.started",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2802
+  },
+  {
+    "path": "Weave.library.patterns.resource",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2803
   }
 ]
