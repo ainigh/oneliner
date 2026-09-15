@@ -541,7 +541,9 @@ Weave.library.browser.pageScrollX = () => scrollX;
 Weave.library.browser.pageScrollY = () => scrollY;
 Weave.library.browser.scrollWindowTo = options => (scrollTo(options), undefined);
 Weave.library.browser.devicePixelRatio = () => devicePixelRatio;
-Weave.library.browser.matchMedia = query => matchMedia(query);
+Weave.library.browser.mediaStub = { matches: false, media: '', addEventListener: Weave.library.composition.noop, removeEventListener: Weave.library.composition.noop, addListener: Weave.library.composition.noop, removeListener: Weave.library.composition.noop };
+Weave.library.browser.hasMatchMedia = () => typeof matchMedia === 'function';
+Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.library.browser.hasMatchMedia, () => matchMedia(query), () => Weave.library.browser.mediaStub)(query);
 
 /* events: registration, dispatch and every getter the event object exposes. */
 Weave.library.browser.addListener = (el, [type, handler]) => (el.addEventListener(type, handler), el);
@@ -2494,6 +2496,10 @@ Weave.library.components.parts.summary = Weave.library.elements.summary;
 Weave.library.components.parts.meter = Weave.library.elements.progress;
 Weave.library.components.parts.moment = Weave.library.elements.time;
 Weave.library.components.parts.checkbox = Weave.library.elements.inputs.checkbox;
+Weave.library.components.parts.radio = Weave.library.elements.inputs.radio;
+Weave.library.components.parts.media = Weave.library.elements.figure;
+Weave.library.components.parts.group = Weave.library.elements.fieldset;
+Weave.library.components.parts.legend = Weave.library.elements.legend;
 Weave.library.components.parts.search = Weave.library.elements.inputs.search;
 
 /* naming: a component key is its class. One prefix, one rule, and no class string anywhere else. */
@@ -2534,6 +2540,9 @@ Weave.library.components.blueprints.shell = Weave.library.components.parts.box;
 Weave.library.components.blueprints.pane = Weave.library.components.parts.section;
 Weave.library.components.blueprints.rowButton = Weave.library.components.parts.button;
 Weave.library.components.blueprints.strong = Weave.library.components.parts.emphasis;
+Weave.library.components.blueprints.tabBar = Weave.library.components.parts.navigation;
+Weave.library.components.blueprints.choiceGroup = Weave.library.components.parts.group;
+Weave.library.components.blueprints.choiceLegend = Weave.library.components.parts.legend;
 Weave.library.components.blueprints.overlayHost = Weave.library.components.parts.box;
 Weave.library.components.blueprints.scrim = Weave.library.components.parts.box;
 Weave.library.components.blueprints.dialogBox = Weave.library.components.parts.section;
@@ -2594,7 +2603,8 @@ Weave.library.components.placeholderAttribute = 'placeholder';
 Weave.library.components.typeOf = spec => Weave.library.control.defaultTo(Weave.library.elements.inputTypes.text)(spec.type);
 Weave.library.components.entryAttributes = spec => ({ [Weave.library.browser.keywords.type]: Weave.library.components.typeOf(spec), [Weave.library.components.placeholderAttribute]: spec.placeholder, [Weave.library.browser.keywords.value]: spec.value });
 Weave.library.components.controlAttributes = spec => Weave.library.composition.merge(Weave.library.components.namedAttribute(spec), Weave.library.components.entryAttributes(spec));
-Weave.library.components.controlSpec = spec => ({ attributes: Weave.library.components.controlAttributes(spec), onEdit: spec.onEdit, onChoose: spec.onChoose, onPress: spec.onPress, aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.controlAria = spec => Weave.library.composition.merge(Weave.library.components.labelAria(spec), Weave.library.control.defaultTo({})(spec.aria));
+Weave.library.components.controlSpec = spec => ({ attributes: Weave.library.components.controlAttributes(spec), onEdit: spec.onEdit, onChoose: spec.onChoose, onPress: spec.onPress, aria: Weave.library.components.controlAria(spec) });
 Weave.library.components.control = spec => Weave.library.components.build(Weave.library.components.parts.entry, 'control', Weave.library.components.controlSpec(spec));
 Weave.library.components.fieldLabel = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'fieldLabel', { text: Weave.library.components.textOf(spec, Weave.library.components.labelKey) });
 Weave.library.components.labelKey = 'label';
@@ -2740,6 +2750,7 @@ Weave.library.components.tokens.popoverWidth = '200px';
 Weave.library.components.tokens.toastWidth = 'min(360px, calc(100vw - 32px))';
 Weave.library.components.tokens.tipWidth = '240px';
 Weave.library.components.tokens.centreShift = 'translate(-50%, -50%)';
+Weave.library.components.tokens.mediaRatio = '4 / 3';
 Weave.library.components.variablePrefix = '--weave-';
 Weave.library.components.variableName = name => Weave.library.components.variablePrefix + Weave.library.composition.kebabCase(name);
 Weave.library.components.variableOpen = 'var(';
@@ -2850,6 +2861,7 @@ Weave.library.components.states.hover = ':hover';
 Weave.library.components.states.focus = ':focus-visible';
 Weave.library.components.states.pressed = ':active';
 Weave.library.components.states.off = ':disabled';
+Weave.library.components.states.invalid = '[aria-invalid="true"]';
 Weave.library.components.states.chosen = '[aria-selected="true"]';
 Weave.library.components.states.here = '[aria-current="true"]';
 Weave.library.components.states.over = '[data-over="true"]';
@@ -3182,6 +3194,54 @@ Weave.library.components.sheetExtras.marks = Weave.library.components.markTexts;
 Weave.library.components.nameTable = table => Weave.library.composition.fromPairs(Weave.library.composition.keys(table).map(name => [name, name]));
 Weave.library.components.markNames = {};
 Weave.library.composition.defineEach(Weave.library.components.markNames, row => Weave.library.components.nameTable(row.styles))(Weave.library.components.modifiers);
+
+/* media: a picture box that looks right before, during and after the picture arrives. */
+Weave.library.components.lazyLoading = 'lazy';
+Weave.library.components.loadingAttribute = 'loading';
+Weave.library.components.altAttribute = 'alt';
+Weave.library.components.altText = spec => Weave.library.components.textOf(spec, Weave.library.components.altAttribute);
+Weave.library.components.imageAttributes = spec => ({ [Weave.library.browser.keywords.src]: spec.src, [Weave.library.components.altAttribute]: Weave.library.components.altText(spec), [Weave.library.components.loadingAttribute]: Weave.library.components.lazyLoading });
+Weave.library.components.image = spec => Weave.library.components.build(Weave.library.components.parts.picture, 'image', { attributes: Weave.library.components.imageAttributes(spec) });
+Weave.library.components.mediaPicture = spec => Weave.library.control.maybe(() => Weave.library.components.image(spec))(spec.src);
+Weave.library.components.mediaGlyph = spec => Weave.library.control.maybe(glyph => Weave.library.components.icon({ glyph }))(spec.glyph);
+Weave.library.components.mediaParts = spec => Weave.library.composition.compact([Weave.library.components.mediaPicture(spec), Weave.library.components.mediaGlyph(spec)]);
+Weave.library.components.media = spec => Weave.library.components.build(Weave.library.components.parts.media, 'media', { children: Weave.library.components.mediaParts(spec), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.rules.media = { position: Weave.library.components.values.relative, display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.center, aspectRatio: Weave.library.components.vars.mediaRatio, margin: Weave.library.components.values.zero, borderRadius: Weave.library.components.vars.radius, background: Weave.library.components.vars.sunken, overflow: Weave.library.components.values.clip, fontSize: Weave.library.components.vars.fontSizeDisplay };
+Weave.library.components.rules.image = { width: Weave.library.components.values.full, height: Weave.library.components.values.full, objectFit: Weave.library.components.values.cover, display: Weave.library.components.values.block };
+
+/* choices: one radio set, so a spec names a group of options and never a tag or an input type. */
+Weave.library.components.groupKey = 'group';
+Weave.library.components.radioAttributes = spec => ({ [Weave.library.browser.keywords.name]: spec.group, [Weave.library.browser.keywords.value]: spec.value });
+Weave.library.components.radioProperties = spec => ({ [Weave.library.attributes.booleanAttributes.checked]: Weave.library.control.defaultTo(false)(spec.checked) });
+Weave.library.components.radioMark = spec => Weave.library.components.build(Weave.library.components.parts.radio, 'radioMark', { attributes: Weave.library.components.radioAttributes(spec), properties: Weave.library.components.radioProperties(spec), onChoose: spec.onChoose });
+Weave.library.components.choicePicked = (spec, option) => event => spec.onChoose(option.value, event);
+Weave.library.components.choiceSpec = (spec, option) => Weave.library.composition.merge(option, { group: spec.name, checked: option.value === spec.value, onChoose: Weave.library.components.choicePicked(spec, option) });
+Weave.library.components.choiceRow = (spec, option) => [Weave.library.components.radioMark(Weave.library.components.choiceSpec(spec, option)), Weave.library.components.fieldLabel(option), Weave.library.components.fill({}), Weave.library.components.note({ text: option.note })];
+Weave.library.components.choiceField = spec => option => Weave.library.components.build(Weave.library.components.parts.label, 'choiceField', { children: Weave.library.components.choiceRow(spec, option) });
+Weave.library.components.choiceParts = spec => [Weave.library.components.choiceLegend({ text: Weave.library.components.textOf(spec, Weave.library.components.labelKey) })].concat(spec.options.map(Weave.library.components.choiceField(spec)));
+Weave.library.components.choices = spec => Weave.library.components.build(Weave.library.components.parts.group, 'choices', { children: Weave.library.components.choiceParts(spec) });
+Weave.library.components.rules.choices = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight, border: Weave.library.components.values.none, margin: Weave.library.components.values.zero, padding: Weave.library.components.values.zero };
+Weave.library.components.rules.choiceGroup = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight, border: Weave.library.components.values.none, padding: Weave.library.components.values.zero };
+Weave.library.components.rules.choiceLegend = { color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall, padding: Weave.library.components.values.zero };
+Weave.library.components.rules.choiceField = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.space, padding: Weave.library.components.vars.spaceTight, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radiusSmall, cursor: Weave.library.components.values.pointer };
+
+/* steps: a track that says where in a sequence the reader is. The current step is the only marked one. */
+Weave.library.components.stepDot = position => Weave.library.components.statusDot({ tone: Weave.library.components.stepTone(position) });
+Weave.library.components.stepTone = position => Weave.library.control.either(() => position, () => Weave.library.components.toneNames.success, () => Weave.library.components.toneNames.info)(position);
+Weave.library.components.stepSpec = (spec, label, index) => ({ children: [Weave.library.components.stepDot(index <= spec.active), Weave.library.components.note({ text: label })], aria: { current: String(index === spec.active) } });
+Weave.library.components.stepItem = spec => (label, index) => Weave.library.components.build(Weave.library.components.parts.listItem, 'step', Weave.library.components.stepSpec(spec, label, index));
+Weave.library.components.stepItems = spec => Weave.library.components.childrenOf(spec, Weave.library.components.itemsKey).map(Weave.library.components.stepItem(spec));
+Weave.library.components.steps = spec => Weave.library.components.build(Weave.library.components.parts.list, 'steps', { children: Weave.library.components.stepItems(spec), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.rules.steps = { listStyle: Weave.library.components.values.none, margin: Weave.library.components.values.zero, padding: Weave.library.components.values.zero, display: Weave.library.components.values.flex, gap: Weave.library.components.vars.spaceLoose, flexWrap: Weave.library.components.values.wrap, alignItems: Weave.library.components.values.center };
+Weave.library.components.rules.step = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.spaceTight, color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.rules.tabBar = { display: Weave.library.components.values.flex, gap: Weave.library.components.vars.spaceTight, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.between, padding: Weave.library.components.vars.spaceTight, background: Weave.library.components.vars.surface, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radius };
+Weave.library.components.rules.fieldError = { color: Weave.library.components.vars.danger, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.errorSpec = spec => ({ text: Weave.library.components.textOf(spec, Weave.library.components.textKey), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.alert) });
+Weave.library.components.fieldError = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'fieldError', Weave.library.components.errorSpec(spec));
+Weave.library.components.stateRules.stepHere = { name: 'step', state: Weave.library.components.stateNames.here, style: { color: Weave.library.components.vars.ink, fontWeight: Weave.library.components.values.heavy } };
+Weave.library.components.stateRules.controlInvalid = { name: Weave.library.components.interactive.control, state: Weave.library.components.stateNames.invalid, style: { borderColor: Weave.library.components.vars.danger } };
+Weave.library.components.pinnedToBottom = { position: Weave.library.components.values.fixed, left: Weave.library.components.values.zero, right: Weave.library.components.values.zero, bottom: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerSticky, borderRadius: Weave.library.components.values.zero };
+Weave.library.components.mediaRules.compact.rules.tabBar = Weave.library.components.pinnedToBottom;
 
 /* overlays: everything that sits above the page. One host, one ladder, and a release for every open thing. */
 Weave.library.overlays = {};
@@ -3678,14 +3738,19 @@ Weave.library.patterns.linkTo = name => holder => Weave.library.patterns.holding
 Weave.library.patterns.rulesOf = spec => Weave.library.composition.fromPairs(spec.fields.map(field => [field.name, Weave.library.control.defaultTo({})(field.rules)]));
 Weave.library.patterns.problemsOf = (spec, values) => Weave.library.composition.fromPairs(spec.fields.map(field => [field.name, Weave.library.forms.checkControl(values, Weave.library.patterns.rulesOf(spec))(field.name)]));
 Weave.library.patterns.isClean = errors => Weave.library.composition.values(errors).every(list => list.length === 0);
-Weave.library.patterns.fieldNotes = (state, field) => Weave.library.control.defaultTo([])(state.errors[field.name]).map(message => Weave.library.components.note({ text: message }));
-Weave.library.patterns.fieldControl = (state, field) => Weave.library.components.field({ label: field.label, name: field.name, type: field.type, value: state.values[field.name] });
+Weave.library.patterns.fieldProblems = (state, field) => Weave.library.control.defaultTo([])(state.errors[field.name]);
+Weave.library.patterns.fieldNotes = (state, field) => Weave.library.patterns.fieldProblems(state, field).map(message => Weave.library.components.fieldError({ text: message }));
+Weave.library.patterns.fieldInvalid = (state, field) => ({ invalid: String(Weave.library.patterns.fieldProblems(state, field).length > 0) });
+Weave.library.patterns.fieldControl = (state, field) => Weave.library.components.field({ label: field.label, name: field.name, type: field.type, value: state.values[field.name], aria: Weave.library.patterns.fieldInvalid(state, field) });
 Weave.library.patterns.fieldParts = (state, field) => [Weave.library.patterns.fieldControl(state, field)].concat(Weave.library.patterns.fieldNotes(state, field));
 Weave.library.patterns.entryField = state => field => Weave.library.components.stack({ data: { key: field.name }, children: Weave.library.patterns.fieldParts(state, field) });
 Weave.library.patterns.accepted = (spec, values) => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onSubmit)(values);
 Weave.library.patterns.reported = (spec, values, errors) => (Weave.library.control.when(() => Weave.library.patterns.isClean(errors), () => Weave.library.patterns.accepted(spec, values))(values), { values, errors });
 Weave.library.patterns.checked = (spec, values) => Weave.library.patterns.reported(spec, values, Weave.library.patterns.problemsOf(spec, values));
-Weave.library.patterns.entrySubmit = (spec, update) => values => update(() => Weave.library.patterns.checked(spec, values));
+Weave.library.patterns.firstProblem = errors => Weave.library.composition.first(Weave.library.composition.pairs(errors).filter(([ignored, list]) => list.length > 0));
+Weave.library.patterns.focusNamed = (handle, name) => Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.query.oneWithin(Weave.library.query.attributeSelector(Weave.library.browser.keywords.name, name))(handle.element));
+Weave.library.patterns.focusProblem = handle => Weave.library.control.maybe(row => Weave.library.patterns.focusNamed(handle, Weave.library.composition.first(row)))(Weave.library.patterns.firstProblem(handle.state.errors));
+Weave.library.patterns.entrySubmit = (spec, update) => values => Weave.library.patterns.focusProblem(update(() => Weave.library.patterns.checked(spec, values)));
 Weave.library.patterns.entryFields = (spec, state) => spec.fields.map(Weave.library.patterns.entryField(state));
 Weave.library.patterns.entryBody = (spec, state, update) => Weave.library.components.form({ submit: spec.submit, fields: Weave.library.patterns.entryFields(spec, state), onSubmit: Weave.library.patterns.entrySubmit(spec, update) });
 Weave.library.patterns.entryParts = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.entryBody(spec, state, update)];

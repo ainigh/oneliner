@@ -1,0 +1,32 @@
+const { JSDOM } = require('jsdom');
+JSDOM.fromFile('apps/relay.html', {runScripts:'dangerously', resources:'usable', pretendToBeVisual:true}).then(dom => {
+  const w = dom.window, d = w.document;
+  setTimeout(() => {
+    const W = w.eval('Weave'), A = W.application, L = W.library;
+    const audit = tag => console.log('audit@'+tag+':', JSON.stringify(L.accessibility.audit(d.body).map(r=>r.message)));
+    const press = (key, opt={}) => d.dispatchEvent(new w.KeyboardEvent('keydown', Object.assign({key, bubbles:true}, opt)));
+    const btn = label => [...d.querySelectorAll('.weave-button')].find(b=>b.textContent.trim()===label);
+    const counts = () => ({host: d.querySelectorAll('.weave-overlay-host > *').length, scrim: d.querySelectorAll('.weave-scrim').length, dialog: d.querySelectorAll('.weave-dialog-box').length, sheet: d.querySelectorAll('.weave-sheet-box').length, pop: d.querySelectorAll('.weave-popover-box').length, lock: L.interaction.scrollLocks.depth, popovers: L.overlays.openPopovers.length});
+    audit('start');
+    console.log('counts start', JSON.stringify(counts()));
+    console.log('--- open compose twice ---');
+    btn('Compose').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+    console.log('after 1st compose', JSON.stringify(counts()));
+    audit('compose1');
+    btn('Compose').dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+    console.log('after 2nd compose', JSON.stringify(counts()));
+    audit('compose2');
+    console.log('--- press c while dialog open (focus on dialog close btn) ---');
+    press('c');
+    console.log('after key c', JSON.stringify(counts()));
+    console.log('--- escape ---');
+    press('Escape');
+    console.log('after 1 escape', JSON.stringify(counts()));
+    press('Escape');
+    console.log('after 2 escape', JSON.stringify(counts()));
+    press('Escape');
+    console.log('after 3 escape', JSON.stringify(counts()));
+    audit('closed');
+    dom.window.close();
+  }, 400);
+}).catch(e=>console.error(e));

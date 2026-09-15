@@ -363,7 +363,7 @@ Weave.tests.signupForm = () => Weave.library.patterns.entryForm({ title: 'Join',
 Weave.tests.accepted = [];
 Weave.tests.freshSignup = () => (Weave.tests.accepted.splice(0), Weave.tests.spawn(Weave.tests.signupForm()));
 Weave.tests.fillIn = (handle, name, value) => Weave.tests.typeInto(handle, name, value);
-Weave.tests.noteCount = handle => Weave.tests.countIn(handle, Weave.tests.selectorFor('note'));
+Weave.tests.noteCount = handle => Weave.tests.countIn(handle, Weave.tests.selectorFor('fieldError'));
 Weave.tests.cases.patternsEntryFormStartsClean = () => Weave.tests.withPattern(Weave.tests.signupForm(), handle => Weave.tests.noteCount(handle) === 0);
 Weave.tests.cases.patternsEntryFormRefusesAnEmptyRequiredField = () => Weave.tests.refuses(Weave.tests.freshSignup());
 Weave.tests.refuses = handle => (Weave.tests.submitIn(handle), Weave.tests.discard(handle), Weave.tests.accepted.length === 0);

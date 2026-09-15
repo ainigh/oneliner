@@ -115,7 +115,8 @@ Weave.application.searchBox = state => Weave.library.components.searchBox({ name
 Weave.application.searchLabel = 'Search this folder';
 Weave.application.toolbarParts = state => [Weave.application.selectAll(state)].concat(Weave.library.composition.pairs(Weave.application.moveLabels).map(Weave.application.moveButton(state)), [Weave.application.searchBox(state)]);
 Weave.application.listHead = state => Weave.library.components.sticky({ children: [Weave.library.components.toolbar({ items: Weave.application.toolbarParts(state) }), Weave.library.components.note({ text: Weave.application.countText(state) })] });
-Weave.application.countText = state => Weave.library.formatting.decimal(Weave.application.visible(state).length) + Weave.application.countSuffix;
+Weave.application.wholeNumber = Weave.library.formatting.decimal(0);
+Weave.application.countText = state => Weave.application.wholeNumber(Weave.application.visible(state).length) + Weave.application.countSuffix;
 Weave.application.countSuffix = ' threads';
 Weave.application.listBody = (state, ignored) => Weave.library.components.pane({ pane: Weave.library.components.markNames.pane.list, children: [Weave.application.listHead(state), Weave.application.listHandle.element] });
 

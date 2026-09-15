@@ -258,7 +258,9 @@ Weave.library.browser.pageScrollX = () => scrollX;
 Weave.library.browser.pageScrollY = () => scrollY;
 Weave.library.browser.scrollWindowTo = options => (scrollTo(options), undefined);
 Weave.library.browser.devicePixelRatio = () => devicePixelRatio;
-Weave.library.browser.matchMedia = query => matchMedia(query);
+Weave.library.browser.mediaStub = { matches: false, media: '', addEventListener: Weave.library.composition.noop, removeEventListener: Weave.library.composition.noop, addListener: Weave.library.composition.noop, removeListener: Weave.library.composition.noop };
+Weave.library.browser.hasMatchMedia = () => typeof matchMedia === 'function';
+Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.library.browser.hasMatchMedia, () => matchMedia(query), () => Weave.library.browser.mediaStub)(query);
 
 /* events: registration, dispatch and every getter the event object exposes. */
 Weave.library.browser.addListener = (el, [type, handler]) => (el.addEventListener(type, handler), el);
