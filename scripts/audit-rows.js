@@ -33,8 +33,11 @@ const cases = [
   { table: 'Weave.library.browser.dateParts', target: 'library.browser.dateReaders', nameOf: key => key },
   { table: 'Weave.library.components.blueprints', target: 'library.components', nameOf: key => key },
   { table: 'Weave.library.components.tokens', target: 'library.components.vars', nameOf: key => key },
-  { table: 'Weave.library.components.interactive', target: 'library.components.stateRules', nameOf: key => ['focus' + capitalize(key), 'off' + capitalize(key)] },
+  { table: 'Weave.library.components.interactive', target: 'library.components.stateRules', nameOf: (key, root) => ['focus' + capitalize(key)].concat(Object.keys(reach(root, 'library.components.disableable')).includes(key) ? ['off' + capitalize(key)] : []) },
   { table: 'Weave.library.components.pressable', target: 'library.components.stateRules', nameOf: key => ['pressed' + capitalize(key), 'hover' + capitalize(key)] },
+  { table: 'Weave.library.components.states', target: 'library.components.stateNames', nameOf: key => key },
+  { table: 'Weave.library.components.tones', target: 'library.components.toneNames', nameOf: key => key },
+  { table: 'Weave.library.components.modifiers', target: 'library.components.markNames', nameOf: key => key },
 ];
 
 const baseline = evaluate(source);
@@ -52,7 +55,7 @@ cases.forEach(row => {
     const after = new Set(Object.keys(reach(evaluate(trimmed), row.target)));
     const gone = [...before].filter(name => !after.has(name)).sort();
     const added = [...after].filter(name => !before.has(name));
-    const expected = [row.nameOf(key)].flat().sort();
+    const expected = [row.nameOf(key, baseline)].flat().sort();
     checked += 1;
     if (gone.join(',') !== expected.join(',') || added.length > 0) {
       failures.push(`${row.table}.${key}: removed ${JSON.stringify(gone)} expected ${JSON.stringify(expected)}${added.length ? ` and added ${JSON.stringify(added)}` : ''}`);

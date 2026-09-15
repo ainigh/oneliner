@@ -110,7 +110,7 @@ Weave.application.announceMove = (moved, label) => Weave.application.toasts.push
 Weave.application.movedSuffix = ' — threads moved: ';
 Weave.application.undoLabel = 'Undo';
 Weave.application.searchField = 'search';
-Weave.application.searchTyped = event => Weave.application.setQuery(Weave.library.forms.valueOf(Weave.library.browser.currentTargetOf(event)));
+Weave.application.searchTyped = event => Weave.application.setQuery(Weave.library.events.valueOfTarget(event));
 Weave.application.searchBox = state => Weave.library.components.searchBox({ name: Weave.application.searchField, label: Weave.application.searchLabel, value: state.query, onEdit: Weave.application.searchTyped });
 Weave.application.searchLabel = 'Search this folder';
 Weave.application.toolbarParts = state => [Weave.application.selectAll(state)].concat(Weave.library.composition.pairs(Weave.application.moveLabels).map(Weave.application.moveButton(state)), [Weave.application.searchBox(state)]);
@@ -134,9 +134,9 @@ Weave.application.readerBody = (state, ignored) => Weave.library.control.either(
 
 /* compose: a dialog with three fields, refusing to send until the library's own validators are happy. */
 Weave.application.composeFields = {};
-Weave.application.composeFields.to = { label: 'To', rule: Weave.library.forms.validators.email };
-Weave.application.composeFields.subject = { label: 'Subject', rule: Weave.library.forms.validators.required };
-Weave.application.composeFields.body = { label: 'Message', rule: Weave.library.forms.validators.required };
+Weave.application.composeFields.to = { label: 'To', rules: { email: true } };
+Weave.application.composeFields.subject = { label: 'Subject', rules: { required: true } };
+Weave.application.composeFields.body = { label: 'Message', rules: { required: true } };
 Weave.application.composeRows = () => Weave.library.composition.pairs(Weave.application.composeFields).map(([name, row]) => Weave.library.composition.merge(row, { name }));
 Weave.application.composeForm = () => Weave.library.patterns.entryForm({ fields: Weave.application.composeRows(), submit: Weave.application.sendLabel, onSubmit: Weave.application.sent });
 Weave.application.sendLabel = 'Send';

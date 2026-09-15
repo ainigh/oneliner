@@ -148,7 +148,7 @@ Weave.library.predicates.isObject = value => Weave.library.control.and(typeof va
 Weave.library.predicates.typeOfObject = 'object';
 Weave.library.predicates.isPlainObject = value => Weave.library.predicates.both(Weave.library.predicates.isObject, Weave.library.predicates.hasPlainPrototype)(value);
 Weave.library.predicates.hasPlainPrototype = value => [Object.prototype, null].includes(Object.getPrototypeOf(value));
-Weave.library.predicates.isEmptyObject = value => Weave.library.composition.keys(value).length === 0;
+Weave.library.predicates.isEmptyObject = value => Weave.library.composition.keys(Weave.library.control.defaultTo({})(value)).length === 0;
 Weave.library.predicates.isEmptyArray = value => value.length === 0;
 Weave.library.predicates.isEmptyString = value => Weave.library.composition.trim(value).length === 0;
 Weave.library.predicates.isEmpty = value => Weave.library.control.selectByKey(Weave.library.predicates.emptyTests, Weave.library.predicates.isNil)(typeof value)(value);
@@ -230,7 +230,8 @@ Weave.library.control.unless = (test, f) => x => test(x) ? x : f(x);
 Weave.library.control.either = (test, f, g) => x => test(x) ? f(x) : g(x);
 Weave.library.control.select = rows => x => Weave.library.control.applyRow(rows.find(([test]) => test(x)), x);
 Weave.library.control.applyRow = (row, x) => Weave.library.control.either(Weave.library.predicates.isDefined, found => found[1](x), Weave.library.composition.noop)(row);
-Weave.library.control.selectByKey = (table, fallback) => key => Weave.library.control.nullish(table[key], fallback);
+Weave.library.control.ownValue = (table, key) => Weave.library.control.either(() => Object.hasOwn(table, key), () => table[key], Weave.library.composition.noop)(key);
+Weave.library.control.selectByKey = (table, fallback) => key => Weave.library.control.nullish(Weave.library.control.ownValue(table, key), fallback);
 Weave.library.control.dispatch = (table, fallback) => key => (...args) => Weave.library.control.selectByKey(table, fallback)(key)(...args);
 Weave.library.control.defaultTo = fallback => x => Weave.library.control.nullish(x, fallback);
 Weave.library.control.orElse = fallback => x => Weave.library.control.or(x, fallback);
@@ -3270,12 +3271,18 @@ Weave.library.overlays.tip = text => element => Weave.library.overlays.tipBind(e
 
 /* patterns: a pattern is a component with state. One view repaints every one of them, the same way. */
 Weave.library.patterns = {};
-Weave.library.patterns.nameOfFocus = () => Weave.library.control.maybe(Weave.library.attributes.name)(Weave.library.query.focused());
-Weave.library.patterns.namedControl = (handle, name) => Weave.library.query.oneWithin(Weave.library.query.attributeSelector(Weave.library.browser.keywords.name, name))(handle.element);
-Weave.library.patterns.restoreFocus = (handle, name) => Weave.library.control.maybe(found => Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.patterns.namedControl(handle, found)))(name);
+Weave.library.patterns.focusReaders = {};
+Weave.library.patterns.focusReaders.name = { read: Weave.library.attributes.name, select: value => Weave.library.query.attributeSelector(Weave.library.browser.keywords.name, value) };
+Weave.library.patterns.focusReaders.id = { read: Weave.library.attributes.attribute(Weave.library.browser.keywords.id), select: value => Weave.library.query.attributeSelector(Weave.library.browser.keywords.id, value) };
+Weave.library.patterns.focusReaders.key = { read: Weave.library.attributes.data(Weave.library.elements.keyName), select: value => Weave.library.query.dataSelector(Weave.library.elements.keyName, value) };
+Weave.library.patterns.focusValue = (row, el) => Weave.library.control.guard(value => !Weave.library.predicates.isEmpty(value))(row.read(el));
+Weave.library.patterns.focusSelectorRow = el => row => Weave.library.control.maybe(row.select)(Weave.library.patterns.focusValue(row, el));
+Weave.library.patterns.focusSelectorFor = el => Weave.library.composition.first(Weave.library.composition.compact(Weave.library.composition.values(Weave.library.patterns.focusReaders).map(Weave.library.patterns.focusSelectorRow(el))));
+Weave.library.patterns.focusSelector = () => Weave.library.control.maybe(Weave.library.patterns.focusSelectorFor)(Weave.library.query.focused());
+Weave.library.patterns.restoreFocus = (handle, selector) => Weave.library.control.maybe(found => Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.query.oneWithin(found)(handle.element)))(selector);
 Weave.library.patterns.paint = handle => Weave.library.elements.morphInner([handle.render(handle.state, handle.update)])(handle.element);
-Weave.library.patterns.painted = (handle, name) => (Weave.library.patterns.paint(handle), Weave.library.patterns.restoreFocus(handle, name), handle);
-Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle, Weave.library.patterns.nameOfFocus());
+Weave.library.patterns.painted = (handle, selector) => (Weave.library.patterns.paint(handle), Weave.library.patterns.restoreFocus(handle, selector), handle);
+Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle, Weave.library.patterns.focusSelector());
 Weave.library.patterns.merged = (handle, changes) => Object.assign(handle, { state: Weave.library.composition.merge(handle.state, changes) });
 Weave.library.patterns.updater = handle => change => Weave.library.patterns.repaint(Weave.library.patterns.merged(handle, change(handle.state)));
 Weave.library.patterns.wired = handle => Object.assign(handle, { update: Weave.library.patterns.updater(handle) });

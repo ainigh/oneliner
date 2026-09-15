@@ -583,6 +583,14 @@ Weave.tests.cancelledTimeout = () => Weave.library.composition.tap(handle => han
 Weave.tests.cases.controlTimeoutHandsBackItsCancel = () => Weave.library.predicates.isFunction(Weave.tests.cancelledTimeout().cancel);
 Weave.tests.toastStack = () => Weave.library.composition.tap(handle => handle.push('Pinned'))(Weave.library.patterns.notifications({}));
 Weave.tests.cases.patternsToastHoldsItsOwnCancel = () => Weave.library.predicates.isFunction(Weave.library.composition.first(Weave.tests.toastStack().state.toasts).cancel);
+Weave.tests.cases.predicatesIsEmptyAnswersForNothing = () => Weave.library.control.and(Weave.library.predicates.isEmpty(null) === true, Weave.library.predicates.isEmpty(undefined) === true);
+Weave.tests.namelessButton = () => Weave.library.elements.appendTo(Weave.library.browser.body())(Weave.library.components.button({ text: 'nameless' }));
+Weave.tests.focusedSelector = element => (Weave.library.browser.focus(element), Weave.library.patterns.focusSelector());
+Weave.tests.cases.patternsFocusSelectorSkipsANamelessControl = () => Weave.library.predicates.isDefined(Weave.tests.focusedSelector(Weave.tests.namelessButton())) === false;
+Weave.tests.namedInput = () => Weave.library.elements.appendTo(Weave.library.browser.body())(Weave.library.components.control({ name: 'finder', label: 'Find' }));
+Weave.tests.cases.patternsFocusSelectorFindsANamedControl = () => Weave.tests.focusedSelector(Weave.tests.namedInput()) === Weave.library.query.attributeSelector(Weave.library.browser.keywords.name, 'finder');
+Weave.tests.cases.controlSelectByKeyIgnoresInheritedNames = () => Weave.library.control.selectByKey({}, Weave.tests.selectFallback)('valueOf') === Weave.tests.selectFallback;
+Weave.tests.selectFallback = 'fallback';
 Weave.tests.cases.interactionResizeAddsToTheStartSize = () => Weave.library.interaction.resizeStyles({ width: 10, height: 20, dx: 5, dy: 6 })[Weave.library.browser.properties.width] === 15;
 
 /* the overlay layer: a dialog that traps and releases, a popover that goes, and a tip that leaves nothing. */

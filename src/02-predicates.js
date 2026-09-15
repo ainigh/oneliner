@@ -33,7 +33,7 @@ Weave.library.predicates.isObject = value => Weave.library.control.and(typeof va
 Weave.library.predicates.typeOfObject = 'object';
 Weave.library.predicates.isPlainObject = value => Weave.library.predicates.both(Weave.library.predicates.isObject, Weave.library.predicates.hasPlainPrototype)(value);
 Weave.library.predicates.hasPlainPrototype = value => [Object.prototype, null].includes(Object.getPrototypeOf(value));
-Weave.library.predicates.isEmptyObject = value => Weave.library.composition.keys(value).length === 0;
+Weave.library.predicates.isEmptyObject = value => Weave.library.composition.keys(Weave.library.control.defaultTo({})(value)).length === 0;
 Weave.library.predicates.isEmptyArray = value => value.length === 0;
 Weave.library.predicates.isEmptyString = value => Weave.library.composition.trim(value).length === 0;
 Weave.library.predicates.isEmpty = value => Weave.library.control.selectByKey(Weave.library.predicates.emptyTests, Weave.library.predicates.isNil)(typeof value)(value);
