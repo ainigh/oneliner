@@ -14978,5 +14978,293 @@
     "layer": "patterns",
     "shape": "arrow",
     "line": 2717
+  },
+  {
+    "path": "Weave.library.patterns.storeFrom",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2720
+  },
+  {
+    "path": "Weave.library.patterns.store",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2721
+  },
+  {
+    "path": "Weave.library.patterns.storeUpdater",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2722
+  },
+  {
+    "path": "Weave.library.patterns.storeMerged",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2723
+  },
+  {
+    "path": "Weave.library.patterns.storeNotify",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2724
+  },
+  {
+    "path": "Weave.library.patterns.storeWatcher",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2725
+  },
+  {
+    "path": "Weave.library.patterns.storeForget",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2726
+  },
+  {
+    "path": "Weave.library.patterns.followStore",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2727
+  },
+  {
+    "path": "Weave.library.patterns.joined",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2728
+  },
+  {
+    "path": "Weave.library.patterns.connect",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2729
+  },
+  {
+    "path": "Weave.library.patterns.releasesOf",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2732
+  },
+  {
+    "path": "Weave.library.patterns.holding",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2733
+  },
+  {
+    "path": "Weave.library.patterns.stop",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2734
+  },
+  {
+    "path": "Weave.library.patterns.detach",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2735
+  },
+  {
+    "path": "Weave.library.patterns.stacks",
+    "layer": "patterns",
+    "shape": "namespace",
+    "line": 2738
+  },
+  {
+    "path": "Weave.library.patterns.stacks.past",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2739
+  },
+  {
+    "path": "Weave.library.patterns.stacks.future",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2740
+  },
+  {
+    "path": "Weave.library.patterns.timeTravel",
+    "layer": "patterns",
+    "shape": "namespace",
+    "line": 2741
+  },
+  {
+    "path": "Weave.library.patterns.timeTravel.undo",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2742
+  },
+  {
+    "path": "Weave.library.patterns.timeTravel.redo",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2743
+  },
+  {
+    "path": "Weave.library.patterns.emptyLog",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2744
+  },
+  {
+    "path": "Weave.library.patterns.popped",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2745
+  },
+  {
+    "path": "Weave.library.patterns.isStore",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2746
+  },
+  {
+    "path": "Weave.library.patterns.storeShow",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2747
+  },
+  {
+    "path": "Weave.library.patterns.showState",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2748
+  },
+  {
+    "path": "Weave.library.patterns.rotated",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2749
+  },
+  {
+    "path": "Weave.library.patterns.travelWith",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2750
+  },
+  {
+    "path": "Weave.library.patterns.travelTo",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2751
+  },
+  {
+    "path": "Weave.library.patterns.hasSteps",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2752
+  },
+  {
+    "path": "Weave.library.patterns.traveller",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2753
+  },
+  {
+    "path": "Weave.library.patterns.checker",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2754
+  },
+  {
+    "path": "Weave.library.patterns.canPrefix",
+    "layer": "patterns",
+    "shape": "row",
+    "line": 2755
+  },
+  {
+    "path": "Weave.library.patterns.canName",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2756
+  },
+  {
+    "path": "Weave.library.patterns.travellers",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2757
+  },
+  {
+    "path": "Weave.library.patterns.checkers",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2758
+  },
+  {
+    "path": "Weave.library.patterns.recorded",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2759
+  },
+  {
+    "path": "Weave.library.patterns.recorder",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2760
+  },
+  {
+    "path": "Weave.library.patterns.record",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2761
+  },
+  {
+    "path": "Weave.library.patterns.withHistory",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2762
+  },
+  {
+    "path": "Weave.library.patterns.historyWired",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2763
+  },
+  {
+    "path": "Weave.library.patterns.saved",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2766
+  },
+  {
+    "path": "Weave.library.patterns.saving",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2767
+  },
+  {
+    "path": "Weave.library.patterns.reloaded",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2768
+  },
+  {
+    "path": "Weave.library.patterns.persistWired",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2769
+  },
+  {
+    "path": "Weave.library.patterns.persistIn",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2770
+  },
+  {
+    "path": "Weave.library.patterns.persist",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2771
+  },
+  {
+    "path": "Weave.library.patterns.forgetIn",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2772
+  },
+  {
+    "path": "Weave.library.patterns.forget",
+    "layer": "patterns",
+    "shape": "arrow",
+    "line": 2773
   }
 ]
