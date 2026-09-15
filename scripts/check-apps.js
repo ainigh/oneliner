@@ -12,7 +12,7 @@ function open(file) {
 }
 
 function settle(dom) {
-  return new Promise(resolve => setTimeout(() => resolve(dom), 250));
+  return new Promise(resolve => setTimeout(() => resolve(dom), 750));
 }
 
 function expect(name, ok, detail) {
