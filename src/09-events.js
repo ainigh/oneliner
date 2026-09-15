@@ -30,6 +30,8 @@ Weave.library.events.delegateAll = obj => el => Weave.library.events.combine(Wea
 Weave.library.events.trigger = (type, detail) => el => (Weave.library.browser.dispatch(el, Weave.library.browser.createEvent(type, { bubbles: true, cancelable: true, detail })), el);
 Weave.library.events.dispatchEvent = event => el => Weave.library.browser.dispatch(el, event);
 Weave.library.events.triggerNative = type => el => Weave.library.events.nativeTriggers[type](el);
+Weave.library.events.triggerKey = (type, key) => el => Weave.library.browser.dispatchKey(el, type, key);
+Weave.library.events.pressKey = key => el => Weave.library.events.triggerKey(Weave.library.events.types.keydown, key)(el);
 Weave.library.events.isLoading = () => Weave.library.browser.readyState() === Weave.library.browser.readyStates.loading;
 Weave.library.events.ready = f => Weave.library.control.either(Weave.library.events.isLoading, () => Weave.library.events.on(Weave.library.events.types.domContentLoaded, f)(Weave.library.browser.document()), () => Weave.library.timing.defer(f))(f);
 Weave.library.events.loaded = f => Weave.library.events.on(Weave.library.events.types.load, f)(Weave.library.browser.window());

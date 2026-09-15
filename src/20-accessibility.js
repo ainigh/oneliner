@@ -84,11 +84,11 @@ Weave.library.accessibility.cycleForward = (el, event) => Weave.library.control.
 Weave.library.accessibility.trapFocus = el => Weave.library.accessibility.trapWith(el, Weave.library.interaction.restoreFocus());
 Weave.library.accessibility.trapWith = (el, restore) => Weave.library.accessibility.releaseWith(Weave.library.events.on(Weave.library.events.types.keydown, Weave.library.accessibility.trapStep(el))(Weave.library.browser.document()), restore, el);
 Weave.library.accessibility.releaseWith = (unsubscribe, restore, el) => (Weave.library.interaction.focusFirst(el), () => (unsubscribe(), restore()));
-Weave.library.accessibility.modal = (el, onClose = Weave.library.composition.noop) => Weave.library.accessibility.modalWith(el, { close: Weave.library.composition.noop, onClose });
+Weave.library.accessibility.modal = (el, onClose) => Weave.library.accessibility.modalWith(el, { close: Weave.library.composition.noop, onClose });
 Weave.library.accessibility.modalWith = (el, state) => Weave.library.accessibility.modalHold(state, Weave.library.accessibility.trapFocus(el), Weave.library.interaction.onEscape(() => Weave.library.accessibility.modalEscape(state))(Weave.library.browser.document()));
 Weave.library.accessibility.modalHold = (state, trap, escape) => (Weave.library.interaction.lockScroll(), Object.assign(state, { close: Weave.library.control.once(() => Weave.library.accessibility.modalEnd(trap, escape)) }).close);
 Weave.library.accessibility.modalEnd = (trap, escape) => (escape(), trap(), Weave.library.interaction.unlockScroll());
-Weave.library.accessibility.modalEscape = state => (state.close(), state.onClose());
+Weave.library.accessibility.modalEscape = state => Weave.library.control.defaultTo(state.close)(state.onClose)();
 Weave.library.accessibility.rovingIndex = 'tabindex';
 Weave.library.accessibility.setRoving = (items, index) => items.forEach((item, position) => Weave.library.attributes.setAttribute(Weave.library.accessibility.rovingIndex, Weave.library.accessibility.rovingValue(position === index))(item));
 Weave.library.accessibility.rovingValue = active => Weave.library.control.either(() => active, () => Weave.library.accessibility.zeroText, () => Weave.library.accessibility.minusOneText)(active);

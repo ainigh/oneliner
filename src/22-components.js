@@ -674,18 +674,6 @@ Weave.library.components.hostRules.ground = { margin: Weave.library.components.v
 Weave.library.components.hostText = ([name, style]) => Weave.library.components.blockFor(Weave.library.components.hostSelectors[name], style);
 Weave.library.components.hostTexts = () => Weave.library.composition.pairs(Weave.library.components.hostRules).map(Weave.library.components.hostText);
 
-/* sheetExtras: the only place the blocks after the plain rules are listed. One row, one block maker. */
-Weave.library.components.schemeTexts = () => [Weave.library.components.schemeText()];
-Weave.library.components.sheetExtras = {};
-Weave.library.components.sheetExtras.hosts = Weave.library.components.hostTexts;
-Weave.library.components.sheetExtras.themes = Weave.library.components.themeTexts;
-Weave.library.components.sheetExtras.scheme = Weave.library.components.schemeTexts;
-Weave.library.components.sheetExtras.ease = Weave.library.components.easeTexts;
-Weave.library.components.sheetExtras.tones = Weave.library.components.toneTexts;
-Weave.library.components.sheetExtras.variantHovers = Weave.library.components.variantHoverTexts;
-Weave.library.components.sheetExtras.keyframes = Weave.library.components.keyframesTexts;
-Weave.library.components.sheetExtras.media = Weave.library.components.mediaTexts;
-Weave.library.components.extraTexts = () => Weave.library.composition.values(Weave.library.components.sheetExtras).flatMap(make => make());
 
 /* overlay rules: the only place the system positions anything. One host, and a ladder inside it. */
 Weave.library.components.rules.overlayHost = { position: Weave.library.components.values.fixed, inset: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerOverlay, pointerEvents: Weave.library.components.values.none };
@@ -732,7 +720,6 @@ Weave.library.components.markRow = ([key, row]) => Weave.library.composition.pai
 Weave.library.components.markTexts = () => Weave.library.composition.pairs(Weave.library.components.modifiers).flatMap(Weave.library.components.markRow);
 Weave.library.components.markData = key => spec => Weave.library.control.defaultTo({})(Weave.library.control.maybe(value => ({ [key]: value }))(spec[key]));
 Weave.library.components.marksOf = spec => Weave.library.composition.mergeAll(Weave.library.composition.keys(Weave.library.components.modifiers).map(key => Weave.library.components.markData(key)(spec)));
-Weave.library.components.sheetExtras.marks = Weave.library.components.markTexts;
 
 /* markNames: every modifier value as a name, so an application asks for one by name and never by string. */
 Weave.library.components.nameTable = table => Weave.library.composition.fromPairs(Weave.library.composition.keys(table).map(name => [name, name]));
@@ -786,3 +773,17 @@ Weave.library.components.stateRules.stepHere = { name: 'step', state: Weave.libr
 Weave.library.components.stateRules.controlInvalid = { name: Weave.library.components.interactive.control, state: Weave.library.components.stateNames.invalid, style: { borderColor: Weave.library.components.vars.danger } };
 Weave.library.components.pinnedToBottom = { position: Weave.library.components.values.fixed, left: Weave.library.components.values.zero, right: Weave.library.components.values.zero, bottom: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerSticky, borderRadius: Weave.library.components.values.zero };
 Weave.library.components.mediaRules.compact.rules.tabBar = Weave.library.components.pinnedToBottom;
+
+/* sheetExtras: the only place the blocks after the plain rules are listed. One row, one block maker. */
+Weave.library.components.schemeTexts = () => [Weave.library.components.schemeText()];
+Weave.library.components.sheetExtras = {};
+Weave.library.components.sheetExtras.hosts = Weave.library.components.hostTexts;
+Weave.library.components.sheetExtras.themes = Weave.library.components.themeTexts;
+Weave.library.components.sheetExtras.scheme = Weave.library.components.schemeTexts;
+Weave.library.components.sheetExtras.ease = Weave.library.components.easeTexts;
+Weave.library.components.sheetExtras.tones = Weave.library.components.toneTexts;
+Weave.library.components.sheetExtras.marks = Weave.library.components.markTexts;
+Weave.library.components.sheetExtras.variantHovers = Weave.library.components.variantHoverTexts;
+Weave.library.components.sheetExtras.keyframes = Weave.library.components.keyframesTexts;
+Weave.library.components.sheetExtras.media = Weave.library.components.mediaTexts;
+Weave.library.components.extraTexts = () => Weave.library.composition.values(Weave.library.components.sheetExtras).flatMap(make => make());

@@ -266,6 +266,8 @@ Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.l
 Weave.library.browser.addListener = (el, [type, handler]) => (el.addEventListener(type, handler), el);
 Weave.library.browser.addListenerWithOptions = (el, type, handler, options) => (el.addEventListener(type, handler, options), el);
 Weave.library.browser.removeListener = (el, type, handler, options) => (el.removeEventListener(type, handler, options), el);
+Weave.library.browser.createKeyEvent = (type, key) => new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+Weave.library.browser.dispatchKey = (el, type, key) => (Weave.library.browser.dispatch(el, Weave.library.browser.createKeyEvent(type, key)), el);
 Weave.library.browser.dispatch = (el, event) => el.dispatchEvent(event);
 Weave.library.browser.createEvent = (type, init) => new CustomEvent(type, init);
 Weave.library.browser.createKeyboardEvent = (type, init) => new KeyboardEvent(type, init);

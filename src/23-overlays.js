@@ -7,6 +7,11 @@ Weave.library.overlays.host = () => Weave.library.control.either(Weave.library.p
 Weave.library.overlays.mount = element => Weave.library.elements.appendTo(Weave.library.overlays.host())(element);
 Weave.library.overlays.unmount = element => Weave.library.elements.remove(element);
 Weave.library.overlays.openCount = () => Weave.library.query.children(Weave.library.overlays.host()).length;
+Weave.library.overlays.stack = [];
+Weave.library.overlays.push = state => (Weave.library.overlays.stack.push(state), state);
+Weave.library.overlays.drop = state => Weave.library.control.when(index => index >= 0, index => Weave.library.overlays.stack.splice(index, 1))(Weave.library.overlays.stack.indexOf(state));
+Weave.library.overlays.isTop = state => Weave.library.composition.last(Weave.library.overlays.stack) === state;
+Weave.library.overlays.escapeTop = state => Weave.library.control.when(() => Weave.library.overlays.isTop(state), () => state.close())(state);
 
 /* layers: a scrim and a box, mounted together and released together. Only the box maker differs. */
 Weave.library.overlays.layerState = spec => ({ spec, nodes: [], close: Weave.library.composition.noop });
@@ -17,8 +22,9 @@ Weave.library.overlays.layerScrim = state => Weave.library.components.scrim({ on
 Weave.library.overlays.layerNodes = (make, spec, state) => [Weave.library.overlays.layerScrim(state), Weave.library.overlays.layerBox(make, spec)].map(Weave.library.overlays.mount);
 Weave.library.overlays.layerBoxOf = state => Weave.library.composition.last(state.nodes);
 Weave.library.overlays.layerFill = (state, make) => Object.assign(state, { nodes: Weave.library.overlays.layerNodes(make, state.spec, state) });
-Weave.library.overlays.layerHold = state => Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.layerEnd(state)), release: Weave.library.accessibility.modal(Weave.library.overlays.layerBoxOf(state), () => Weave.library.overlays.layerClose(state)) });
-Weave.library.overlays.layerEnd = state => (state.release(), state.nodes.forEach(Weave.library.overlays.unmount), Weave.library.control.maybe(done => done())(state.spec.onClose));
+Weave.library.overlays.layerTrap = state => Weave.library.accessibility.modal(Weave.library.overlays.layerBoxOf(state), () => Weave.library.overlays.escapeTop(state));
+Weave.library.overlays.layerHold = state => Weave.library.overlays.push(Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.layerEnd(state)), release: Weave.library.overlays.layerTrap(state) }));
+Weave.library.overlays.layerEnd = state => (Weave.library.overlays.drop(state), state.release(), state.nodes.forEach(Weave.library.overlays.unmount), Weave.library.control.maybe(done => done())(state.spec.onClose));
 Weave.library.overlays.layerClose = state => state.close();
 Weave.library.overlays.layerHandle = state => ({ element: Weave.library.overlays.layerBoxOf(state), close: state.close });
 Weave.library.overlays.openLayer = (make, spec) => Weave.library.overlays.layerHandle(Weave.library.overlays.layerHold(Weave.library.overlays.layerFill(Weave.library.overlays.layerState(spec), make)));
@@ -35,7 +41,8 @@ Weave.library.overlays.anchorTop = (rect, height) => Weave.library.control.eithe
 Weave.library.overlays.fitsBelow = (rect, height) => rect.bottom + height + Weave.library.overlays.gap <= Weave.library.style.viewport().height;
 Weave.library.overlays.aboveTop = (rect, height) => Math.max(Weave.library.overlays.edge, rect.top - height - Weave.library.overlays.gap);
 Weave.library.overlays.placement = (rect, box) => ({ left: Weave.library.overlays.anchorLeft(rect, Weave.library.style.outerWidth(box)), top: Weave.library.overlays.anchorTop(rect, Weave.library.style.outerHeight(box)) });
-Weave.library.overlays.placeAt = (box, anchor) => Weave.library.style.setCssAll(Weave.library.overlays.placement(Weave.library.style.rect(anchor), box))(box);
+Weave.library.overlays.moveTo = (box, anchor) => Weave.library.style.setCssAll(Weave.library.overlays.placement(Weave.library.style.rect(anchor), box))(box);
+Weave.library.overlays.placeAt = (box, anchor) => Weave.library.composition.tap(() => Weave.library.control.maybe(found => Weave.library.overlays.moveTo(box, found))(anchor))(box);
 
 /* popovers: at most one is open at a time, and it goes when you click away, press escape or scroll. */
 Weave.library.overlays.openPopovers = [];
@@ -45,12 +52,13 @@ Weave.library.overlays.remember = state => (Weave.library.overlays.openPopovers.
 Weave.library.overlays.isOutside = (state, target) => Weave.library.control.and(!Weave.library.predicates.contains(state.box, target), !Weave.library.predicates.contains(state.anchor, target));
 Weave.library.overlays.outsideStep = state => event => Weave.library.control.when(() => Weave.library.overlays.isOutside(state, Weave.library.browser.targetOf(event)), () => state.close())(event);
 Weave.library.overlays.watchOutside = state => Weave.library.events.on(Weave.library.events.types.pointerdown, Weave.library.overlays.outsideStep(state))(Weave.library.browser.document());
-Weave.library.overlays.watchEscape = state => Weave.library.interaction.onEscape(() => state.close())(Weave.library.browser.document());
+Weave.library.overlays.watchEscape = state => Weave.library.interaction.onEscape(() => Weave.library.overlays.escapeTop(state))(Weave.library.browser.document());
 Weave.library.overlays.scrollOptions = { capture: true, passive: true };
 Weave.library.overlays.watchScroll = state => Weave.library.events.onWithOptions(Weave.library.events.types.scroll, () => state.close(), Weave.library.overlays.scrollOptions)(Weave.library.browser.document());
 Weave.library.overlays.popoverState = (anchor, box) => ({ anchor, box, close: Weave.library.composition.noop, releases: [] });
-Weave.library.overlays.popoverHold = state => Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state), Weave.library.overlays.watchScroll(state)] });
-Weave.library.overlays.popoverEnd = state => (state.releases.forEach(release => release()), Weave.library.overlays.unmount(state.box), Weave.library.overlays.forget(state), Weave.library.overlays.popoverDone(state));
+Weave.library.overlays.popoverWatchers = state => [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state), Weave.library.overlays.watchScroll(state)];
+Weave.library.overlays.popoverHold = state => Weave.library.overlays.push(Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: Weave.library.overlays.popoverWatchers(state) }));
+Weave.library.overlays.popoverEnd = state => (Weave.library.overlays.drop(state), state.releases.forEach(release => release()), Weave.library.overlays.unmount(state.box), Weave.library.overlays.forget(state), Weave.library.overlays.popoverDone(state));
 Weave.library.overlays.popoverDone = state => Weave.library.control.maybe(done => done())(state.onClose);
 Weave.library.overlays.popoverBox = spec => Weave.library.components.popoverBox({ children: Weave.library.components.childrenOf(spec, Weave.library.components.bodyKey), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.menu) });
 Weave.library.overlays.popoverOpen = (anchor, spec) => Weave.library.overlays.popoverPlace(Weave.library.overlays.popoverState(anchor, Weave.library.overlays.mount(Weave.library.overlays.popoverBox(spec))), spec);

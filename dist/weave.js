@@ -549,6 +549,8 @@ Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.l
 Weave.library.browser.addListener = (el, [type, handler]) => (el.addEventListener(type, handler), el);
 Weave.library.browser.addListenerWithOptions = (el, type, handler, options) => (el.addEventListener(type, handler, options), el);
 Weave.library.browser.removeListener = (el, type, handler, options) => (el.removeEventListener(type, handler, options), el);
+Weave.library.browser.createKeyEvent = (type, key) => new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+Weave.library.browser.dispatchKey = (el, type, key) => (Weave.library.browser.dispatch(el, Weave.library.browser.createKeyEvent(type, key)), el);
 Weave.library.browser.dispatch = (el, event) => el.dispatchEvent(event);
 Weave.library.browser.createEvent = (type, init) => new CustomEvent(type, init);
 Weave.library.browser.createKeyboardEvent = (type, init) => new KeyboardEvent(type, init);
@@ -1340,6 +1342,8 @@ Weave.library.events.delegateAll = obj => el => Weave.library.events.combine(Wea
 Weave.library.events.trigger = (type, detail) => el => (Weave.library.browser.dispatch(el, Weave.library.browser.createEvent(type, { bubbles: true, cancelable: true, detail })), el);
 Weave.library.events.dispatchEvent = event => el => Weave.library.browser.dispatch(el, event);
 Weave.library.events.triggerNative = type => el => Weave.library.events.nativeTriggers[type](el);
+Weave.library.events.triggerKey = (type, key) => el => Weave.library.browser.dispatchKey(el, type, key);
+Weave.library.events.pressKey = key => el => Weave.library.events.triggerKey(Weave.library.events.types.keydown, key)(el);
 Weave.library.events.isLoading = () => Weave.library.browser.readyState() === Weave.library.browser.readyStates.loading;
 Weave.library.events.ready = f => Weave.library.control.either(Weave.library.events.isLoading, () => Weave.library.events.on(Weave.library.events.types.domContentLoaded, f)(Weave.library.browser.document()), () => Weave.library.timing.defer(f))(f);
 Weave.library.events.loaded = f => Weave.library.events.on(Weave.library.events.types.load, f)(Weave.library.browser.window());
@@ -2310,11 +2314,11 @@ Weave.library.accessibility.cycleForward = (el, event) => Weave.library.control.
 Weave.library.accessibility.trapFocus = el => Weave.library.accessibility.trapWith(el, Weave.library.interaction.restoreFocus());
 Weave.library.accessibility.trapWith = (el, restore) => Weave.library.accessibility.releaseWith(Weave.library.events.on(Weave.library.events.types.keydown, Weave.library.accessibility.trapStep(el))(Weave.library.browser.document()), restore, el);
 Weave.library.accessibility.releaseWith = (unsubscribe, restore, el) => (Weave.library.interaction.focusFirst(el), () => (unsubscribe(), restore()));
-Weave.library.accessibility.modal = (el, onClose = Weave.library.composition.noop) => Weave.library.accessibility.modalWith(el, { close: Weave.library.composition.noop, onClose });
+Weave.library.accessibility.modal = (el, onClose) => Weave.library.accessibility.modalWith(el, { close: Weave.library.composition.noop, onClose });
 Weave.library.accessibility.modalWith = (el, state) => Weave.library.accessibility.modalHold(state, Weave.library.accessibility.trapFocus(el), Weave.library.interaction.onEscape(() => Weave.library.accessibility.modalEscape(state))(Weave.library.browser.document()));
 Weave.library.accessibility.modalHold = (state, trap, escape) => (Weave.library.interaction.lockScroll(), Object.assign(state, { close: Weave.library.control.once(() => Weave.library.accessibility.modalEnd(trap, escape)) }).close);
 Weave.library.accessibility.modalEnd = (trap, escape) => (escape(), trap(), Weave.library.interaction.unlockScroll());
-Weave.library.accessibility.modalEscape = state => (state.close(), state.onClose());
+Weave.library.accessibility.modalEscape = state => Weave.library.control.defaultTo(state.close)(state.onClose)();
 Weave.library.accessibility.rovingIndex = 'tabindex';
 Weave.library.accessibility.setRoving = (items, index) => items.forEach((item, position) => Weave.library.attributes.setAttribute(Weave.library.accessibility.rovingIndex, Weave.library.accessibility.rovingValue(position === index))(item));
 Weave.library.accessibility.rovingValue = active => Weave.library.control.either(() => active, () => Weave.library.accessibility.zeroText, () => Weave.library.accessibility.minusOneText)(active);
@@ -3130,18 +3134,6 @@ Weave.library.components.hostRules.ground = { margin: Weave.library.components.v
 Weave.library.components.hostText = ([name, style]) => Weave.library.components.blockFor(Weave.library.components.hostSelectors[name], style);
 Weave.library.components.hostTexts = () => Weave.library.composition.pairs(Weave.library.components.hostRules).map(Weave.library.components.hostText);
 
-/* sheetExtras: the only place the blocks after the plain rules are listed. One row, one block maker. */
-Weave.library.components.schemeTexts = () => [Weave.library.components.schemeText()];
-Weave.library.components.sheetExtras = {};
-Weave.library.components.sheetExtras.hosts = Weave.library.components.hostTexts;
-Weave.library.components.sheetExtras.themes = Weave.library.components.themeTexts;
-Weave.library.components.sheetExtras.scheme = Weave.library.components.schemeTexts;
-Weave.library.components.sheetExtras.ease = Weave.library.components.easeTexts;
-Weave.library.components.sheetExtras.tones = Weave.library.components.toneTexts;
-Weave.library.components.sheetExtras.variantHovers = Weave.library.components.variantHoverTexts;
-Weave.library.components.sheetExtras.keyframes = Weave.library.components.keyframesTexts;
-Weave.library.components.sheetExtras.media = Weave.library.components.mediaTexts;
-Weave.library.components.extraTexts = () => Weave.library.composition.values(Weave.library.components.sheetExtras).flatMap(make => make());
 
 /* overlay rules: the only place the system positions anything. One host, and a ladder inside it. */
 Weave.library.components.rules.overlayHost = { position: Weave.library.components.values.fixed, inset: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerOverlay, pointerEvents: Weave.library.components.values.none };
@@ -3188,7 +3180,6 @@ Weave.library.components.markRow = ([key, row]) => Weave.library.composition.pai
 Weave.library.components.markTexts = () => Weave.library.composition.pairs(Weave.library.components.modifiers).flatMap(Weave.library.components.markRow);
 Weave.library.components.markData = key => spec => Weave.library.control.defaultTo({})(Weave.library.control.maybe(value => ({ [key]: value }))(spec[key]));
 Weave.library.components.marksOf = spec => Weave.library.composition.mergeAll(Weave.library.composition.keys(Weave.library.components.modifiers).map(key => Weave.library.components.markData(key)(spec)));
-Weave.library.components.sheetExtras.marks = Weave.library.components.markTexts;
 
 /* markNames: every modifier value as a name, so an application asks for one by name and never by string. */
 Weave.library.components.nameTable = table => Weave.library.composition.fromPairs(Weave.library.composition.keys(table).map(name => [name, name]));
@@ -3243,6 +3234,20 @@ Weave.library.components.stateRules.controlInvalid = { name: Weave.library.compo
 Weave.library.components.pinnedToBottom = { position: Weave.library.components.values.fixed, left: Weave.library.components.values.zero, right: Weave.library.components.values.zero, bottom: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerSticky, borderRadius: Weave.library.components.values.zero };
 Weave.library.components.mediaRules.compact.rules.tabBar = Weave.library.components.pinnedToBottom;
 
+/* sheetExtras: the only place the blocks after the plain rules are listed. One row, one block maker. */
+Weave.library.components.schemeTexts = () => [Weave.library.components.schemeText()];
+Weave.library.components.sheetExtras = {};
+Weave.library.components.sheetExtras.hosts = Weave.library.components.hostTexts;
+Weave.library.components.sheetExtras.themes = Weave.library.components.themeTexts;
+Weave.library.components.sheetExtras.scheme = Weave.library.components.schemeTexts;
+Weave.library.components.sheetExtras.ease = Weave.library.components.easeTexts;
+Weave.library.components.sheetExtras.tones = Weave.library.components.toneTexts;
+Weave.library.components.sheetExtras.marks = Weave.library.components.markTexts;
+Weave.library.components.sheetExtras.variantHovers = Weave.library.components.variantHoverTexts;
+Weave.library.components.sheetExtras.keyframes = Weave.library.components.keyframesTexts;
+Weave.library.components.sheetExtras.media = Weave.library.components.mediaTexts;
+Weave.library.components.extraTexts = () => Weave.library.composition.values(Weave.library.components.sheetExtras).flatMap(make => make());
+
 /* overlays: everything that sits above the page. One host, one ladder, and a release for every open thing. */
 Weave.library.overlays = {};
 Weave.library.overlays.hostName = 'overlayHost';
@@ -3252,6 +3257,11 @@ Weave.library.overlays.host = () => Weave.library.control.either(Weave.library.p
 Weave.library.overlays.mount = element => Weave.library.elements.appendTo(Weave.library.overlays.host())(element);
 Weave.library.overlays.unmount = element => Weave.library.elements.remove(element);
 Weave.library.overlays.openCount = () => Weave.library.query.children(Weave.library.overlays.host()).length;
+Weave.library.overlays.stack = [];
+Weave.library.overlays.push = state => (Weave.library.overlays.stack.push(state), state);
+Weave.library.overlays.drop = state => Weave.library.control.when(index => index >= 0, index => Weave.library.overlays.stack.splice(index, 1))(Weave.library.overlays.stack.indexOf(state));
+Weave.library.overlays.isTop = state => Weave.library.composition.last(Weave.library.overlays.stack) === state;
+Weave.library.overlays.escapeTop = state => Weave.library.control.when(() => Weave.library.overlays.isTop(state), () => state.close())(state);
 
 /* layers: a scrim and a box, mounted together and released together. Only the box maker differs. */
 Weave.library.overlays.layerState = spec => ({ spec, nodes: [], close: Weave.library.composition.noop });
@@ -3262,8 +3272,9 @@ Weave.library.overlays.layerScrim = state => Weave.library.components.scrim({ on
 Weave.library.overlays.layerNodes = (make, spec, state) => [Weave.library.overlays.layerScrim(state), Weave.library.overlays.layerBox(make, spec)].map(Weave.library.overlays.mount);
 Weave.library.overlays.layerBoxOf = state => Weave.library.composition.last(state.nodes);
 Weave.library.overlays.layerFill = (state, make) => Object.assign(state, { nodes: Weave.library.overlays.layerNodes(make, state.spec, state) });
-Weave.library.overlays.layerHold = state => Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.layerEnd(state)), release: Weave.library.accessibility.modal(Weave.library.overlays.layerBoxOf(state), () => Weave.library.overlays.layerClose(state)) });
-Weave.library.overlays.layerEnd = state => (state.release(), state.nodes.forEach(Weave.library.overlays.unmount), Weave.library.control.maybe(done => done())(state.spec.onClose));
+Weave.library.overlays.layerTrap = state => Weave.library.accessibility.modal(Weave.library.overlays.layerBoxOf(state), () => Weave.library.overlays.escapeTop(state));
+Weave.library.overlays.layerHold = state => Weave.library.overlays.push(Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.layerEnd(state)), release: Weave.library.overlays.layerTrap(state) }));
+Weave.library.overlays.layerEnd = state => (Weave.library.overlays.drop(state), state.release(), state.nodes.forEach(Weave.library.overlays.unmount), Weave.library.control.maybe(done => done())(state.spec.onClose));
 Weave.library.overlays.layerClose = state => state.close();
 Weave.library.overlays.layerHandle = state => ({ element: Weave.library.overlays.layerBoxOf(state), close: state.close });
 Weave.library.overlays.openLayer = (make, spec) => Weave.library.overlays.layerHandle(Weave.library.overlays.layerHold(Weave.library.overlays.layerFill(Weave.library.overlays.layerState(spec), make)));
@@ -3280,7 +3291,8 @@ Weave.library.overlays.anchorTop = (rect, height) => Weave.library.control.eithe
 Weave.library.overlays.fitsBelow = (rect, height) => rect.bottom + height + Weave.library.overlays.gap <= Weave.library.style.viewport().height;
 Weave.library.overlays.aboveTop = (rect, height) => Math.max(Weave.library.overlays.edge, rect.top - height - Weave.library.overlays.gap);
 Weave.library.overlays.placement = (rect, box) => ({ left: Weave.library.overlays.anchorLeft(rect, Weave.library.style.outerWidth(box)), top: Weave.library.overlays.anchorTop(rect, Weave.library.style.outerHeight(box)) });
-Weave.library.overlays.placeAt = (box, anchor) => Weave.library.style.setCssAll(Weave.library.overlays.placement(Weave.library.style.rect(anchor), box))(box);
+Weave.library.overlays.moveTo = (box, anchor) => Weave.library.style.setCssAll(Weave.library.overlays.placement(Weave.library.style.rect(anchor), box))(box);
+Weave.library.overlays.placeAt = (box, anchor) => Weave.library.composition.tap(() => Weave.library.control.maybe(found => Weave.library.overlays.moveTo(box, found))(anchor))(box);
 
 /* popovers: at most one is open at a time, and it goes when you click away, press escape or scroll. */
 Weave.library.overlays.openPopovers = [];
@@ -3290,12 +3302,13 @@ Weave.library.overlays.remember = state => (Weave.library.overlays.openPopovers.
 Weave.library.overlays.isOutside = (state, target) => Weave.library.control.and(!Weave.library.predicates.contains(state.box, target), !Weave.library.predicates.contains(state.anchor, target));
 Weave.library.overlays.outsideStep = state => event => Weave.library.control.when(() => Weave.library.overlays.isOutside(state, Weave.library.browser.targetOf(event)), () => state.close())(event);
 Weave.library.overlays.watchOutside = state => Weave.library.events.on(Weave.library.events.types.pointerdown, Weave.library.overlays.outsideStep(state))(Weave.library.browser.document());
-Weave.library.overlays.watchEscape = state => Weave.library.interaction.onEscape(() => state.close())(Weave.library.browser.document());
+Weave.library.overlays.watchEscape = state => Weave.library.interaction.onEscape(() => Weave.library.overlays.escapeTop(state))(Weave.library.browser.document());
 Weave.library.overlays.scrollOptions = { capture: true, passive: true };
 Weave.library.overlays.watchScroll = state => Weave.library.events.onWithOptions(Weave.library.events.types.scroll, () => state.close(), Weave.library.overlays.scrollOptions)(Weave.library.browser.document());
 Weave.library.overlays.popoverState = (anchor, box) => ({ anchor, box, close: Weave.library.composition.noop, releases: [] });
-Weave.library.overlays.popoverHold = state => Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state), Weave.library.overlays.watchScroll(state)] });
-Weave.library.overlays.popoverEnd = state => (state.releases.forEach(release => release()), Weave.library.overlays.unmount(state.box), Weave.library.overlays.forget(state), Weave.library.overlays.popoverDone(state));
+Weave.library.overlays.popoverWatchers = state => [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state), Weave.library.overlays.watchScroll(state)];
+Weave.library.overlays.popoverHold = state => Weave.library.overlays.push(Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: Weave.library.overlays.popoverWatchers(state) }));
+Weave.library.overlays.popoverEnd = state => (Weave.library.overlays.drop(state), state.releases.forEach(release => release()), Weave.library.overlays.unmount(state.box), Weave.library.overlays.forget(state), Weave.library.overlays.popoverDone(state));
 Weave.library.overlays.popoverDone = state => Weave.library.control.maybe(done => done())(state.onClose);
 Weave.library.overlays.popoverBox = spec => Weave.library.components.popoverBox({ children: Weave.library.components.childrenOf(spec, Weave.library.components.bodyKey), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.menu) });
 Weave.library.overlays.popoverOpen = (anchor, spec) => Weave.library.overlays.popoverPlace(Weave.library.overlays.popoverState(anchor, Weave.library.overlays.mount(Weave.library.overlays.popoverBox(spec))), spec);
@@ -3379,7 +3392,8 @@ Weave.library.patterns.listOrEmpty = children => Weave.library.control.either(We
 Weave.library.patterns.queryField = 'query';
 Weave.library.patterns.queryState = () => ({ query: Weave.library.browser.keywords.empty, page: 0 });
 Weave.library.patterns.queryHandler = update => event => update(() => ({ query: Weave.library.events.valueOfTarget(event), page: 0 }));
-Weave.library.patterns.queryBox = (state, update) => Weave.library.components.searchBox({ name: Weave.library.patterns.queryField, placeholder: Weave.library.patterns.labels.search, value: state.query, onEdit: Weave.library.patterns.queryHandler(update) });
+Weave.library.patterns.querySpec = (state, update) => ({ name: Weave.library.patterns.queryField, label: Weave.library.patterns.labels.search, placeholder: Weave.library.patterns.labels.search, value: state.query, onEdit: Weave.library.patterns.queryHandler(update) });
+Weave.library.patterns.queryBox = (state, update) => Weave.library.components.searchBox(Weave.library.patterns.querySpec(state, update));
 Weave.library.patterns.oneFieldForm = (label, name, onSubmit) => Weave.library.components.form({ submit: label, fields: [Weave.library.components.field({ label, name })], onSubmit });
 Weave.library.patterns.splitView = (chooser, pane) => Weave.library.components.row({ children: [Weave.library.components.rail({ children: [chooser] }), Weave.library.components.panel({ children: [pane] })] });
 Weave.library.patterns.stepBack = -1;
@@ -3799,6 +3813,7 @@ Weave.library.patterns.menuRow = state => item => Weave.library.composition.merg
 Weave.library.patterns.menuBody = state => [Weave.library.components.menu({ items: state.spec.items.map(Weave.library.patterns.menuRow(state)) })];
 Weave.library.patterns.menuOpen = (anchor, state) => Object.assign(state, { handle: Weave.library.overlays.popover(anchor, { body: Weave.library.patterns.menuBody(state), onClose: state.spec.onClose }) }).handle;
 Weave.library.patterns.menu = (anchor, spec) => Weave.library.patterns.menuOpen(anchor, Weave.library.patterns.heldState(spec));
+Weave.library.patterns.menuAt = spec => event => Weave.library.patterns.menu(Weave.library.browser.currentTargetOf(event), spec);
 
 /* shortcuts: one row per key, bound to the document and held back while the reader is typing. */
 Weave.library.patterns.shortcutStep = handler => event => Weave.library.control.unless(() => Weave.library.interaction.isTyping(), () => handler(event))(event);

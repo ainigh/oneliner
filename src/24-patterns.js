@@ -48,7 +48,8 @@ Weave.library.patterns.listOrEmpty = children => Weave.library.control.either(We
 Weave.library.patterns.queryField = 'query';
 Weave.library.patterns.queryState = () => ({ query: Weave.library.browser.keywords.empty, page: 0 });
 Weave.library.patterns.queryHandler = update => event => update(() => ({ query: Weave.library.events.valueOfTarget(event), page: 0 }));
-Weave.library.patterns.queryBox = (state, update) => Weave.library.components.searchBox({ name: Weave.library.patterns.queryField, placeholder: Weave.library.patterns.labels.search, value: state.query, onEdit: Weave.library.patterns.queryHandler(update) });
+Weave.library.patterns.querySpec = (state, update) => ({ name: Weave.library.patterns.queryField, label: Weave.library.patterns.labels.search, placeholder: Weave.library.patterns.labels.search, value: state.query, onEdit: Weave.library.patterns.queryHandler(update) });
+Weave.library.patterns.queryBox = (state, update) => Weave.library.components.searchBox(Weave.library.patterns.querySpec(state, update));
 Weave.library.patterns.oneFieldForm = (label, name, onSubmit) => Weave.library.components.form({ submit: label, fields: [Weave.library.components.field({ label, name })], onSubmit });
 Weave.library.patterns.splitView = (chooser, pane) => Weave.library.components.row({ children: [Weave.library.components.rail({ children: [chooser] }), Weave.library.components.panel({ children: [pane] })] });
 Weave.library.patterns.stepBack = -1;
@@ -468,6 +469,7 @@ Weave.library.patterns.menuRow = state => item => Weave.library.composition.merg
 Weave.library.patterns.menuBody = state => [Weave.library.components.menu({ items: state.spec.items.map(Weave.library.patterns.menuRow(state)) })];
 Weave.library.patterns.menuOpen = (anchor, state) => Object.assign(state, { handle: Weave.library.overlays.popover(anchor, { body: Weave.library.patterns.menuBody(state), onClose: state.spec.onClose }) }).handle;
 Weave.library.patterns.menu = (anchor, spec) => Weave.library.patterns.menuOpen(anchor, Weave.library.patterns.heldState(spec));
+Weave.library.patterns.menuAt = spec => event => Weave.library.patterns.menu(Weave.library.browser.currentTargetOf(event), spec);
 
 /* shortcuts: one row per key, bound to the document and held back while the reader is typing. */
 Weave.library.patterns.shortcutStep = handler => event => Weave.library.control.unless(() => Weave.library.interaction.isTyping(), () => handler(event))(event);

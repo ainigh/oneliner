@@ -75,9 +75,43 @@ Weave.application.widgets.disclosure = () => Weave.library.components.disclosure
 Weave.application.widgets.emptyState = () => Weave.library.components.emptyState({ title: 'Nothing here yet', note: 'Add the first record to see it listed.' });
 Weave.application.widgets.toast = () => Weave.library.components.toast({ message: 'Saved a moment ago' });
 Weave.application.twoDaysBack = () => Weave.library.dates.add(Weave.library.dates.names.day, -2)(Weave.library.dates.today());
+Weave.application.widgets.media = () => Weave.library.components.media({ glyph: '🍋', label: 'A picture box before the picture' });
+Weave.application.widgets.choices = () => Weave.library.components.choices({ name: 'portion', label: 'Pick one', value: 'a', options: [{ value: 'a', label: 'The first' }, { value: 'b', label: 'The second' }] });
+Weave.application.widgets.steps = () => Weave.library.components.steps({ label: 'How far along', active: 1, items: ['Chosen', 'Paid', 'Sent'] });
+Weave.application.widgets.fieldError = () => Weave.library.components.fieldError({ text: 'This is what a broken rule looks like' });
+Weave.application.widgets.tabBar = () => Weave.library.components.tabBar({ children: [Weave.library.components.note({ text: 'Thumb bar' }), Weave.library.components.actionButton({ label: 'Order' })] });
 Weave.application.widgets.timestamp = () => Weave.library.components.timestamp({ text: Weave.library.formatting.relative(Weave.application.twoDaysBack()) });
 Weave.application.widgetCard = ([name, make]) => Weave.library.components.card({ children: [Weave.library.components.note({ text: name }), make()] });
 Weave.application.widgetTiles = () => Weave.library.components.tiles({ children: Weave.library.composition.pairs(Weave.application.widgets).map(Weave.application.widgetCard) });
+
+/* layers: one row per kind of thing the overlay layer can open. All three take the same spec. */
+Weave.application.layerTitle = 'Opened over the page';
+Weave.application.layerNote = 'It traps focus, closes on escape and on the scrim, and gives the page its scrollbar back.';
+Weave.application.layerBody = () => [Weave.library.components.note({ text: Weave.application.layerNote }), Weave.library.components.field({ label: 'Something to focus', name: 'inside' })];
+Weave.application.layerActions = close => [{ label: 'Done', variant: Weave.library.components.markNames.variant.primary, onAction: close }];
+Weave.application.layerOpener = open => () => open({ title: Weave.application.layerTitle, body: Weave.application.layerBody(), actions: Weave.application.layerActions });
+/* layers: one row per overlay opener, so the bar below is a table and not a list of buttons. */
+Weave.application.layers = {};
+Weave.application.layers.dialog = Weave.library.patterns.dialog;
+Weave.application.layers.drawer = Weave.library.patterns.drawer;
+Weave.application.layers.sheet = Weave.library.patterns.sheet;
+Weave.application.layerButton = ([name, open]) => Weave.library.components.actionButton({ label: name, onAction: Weave.application.layerOpener(open) });
+Weave.application.confirmButton = () => Weave.library.components.actionButton({ label: 'confirm', onAction: Weave.application.askFirst });
+Weave.application.askFirst = () => Weave.library.patterns.confirm({ title: 'Delete the draft?', note: 'This one cannot be undone.' });
+Weave.application.menuButton = () => Weave.library.components.actionButton({ label: 'menu', onAction: Weave.application.hangMenu });
+Weave.application.menuItems = [{ label: 'Rename' }, { label: 'Duplicate' }, { label: 'Archive' }];
+Weave.application.hangMenu = Weave.library.patterns.menuAt({ items: Weave.application.menuItems });
+Weave.application.toastButton = () => Weave.library.components.actionButton({ label: 'toast', onAction: Weave.application.raiseToast });
+Weave.application.raiseToast = () => Weave.application.toasts.push('Pinned to the corner, and it expires on its own', Weave.library.components.toneNames.success);
+Weave.application.toasts = Weave.library.patterns.notifications({});
+Weave.application.layerButtons = () => Weave.library.composition.pairs(Weave.application.layers).map(Weave.application.layerButton);
+Weave.application.extraButtons = () => [Weave.application.confirmButton(), Weave.application.menuButton(), Weave.application.toastButton(), Weave.application.tipTarget()];
+Weave.application.layerBar = () => Weave.library.components.toolbar({ items: Weave.application.layerButtons().concat(Weave.application.extraButtons()) });
+Weave.application.tipTarget = () => Weave.library.composition.tap(Weave.library.overlays.tip('A bubble that follows the target'))(Weave.library.components.actionButton({ label: 'hover for a tip' }));
+
+/* sizes and panes: the other two modifier tables, shown the way the variant table is. */
+Weave.application.sizeButton = size => Weave.library.components.actionButton({ label: size, size });
+Weave.application.sizeBar = () => Weave.library.components.toolbar({ items: Weave.library.composition.keys(Weave.library.components.sizes).map(Weave.application.sizeButton).concat([Weave.application.plainButton()]) });
 
 /* sections: one row per part of the styling system, each naming the maker that draws it. */
 Weave.application.sections = {};
@@ -88,6 +122,8 @@ Weave.application.sections.tones = { title: 'Tones', note: 'A tone names a colou
 Weave.application.sections.states = { title: 'States', note: 'Hover, focus, press and rest are generated onto every class the interactive table names, so nothing is styled twice.', body: Weave.application.stateRow };
 Weave.application.sections.breakpoints = { title: 'Breakpoints', note: 'Narrow the window past this query and the rail, the tiles and the page shell change shape.', body: Weave.application.breakpointList };
 Weave.application.sections.scoped = { title: 'Scoped tokens', note: 'applyTokens sets the same custom properties on one element, so a subtree can be branded without a theme and without a rule.', body: Weave.application.brandedPanel };
+Weave.application.sections.layers = { title: 'Layers', note: 'Everything that sits above the page comes from one host and one z-index ladder: dialogs, drawers, sheets, a confirm that answers a promise, anchored menus, pinned toasts and tips.', body: Weave.application.layerBar };
+Weave.application.sections.sizes = { title: 'Sizes', note: 'A size is a data attribute on a button, exactly as a variant is, and both come from the one modifier table.', body: Weave.application.sizeBar };
 Weave.application.sections.widgets = { title: 'Widgets', note: 'Every component below is a class from its own name and a rules row of token references. None of them names a tag or a colour.', body: Weave.application.widgetTiles };
 Weave.application.sectionPanel = section => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: section.title }), Weave.library.components.note({ text: section.note }), section.body()] });
 Weave.application.sectionPanels = () => Weave.library.composition.values(Weave.application.sections).map(Weave.application.sectionPanel);

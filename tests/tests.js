@@ -593,6 +593,30 @@ Weave.tests.cases.controlSelectByKeyIgnoresInheritedNames = () => Weave.library.
 Weave.tests.selectFallback = 'fallback';
 Weave.tests.cases.interactionResizeAddsToTheStartSize = () => Weave.library.interaction.resizeStyles({ width: 10, height: 20, dx: 5, dy: 6 })[Weave.library.browser.properties.width] === 15;
 
+/* the second flagship's vocabulary: media, choices, steps, a thumb bar and a marked failure. */
+Weave.tests.cases.browserMatchMediaAnswersWithoutTheHost = () => Weave.library.browser.matchMedia(Weave.library.components.breakpoints.compact).matches === false;
+Weave.tests.cases.styleMatchesMediaNeverThrows = () => Weave.library.control.attemptOr(() => Weave.library.style.matchesMedia(Weave.library.browser.mediaQueries.print), 'threw')() === false;
+Weave.tests.cases.observersOnMediaHandsBackAnUnsubscribe = () => Weave.library.predicates.isFunction(Weave.library.observers.onMedia(Weave.library.browser.mediaQueries.print, Weave.library.composition.noop));
+Weave.tests.chosenValues = [];
+Weave.tests.choiceSample = () => Weave.library.components.choices({ name: 'portion', label: 'Portion', value: 'one', options: Weave.tests.choiceOptions, onChoose: value => Weave.tests.chosenValues.push(value) });
+Weave.tests.choiceOptions = [{ value: 'one', label: 'One' }, { value: 'two', label: 'Two' }];
+Weave.tests.attachedChoices = () => Weave.library.elements.appendTo(Weave.library.browser.body())(Weave.tests.choiceSample());
+Weave.tests.pickedSecond = () => (Weave.tests.chosenValues.splice(0), Weave.library.browser.click(Weave.library.query.allWithin(Weave.tests.radioSelector())(Weave.tests.attachedChoices())[1]), Weave.library.composition.first(Weave.tests.chosenValues));
+Weave.tests.radioSelector = () => Weave.tests.selectorFor('radioMark');
+Weave.tests.cases.componentsChoicesReportTheChosenValue = () => Weave.tests.pickedSecond() === 'two';
+Weave.tests.cases.componentsChoicesCheckTheCurrentOne = () => Weave.library.query.allWithin(Weave.tests.radioSelector())(Weave.tests.choiceSample())[0].checked === true;
+Weave.tests.stepsSample = () => Weave.library.components.steps({ label: 'Progress', active: 1, items: ['One', 'Two', 'Three'] });
+Weave.tests.cases.componentsStepsMarkExactlyOneCurrent = () => Weave.library.query.allWithin(Weave.tests.currentStepSelector())(Weave.tests.stepsSample()).length === 1;
+Weave.tests.currentStepSelector = () => Weave.tests.selectorFor('step') + Weave.library.components.states.here;
+Weave.tests.cases.componentsMediaShowsItsGlyphWithoutAPicture = () => Weave.library.elements.textOf(Weave.library.components.media({ glyph: '🍋', label: 'Lemon' })) === '🍋';
+Weave.tests.cases.componentsImageLoadsLazily = () => Weave.library.attributes.attribute(Weave.library.components.loadingAttribute)(Weave.library.components.image({ src: '/a.png', alt: 'A' })) === Weave.library.components.lazyLoading;
+Weave.tests.cases.componentsTabBarPinsItselfOnAPhone = () => Weave.library.components.mediaRules.compact.rules.tabBar.position === Weave.library.components.values.fixed;
+Weave.tests.brokenForm = () => Weave.library.patterns.entryForm({ fields: [{ name: 'who', label: 'Who', rules: { required: true } }], submit: 'Go' });
+Weave.tests.submittedBroken = () => Weave.library.composition.tap(handle => Weave.library.browser.click(Weave.library.query.oneWithin(Weave.tests.submitSelector())(handle.element)))(Weave.tests.mountedForm());
+Weave.tests.mountedForm = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.tests.brokenForm());
+Weave.tests.submitSelector = () => Weave.library.query.attributeSelector(Weave.library.browser.keywords.type, Weave.library.elements.inputTypes.submit);
+Weave.tests.cases.patternsEntryFormMarksTheFailingField = () => Weave.library.attributes.aria('invalid')(Weave.library.query.oneWithin(Weave.tests.selectorFor('control'))(Weave.tests.submittedBroken().element)) === Weave.library.browser.keywords.true;
+
 /* the overlay layer: a dialog that traps and releases, a popover that goes, and a tip that leaves nothing. */
 Weave.tests.overlaySelector = name => Weave.library.components.classSelector(name);
 Weave.tests.countOverlays = name => Weave.library.query.all(Weave.tests.overlaySelector(name)).length;
@@ -615,6 +639,18 @@ Weave.tests.openedTwice = () => (Weave.tests.openedPopover(), Weave.tests.opened
 Weave.tests.twoPopovers = () => Weave.library.composition.tap(Weave.library.overlays.closeAll)(Weave.tests.openedTwice());
 Weave.tests.tippedButton = () => Weave.library.overlays.tipState();
 Weave.tests.tipCycle = state => (Weave.library.overlays.tipShow(state, Weave.tests.anchorButton(), 'one'), Weave.library.overlays.tipShow(state, Weave.tests.anchorButton(), 'two'), Weave.library.overlays.tipHide(state));
+Weave.tests.twoDialogs = () => [Weave.tests.openedDialog(), Weave.tests.openedDialog()];
+Weave.tests.pressEscape = () => Weave.library.events.pressKey(Weave.library.browser.keyNames.escape)(Weave.library.browser.document());
+Weave.tests.closedAll = handles => (handles.forEach(handle => handle.close()), Weave.tests.countOverlays('dialogBox'));
+Weave.tests.afterOneEscape = () => Weave.tests.dialogsLeft(Weave.tests.twoDialogs());
+Weave.tests.dialogsLeft = handles => (Weave.tests.pressEscape(), Weave.tests.tally(Weave.tests.countOverlays('dialogBox'), handles));
+Weave.tests.tally = (left, handles) => (Weave.tests.closedAll(handles), left);
+Weave.tests.mountedPalette = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.library.patterns.commandPalette({ commands: [{ label: 'Go somewhere' }] }));
+Weave.tests.cases.patternsSearchBoxCarriesAName = () => Weave.library.accessibility.audit(Weave.tests.mountedPalette().element).length === 0;
+Weave.tests.cases.overlaysEscapeClosesOnlyTheTopLayer = () => Weave.tests.afterOneEscape() === 1;
+Weave.tests.sheetOrderOf = name => Weave.library.composition.keys(Weave.library.components.sheetExtras).indexOf(name);
+Weave.tests.cases.componentsSheetPutsHoversAfterMarks = () => Weave.tests.sheetOrderOf('variantHovers') > Weave.tests.sheetOrderOf('marks');
+Weave.tests.cases.componentsSheetPutsTheCompactBlockLast = () => Weave.tests.sheetOrderOf('media') === Weave.library.composition.keys(Weave.library.components.sheetExtras).length - 1;
 Weave.tests.cases.overlaysTipLeavesNoOrphan = () => Weave.tests.tipRemainder(Weave.tests.tipCycle(Weave.tests.tippedButton())) === 0;
 Weave.tests.tipRemainder = ignored => Weave.tests.countOverlays('tipBubble');
 
