@@ -330,6 +330,15 @@ Weave.tests.cases.patternsBoardCardsAreDragSources = () => Weave.tests.withPatte
 Weave.tests.cardIsDraggable = handle => Weave.library.attributes.attribute(Weave.library.browser.keywords.draggable)(Weave.library.query.oneWithin(Weave.tests.selectorFor('card'))(handle.element)) === Weave.library.browser.keywords.true;
 Weave.tests.cases.patternsBoardButtonsStillMoveACard = () => Weave.tests.withPattern(Weave.library.patterns.board(Weave.tests.boardSpec), Weave.tests.movesRight);
 
+/* table coverage: every row of a generating table must produce exactly the name it promises. */
+Weave.tests.travelNames = handle => Weave.library.composition.keys(Weave.library.patterns.timeTravel).every(name => Weave.library.predicates.isFunction(handle[name]));
+Weave.tests.checkNames = handle => Weave.library.composition.keys(Weave.library.patterns.timeTravel).every(name => Weave.library.predicates.isFunction(handle[Weave.library.patterns.canName(name)]));
+Weave.tests.cases.patternsHistoryGeneratesEveryDirection = () => Weave.tests.travelNames(Weave.tests.historyHandle());
+Weave.tests.cases.patternsHistoryGeneratesEveryCheck = () => Weave.tests.checkNames(Weave.tests.historyHandle());
+Weave.tests.cases.patternsEveryPhaseHasAPane = () => Weave.library.composition.keys(Weave.library.patterns.phases).every(name => Weave.library.predicates.isFunction(Weave.library.patterns.panes[name]));
+Weave.tests.cases.patternsEveryPaneNamesAPhase = () => Weave.library.composition.keys(Weave.library.patterns.panes).every(name => Weave.library.predicates.isDefined(Weave.library.patterns.phases[name]));
+Weave.tests.cases.patternsEveryStackIsALogKey = () => Weave.library.composition.values(Weave.library.patterns.stacks).every(name => Weave.library.predicates.isArray(Weave.library.patterns.emptyLog()[name]));
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);
