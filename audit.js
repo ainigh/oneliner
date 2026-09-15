@@ -177,7 +177,11 @@ Audit.tables.check = (file, entries) => Audit.tables.required.forEach(table => A
 
 /* catalog: every assigned path in the bundle, emitted for the documentation contract. */
 Audit.catalog = {};
-Audit.catalog.rows = entries => entries.filter(entry => Audit.text.hasAssignment(entry.line)).map(entry => ({ path: Audit.text.pathOf(entry.line), layer: Audit.text.layerOf(entry.line), shape: Audit.shapes.nameOf(entry.line), line: entry.index + 1 }));
+Audit.catalog.isArrow = line => Audit.shapes.nameOf(line) === Audit.shapes.arrowName;
+Audit.catalog.head = line => Audit.text.masked(Audit.text.right(line)).split(Audit.text.arrowToken)[0].trim();
+Audit.catalog.signature = line => Audit.either(Audit.catalog.isArrow(line), () => Audit.catalog.head(line), () => '');
+Audit.catalog.rowFor = entry => ({ path: Audit.text.pathOf(entry.line), layer: Audit.text.layerOf(entry.line), shape: Audit.shapes.nameOf(entry.line), takes: Audit.catalog.signature(entry.line), line: entry.index + 1 });
+Audit.catalog.rows = entries => entries.filter(entry => Audit.text.hasAssignment(entry.line)).map(Audit.catalog.rowFor);
 Audit.catalog.emit = (file, entries) => Audit.platform.write(file, JSON.stringify(Audit.catalog.rows(entries), null, 2) + '\n');
 
 /* run: audit every file, print every finding, exit non-zero when anything failed. */
