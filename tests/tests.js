@@ -357,6 +357,27 @@ Weave.tests.cases.patternsLinkToKeepsTheRestOfTheState = () => Weave.tests.keeps
 Weave.tests.keepsTheRest = handle => (handle.update(() => ({ page: 4 })), Weave.tests.linkedHandle().state.filter === Weave.tests.firstFilter);
 Weave.tests.cases.patternsLinkToStops = () => Weave.library.predicates.isFunction(Weave.tests.clearedAddress().stop) === true;
 
+/* entryForm: the validators reached through a pattern, so a rule that fails is visible and not just true. */
+Weave.tests.signupFields = [{ label: 'Email', name: 'email', rules: { required: true, email: true } }, { label: 'Handle', name: 'handle', rules: { minLength: 3 } }];
+Weave.tests.signupForm = () => Weave.library.patterns.entryForm({ title: 'Join', submit: 'Join', fields: Weave.tests.signupFields, onSubmit: values => Weave.tests.accepted.push(values) });
+Weave.tests.accepted = [];
+Weave.tests.freshSignup = () => (Weave.tests.accepted.splice(0), Weave.tests.spawn(Weave.tests.signupForm()));
+Weave.tests.fillIn = (handle, name, value) => Weave.tests.typeInto(handle, name, value);
+Weave.tests.noteCount = handle => Weave.tests.countIn(handle, Weave.tests.selectorFor('note'));
+Weave.tests.cases.patternsEntryFormStartsClean = () => Weave.tests.withPattern(Weave.tests.signupForm(), handle => Weave.tests.noteCount(handle) === 0);
+Weave.tests.cases.patternsEntryFormRefusesAnEmptyRequiredField = () => Weave.tests.refuses(Weave.tests.freshSignup());
+Weave.tests.refuses = handle => (Weave.tests.submitIn(handle), Weave.tests.discard(handle), Weave.tests.accepted.length === 0);
+Weave.tests.cases.patternsEntryFormShowsEveryBrokenRule = () => Weave.tests.showsProblems(Weave.tests.freshSignup());
+Weave.tests.showsProblems = handle => (Weave.tests.submitIn(handle), Weave.tests.reportFixture(Weave.tests.noteCount(handle) === 3, handle.element));
+Weave.tests.cases.patternsEntryFormNamesTheBrokenRule = () => Weave.tests.namesTheRule(Weave.tests.freshSignup());
+Weave.tests.namesTheRule = handle => (Weave.tests.submitIn(handle), Weave.tests.reportFixture(Weave.library.elements.textOf(handle.element).includes(Weave.library.forms.messages.required), handle.element));
+Weave.tests.cases.patternsEntryFormAcceptsGoodValues = () => Weave.tests.acceptsGood(Weave.tests.freshSignup());
+Weave.tests.acceptsGood = handle => (Weave.tests.fillIn(handle, 'email', 'ada@example.test'), Weave.tests.fillIn(handle, 'handle', 'ada'), Weave.tests.submitIn(handle), Weave.tests.reportFixture(Weave.tests.accepted.length === 1, handle.element));
+Weave.tests.cases.patternsEntryFormKeepsWhatWasTyped = () => Weave.tests.keepsTyped(Weave.tests.freshSignup());
+Weave.tests.keepsTyped = handle => (Weave.tests.fillIn(handle, 'handle', 'ada'), Weave.tests.submitIn(handle), Weave.tests.reportFixture(handle.state.values.handle === 'ada', handle.element));
+Weave.tests.cases.patternsEntryFormClearsAFixedProblem = () => Weave.tests.clearsProblem(Weave.tests.freshSignup());
+Weave.tests.clearsProblem = handle => (Weave.tests.submitIn(handle), Weave.tests.fillIn(handle, 'email', 'ada@example.test'), Weave.tests.fillIn(handle, 'handle', 'ada'), Weave.tests.submitIn(handle), Weave.tests.reportFixture(Weave.tests.noteCount(handle) === 0, handle.element));
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);

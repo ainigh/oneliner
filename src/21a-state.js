@@ -93,3 +93,22 @@ Weave.library.patterns.addressSaving = (name, update) => change => Weave.library
 Weave.library.patterns.addressWired = (name, holder, update) => Object.assign(holder, { update: Weave.library.patterns.addressSaving(name, update) });
 Weave.library.patterns.readAddress = (name, holder) => (Weave.library.patterns.showFromAddress(name, holder), holder);
 Weave.library.patterns.linkTo = name => holder => Weave.library.patterns.holding(Weave.library.patterns.addressWired(name, Weave.library.patterns.readAddress(name, holder), holder.update), Weave.library.patterns.addressChanges(name, holder));
+
+/* entryForm: the form component with the validators wired to it. A field carries its own rules, and a rule that fails shows the message that already sits beside it. */
+Weave.library.patterns.rulesOf = spec => Weave.library.composition.fromPairs(spec.fields.map(field => [field.name, Weave.library.control.defaultTo({})(field.rules)]));
+Weave.library.patterns.problemsOf = (spec, values) => Weave.library.composition.fromPairs(spec.fields.map(field => [field.name, Weave.library.forms.checkControl(values, Weave.library.patterns.rulesOf(spec))(field.name)]));
+Weave.library.patterns.isClean = errors => Weave.library.composition.values(errors).every(list => list.length === 0);
+Weave.library.patterns.fieldNotes = (state, field) => Weave.library.control.defaultTo([])(state.errors[field.name]).map(message => Weave.library.components.note({ text: message }));
+Weave.library.patterns.fieldControl = (state, field) => Weave.library.components.field({ label: field.label, name: field.name, type: field.type, value: state.values[field.name] });
+Weave.library.patterns.fieldParts = (state, field) => [Weave.library.patterns.fieldControl(state, field)].concat(Weave.library.patterns.fieldNotes(state, field));
+Weave.library.patterns.entryField = state => field => Weave.library.components.stack({ data: { key: field.name }, children: Weave.library.patterns.fieldParts(state, field) });
+Weave.library.patterns.accepted = (spec, values) => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onSubmit)(values);
+Weave.library.patterns.reported = (spec, values, errors) => (Weave.library.control.when(() => Weave.library.patterns.isClean(errors), () => Weave.library.patterns.accepted(spec, values))(values), { values, errors });
+Weave.library.patterns.checked = (spec, values) => Weave.library.patterns.reported(spec, values, Weave.library.patterns.problemsOf(spec, values));
+Weave.library.patterns.entrySubmit = (spec, update) => values => update(() => Weave.library.patterns.checked(spec, values));
+Weave.library.patterns.entryFields = (spec, state) => spec.fields.map(Weave.library.patterns.entryField(state));
+Weave.library.patterns.entryBody = (spec, state, update) => Weave.library.components.form({ submit: spec.submit, fields: Weave.library.patterns.entryFields(spec, state), onSubmit: Weave.library.patterns.entrySubmit(spec, update) });
+Weave.library.patterns.entryParts = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.entryBody(spec, state, update)];
+Weave.library.patterns.entryPanel = spec => (state, update) => Weave.library.components.panel({ children: Weave.library.patterns.entryParts(spec, state, update) });
+Weave.library.patterns.entryState = spec => ({ values: Weave.library.control.defaultTo({})(spec.values), errors: {} });
+Weave.library.patterns.entryForm = spec => Weave.library.patterns.view(Weave.library.patterns.entryPanel(spec), Weave.library.patterns.entryState(spec));

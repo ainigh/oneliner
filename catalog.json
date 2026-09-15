@@ -18259,5 +18259,124 @@
     "shape": "arrow",
     "takes": "name",
     "line": 2843
+  },
+  {
+    "path": "Weave.library.patterns.rulesOf",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "spec",
+    "line": 2846
+  },
+  {
+    "path": "Weave.library.patterns.problemsOf",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, values)",
+    "line": 2847
+  },
+  {
+    "path": "Weave.library.patterns.isClean",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "errors",
+    "line": 2848
+  },
+  {
+    "path": "Weave.library.patterns.fieldNotes",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(state, field)",
+    "line": 2849
+  },
+  {
+    "path": "Weave.library.patterns.fieldControl",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(state, field)",
+    "line": 2850
+  },
+  {
+    "path": "Weave.library.patterns.fieldParts",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(state, field)",
+    "line": 2851
+  },
+  {
+    "path": "Weave.library.patterns.entryField",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "state",
+    "line": 2852
+  },
+  {
+    "path": "Weave.library.patterns.accepted",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, values)",
+    "line": 2853
+  },
+  {
+    "path": "Weave.library.patterns.reported",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, values, errors)",
+    "line": 2854
+  },
+  {
+    "path": "Weave.library.patterns.checked",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, values)",
+    "line": 2855
+  },
+  {
+    "path": "Weave.library.patterns.entrySubmit",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, update)",
+    "line": 2856
+  },
+  {
+    "path": "Weave.library.patterns.entryFields",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, state)",
+    "line": 2857
+  },
+  {
+    "path": "Weave.library.patterns.entryBody",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, state, update)",
+    "line": 2858
+  },
+  {
+    "path": "Weave.library.patterns.entryParts",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "(spec, state, update)",
+    "line": 2859
+  },
+  {
+    "path": "Weave.library.patterns.entryPanel",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "spec",
+    "line": 2860
+  },
+  {
+    "path": "Weave.library.patterns.entryState",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "spec",
+    "line": 2861
+  },
+  {
+    "path": "Weave.library.patterns.entryForm",
+    "layer": "patterns",
+    "shape": "arrow",
+    "takes": "spec",
+    "line": 2862
   }
 ]
