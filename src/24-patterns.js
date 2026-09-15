@@ -9,7 +9,7 @@ Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle
 Weave.library.patterns.merged = (handle, changes) => Object.assign(handle, { state: Weave.library.composition.merge(handle.state, changes) });
 Weave.library.patterns.updater = handle => change => Weave.library.patterns.repaint(Weave.library.patterns.merged(handle, change(handle.state)));
 Weave.library.patterns.wired = handle => Object.assign(handle, { update: Weave.library.patterns.updater(handle) });
-Weave.library.patterns.view = (render, state) => Weave.library.patterns.repaint(Weave.library.patterns.wired({ element: Weave.library.components.view({}), render, state }));
+Weave.library.patterns.view = (render, state) => Weave.library.patterns.holding(Weave.library.patterns.repaint(Weave.library.patterns.wired({ element: Weave.library.components.view({}), render, state })), Weave.library.composition.noop);
 Weave.library.patterns.mount = host => handle => (Weave.library.components.installStyles(), Weave.library.elements.append([handle.element])(host), handle);
 
 /* labels: the only place a word the reader sees is written. One row, one word, every pattern. */
@@ -185,6 +185,8 @@ Weave.library.patterns.dashboard = spec => Weave.library.patterns.view(Weave.lib
 Weave.library.patterns.defaults = {};
 Weave.library.patterns.defaults.overscan = 4;
 Weave.library.patterns.defaults.timeout = 4000;
+Weave.library.patterns.defaults.rowHeight = 32;
+Weave.library.patterns.defaults.listHeight = 320;
 
 /* virtualList: only the rows the window can show exist. A spacer above them keeps the scrollbar honest. */
 Weave.library.patterns.virtualInnerKey = 'virtualInner';
@@ -204,7 +206,10 @@ Weave.library.patterns.virtualLead = (spec, state) => Weave.library.patterns.vir
 Weave.library.patterns.virtualSpacerBox = (spec, state) => Weave.library.components.view({ styles: Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualLead(spec, state)), data: Weave.library.patterns.virtualSpacerData() });
 Weave.library.patterns.virtualIdOf = (item, index) => Weave.library.control.defaultTo(index)(item[Weave.library.patterns.idKey]);
 Weave.library.patterns.virtualRowKey = (spec, state, item, index) => Weave.library.patterns.virtualKeyFor(Weave.library.patterns.virtualIdOf(item, Weave.library.patterns.virtualFirst(spec, state) + index));
-Weave.library.patterns.virtualRow = (spec, state) => (item, index) => Weave.library.components.listRow({ children: [spec.row(item)], styles: Weave.library.patterns.virtualHeight(spec.rowHeight), data: Weave.library.patterns.virtualRowKey(spec, state, item, index) });
+Weave.library.patterns.virtualRowExtra = (spec, item) => Weave.library.control.defaultTo({})(Weave.library.control.maybe(make => make(item))(spec.rowSpec));
+Weave.library.patterns.virtualRowBase = (spec, state, item, index) => ({ children: [spec.row(item)], styles: Weave.library.patterns.virtualHeight(spec.rowHeight), data: Weave.library.patterns.virtualRowKey(spec, state, item, index) });
+Weave.library.patterns.virtualRowSpec = (spec, state, item, index) => Weave.library.composition.mergeDeep(Weave.library.patterns.virtualRowBase(spec, state, item, index), Weave.library.patterns.virtualRowExtra(spec, item));
+Weave.library.patterns.virtualRow = (spec, state) => (item, index) => Weave.library.components.listRow(Weave.library.patterns.virtualRowSpec(spec, state, item, index));
 Weave.library.patterns.virtualRows = (spec, state) => Weave.library.patterns.virtualSlice(spec, state).map(Weave.library.patterns.virtualRow(spec, state));
 Weave.library.patterns.virtualChildren = (spec, state) => [Weave.library.patterns.virtualSpacerBox(spec, state)].concat(Weave.library.patterns.virtualRows(spec, state));
 Weave.library.patterns.virtualInnerSpec = (spec, state) => ({ styles: Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualTotal(spec)), data: Weave.library.patterns.virtualInnerData(), children: Weave.library.patterns.virtualChildren(spec, state) });
@@ -213,24 +218,32 @@ Weave.library.patterns.virtualUpdater = update => Weave.library.timing.throttleF
 Weave.library.patterns.virtualScrolled = throttled => event => throttled(Weave.library.browser.scrollTopOf(Weave.library.events.currentTarget(event)));
 Weave.library.patterns.virtualListener = update => Weave.library.patterns.virtualScrolled(Weave.library.patterns.virtualUpdater(update));
 Weave.library.patterns.virtualRestore = state => el => Weave.library.browser.setScrollTop(el, state.offset);
-Weave.library.patterns.virtualStyles = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(spec.height), { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto });
-Weave.library.patterns.virtualBoxPart = (spec, state) => ({ ref: Weave.library.patterns.virtualRestore(state), children: [Weave.library.patterns.virtualInnerBox(spec, state)] });
+Weave.library.patterns.virtualSized = spec => Weave.library.composition.merge({ rowHeight: Weave.library.patterns.defaults.rowHeight, height: Weave.library.patterns.defaults.listHeight }, spec);
+Weave.library.patterns.virtualMetrics = (spec, state) => Weave.library.composition.merge(spec, { height: Weave.library.control.defaultTo(spec.height)(state.height), items: Weave.library.control.defaultTo(spec.items)(state.items) });
+Weave.library.patterns.virtualCssHeight = spec => Weave.library.control.either(() => spec.fill === true, () => Weave.library.components.values.full, () => spec.height)(spec);
+Weave.library.patterns.virtualStyles = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualCssHeight(spec)), { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto });
+Weave.library.patterns.needsFit = (spec, state, el) => Weave.library.control.and(spec.fill === true, Weave.library.style.outerHeight(el) !== state.height);
+Weave.library.patterns.virtualFit = (spec, state, update, el) => Weave.library.control.when(() => Weave.library.patterns.needsFit(spec, state, el), () => update(() => ({ height: Weave.library.style.outerHeight(el) })))(el);
+Weave.library.patterns.virtualRef = (spec, state, update) => el => (Weave.library.patterns.virtualRestore(state)(el), Weave.library.patterns.virtualFit(spec, state, update, el));
+Weave.library.patterns.virtualBoxPart = (spec, state, update) => ({ ref: Weave.library.patterns.virtualRef(spec, state, update), children: [Weave.library.patterns.virtualInnerBox(spec, state)] });
 Weave.library.patterns.virtualBoxHead = (spec, update) => ({ styles: Weave.library.patterns.virtualStyles(spec), data: Weave.library.patterns.virtualScrollerData(), onScroll: Weave.library.patterns.virtualListener(update) });
-Weave.library.patterns.virtualBoxSpec = (spec, state, update) => Weave.library.composition.merge(Weave.library.patterns.virtualBoxHead(spec, update), Weave.library.patterns.virtualBoxPart(spec, state));
+Weave.library.patterns.virtualBoxSpec = (spec, state, update) => Weave.library.composition.merge(Weave.library.patterns.virtualBoxHead(spec, update), Weave.library.patterns.virtualBoxPart(spec, state, update));
 Weave.library.patterns.virtualBox = (spec, state, update) => Weave.library.components.scroller(Weave.library.patterns.virtualBoxSpec(spec, state, update));
 Weave.library.patterns.virtualState = () => ({ offset: 0 });
-Weave.library.patterns.virtualBody = spec => (state, update) => Weave.library.patterns.virtualBox(spec, state, update);
-Weave.library.patterns.virtualList = spec => Weave.library.patterns.view(Weave.library.patterns.virtualBody(spec), Weave.library.patterns.virtualState());
+Weave.library.patterns.virtualBody = spec => (state, update) => Weave.library.patterns.virtualBox(Weave.library.patterns.virtualMetrics(spec, state), state, update);
+Weave.library.patterns.virtualShow = handle => items => handle.update(() => ({ items, offset: 0 }));
+Weave.library.patterns.virtualHandle = handle => Object.assign(handle, { show: Weave.library.patterns.virtualShow(handle) });
+Weave.library.patterns.virtualList = spec => Weave.library.patterns.virtualHandle(Weave.library.patterns.view(Weave.library.patterns.virtualBody(Weave.library.patterns.virtualSized(spec)), Weave.library.patterns.virtualState()));
 
 /* virtualGrid: the search box of the data grid over a virtual list, so no query ever draws the whole table. */
 Weave.library.patterns.virtualCell = row => column => Weave.library.components.note({ text: String(Weave.library.components.cellValue(row, column)) });
 Weave.library.patterns.virtualGridRow = spec => row => Weave.library.components.row({ children: spec.columns.map(Weave.library.patterns.virtualCell(row)) });
-Weave.library.patterns.virtualGridSpec = (spec, state) => Weave.library.composition.merge(spec, { items: Weave.library.patterns.gridFound(spec, state), row: Weave.library.patterns.virtualGridRow(spec) });
+Weave.library.patterns.virtualGridSpec = (spec, state) => Weave.library.composition.merge(Weave.library.patterns.virtualMetrics(spec, state), { items: Weave.library.patterns.gridFound(spec, state), row: Weave.library.patterns.virtualGridRow(spec) });
 Weave.library.patterns.virtualGridList = (spec, state, update) => Weave.library.patterns.virtualBox(Weave.library.patterns.virtualGridSpec(spec, state), state, update);
 Weave.library.patterns.virtualGridParts = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.queryBox(state, update), Weave.library.patterns.virtualGridList(spec, state, update)];
 Weave.library.patterns.virtualGridBody = spec => (state, update) => Weave.library.components.panel({ children: Weave.library.patterns.virtualGridParts(spec, state, update) });
 Weave.library.patterns.virtualGridState = () => Weave.library.composition.merge(Weave.library.patterns.queryState(), Weave.library.patterns.virtualState());
-Weave.library.patterns.virtualGrid = spec => Weave.library.patterns.view(Weave.library.patterns.virtualGridBody(spec), Weave.library.patterns.virtualGridState());
+Weave.library.patterns.virtualGrid = spec => Weave.library.patterns.view(Weave.library.patterns.virtualGridBody(Weave.library.patterns.virtualSized(spec)), Weave.library.patterns.virtualGridState());
 /* calendar: a month you can step through and pick a day from, with that day's events under the grid. */
 Weave.library.patterns.labels.previousMonth = 'Previous month';
 Weave.library.patterns.labels.nextMonth = 'Next month';
@@ -272,16 +285,20 @@ Weave.library.patterns.calendar = spec => Weave.library.patterns.view(Weave.libr
 
 /* notifications: a toast stack. The handle carries push, and every toast expires on its own. */
 Weave.library.patterns.notificationTimeout = spec => Weave.library.control.defaultTo(Weave.library.patterns.defaults.timeout)(spec.timeout);
-Weave.library.patterns.notificationRow = (message, tone) => Weave.library.patterns.withId({ message, tone });
-Weave.library.patterns.notificationDrop = (update, row) => () => update(state => ({ toasts: Weave.library.patterns.without(state.toasts, row) }));
-Weave.library.patterns.notificationAlert = (update, row) => Weave.library.components.alert({ tone: row.tone, title: row.message, onClose: Weave.library.patterns.notificationDrop(update, row) });
+Weave.library.patterns.notificationRow = (message, tone, action) => Weave.library.patterns.withId({ message, tone, action });
+Weave.library.patterns.notificationCancel = row => Weave.library.control.maybe(cancel => cancel())(row.cancel);
+Weave.library.patterns.notificationDrop = (update, row) => () => (Weave.library.patterns.notificationCancel(row), update(state => ({ toasts: Weave.library.patterns.without(state.toasts, row) })));
+Weave.library.patterns.notificationRun = (update, row, action) => () => (Weave.library.patterns.notificationDrop(update, row)(), action.onAction());
+Weave.library.patterns.notificationAction = (update, row) => Weave.library.control.maybe(action => Weave.library.composition.merge(action, { onAction: Weave.library.patterns.notificationRun(update, row, action) }))(row.action);
+Weave.library.patterns.notificationAlert = (update, row) => Weave.library.components.alert({ tone: row.tone, title: row.message, action: Weave.library.patterns.notificationAction(update, row), onClose: Weave.library.patterns.notificationDrop(update, row) });
 Weave.library.patterns.notificationToast = update => row => Weave.library.components.toastSlot({ children: [Weave.library.patterns.notificationAlert(update, row)], data: { [Weave.library.elements.keyName]: row[Weave.library.patterns.idKey] } });
 Weave.library.patterns.notificationList = (state, update) => Weave.library.components.stack({ children: state.toasts.map(Weave.library.patterns.notificationToast(update)) });
-Weave.library.patterns.notificationExpire = (handle, spec, row) => Weave.library.composition.then(Weave.library.patterns.notificationDrop(handle.update, row))(Weave.library.timing.delay(Weave.library.patterns.notificationTimeout(spec)));
+Weave.library.patterns.notificationExpire = (handle, spec, row) => Object.assign(row, { cancel: Weave.library.timing.after(Weave.library.patterns.notificationTimeout(spec), Weave.library.patterns.notificationDrop(handle.update, row)) });
 Weave.library.patterns.notificationAdd = (handle, spec, row) => (handle.update(state => ({ toasts: state.toasts.concat([row]) })), Weave.library.patterns.notificationExpire(handle, spec, row), handle);
-Weave.library.patterns.notificationPush = (handle, spec) => (message, tone) => Weave.library.patterns.notificationAdd(handle, spec, Weave.library.patterns.notificationRow(message, tone));
+Weave.library.patterns.notificationPush = (handle, spec) => (message, tone, action) => Weave.library.patterns.notificationAdd(handle, spec, Weave.library.patterns.notificationRow(message, tone, action));
 Weave.library.patterns.notificationState = () => ({ toasts: [] });
-Weave.library.patterns.notificationHandle = (spec, handle) => Object.assign(handle, { push: Weave.library.patterns.notificationPush(handle, spec) });
+Weave.library.patterns.notificationSweep = handle => () => handle.state.toasts.forEach(Weave.library.patterns.notificationCancel);
+Weave.library.patterns.notificationHandle = (spec, handle) => Weave.library.patterns.holding(Object.assign(handle, { push: Weave.library.patterns.notificationPush(handle, spec) }), Weave.library.patterns.notificationSweep(handle));
 Weave.library.patterns.notificationPin = handle => Weave.library.composition.tap(() => Weave.library.elements.appendTo(Weave.library.overlays.toastHost())(handle.element))(handle);
 Weave.library.patterns.notifications = (spec = {}) => Weave.library.patterns.notificationPin(Weave.library.patterns.notificationHandle(spec, Weave.library.patterns.view(Weave.library.patterns.notificationList, Weave.library.patterns.notificationState())));
 /* store: state that outlives a single pattern. Many handles watch one store, so two patterns can hold the same data without either owning it. */

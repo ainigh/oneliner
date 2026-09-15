@@ -40,14 +40,16 @@ Weave.library.overlays.placeAt = (box, anchor) => Weave.library.style.setCssAll(
 /* popovers: at most one is open at a time, and it goes when you click away, press escape or scroll. */
 Weave.library.overlays.openPopovers = [];
 Weave.library.overlays.closeAll = () => Weave.library.overlays.openPopovers.slice().forEach(state => state.close());
-Weave.library.overlays.forget = state => Weave.library.overlays.openPopovers.splice(Weave.library.overlays.openPopovers.indexOf(state), 1);
+Weave.library.overlays.forget = state => Weave.library.control.when(index => index >= 0, index => Weave.library.overlays.openPopovers.splice(index, 1))(Weave.library.overlays.openPopovers.indexOf(state));
 Weave.library.overlays.remember = state => (Weave.library.overlays.openPopovers.push(state), state);
 Weave.library.overlays.isOutside = (state, target) => Weave.library.control.and(!Weave.library.predicates.contains(state.box, target), !Weave.library.predicates.contains(state.anchor, target));
 Weave.library.overlays.outsideStep = state => event => Weave.library.control.when(() => Weave.library.overlays.isOutside(state, Weave.library.browser.targetOf(event)), () => state.close())(event);
 Weave.library.overlays.watchOutside = state => Weave.library.events.on(Weave.library.events.types.pointerdown, Weave.library.overlays.outsideStep(state))(Weave.library.browser.document());
 Weave.library.overlays.watchEscape = state => Weave.library.interaction.onEscape(() => state.close())(Weave.library.browser.document());
+Weave.library.overlays.scrollOptions = { capture: true, passive: true };
+Weave.library.overlays.watchScroll = state => Weave.library.events.onWithOptions(Weave.library.events.types.scroll, () => state.close(), Weave.library.overlays.scrollOptions)(Weave.library.browser.document());
 Weave.library.overlays.popoverState = (anchor, box) => ({ anchor, box, close: Weave.library.composition.noop, releases: [] });
-Weave.library.overlays.popoverHold = state => Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state)] });
+Weave.library.overlays.popoverHold = state => Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state), Weave.library.overlays.watchScroll(state)] });
 Weave.library.overlays.popoverEnd = state => (state.releases.forEach(release => release()), Weave.library.overlays.unmount(state.box), Weave.library.overlays.forget(state), Weave.library.overlays.popoverDone(state));
 Weave.library.overlays.popoverDone = state => Weave.library.control.maybe(done => done())(state.onClose);
 Weave.library.overlays.popoverBox = spec => Weave.library.components.popoverBox({ children: Weave.library.components.childrenOf(spec, Weave.library.components.bodyKey), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.menu) });
@@ -71,7 +73,7 @@ Weave.library.overlays.tipEvents.show = [Weave.library.events.types.mouseenter, 
 Weave.library.overlays.tipEvents.hide = [Weave.library.events.types.mouseleave, Weave.library.events.types.focusout];
 Weave.library.overlays.tipBubbleFor = text => Weave.library.components.tipBubble({ text, attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tooltip) });
 Weave.library.overlays.tipState = () => ({ bubble: undefined });
-Weave.library.overlays.tipShow = (state, target, text) => Object.assign(state, { bubble: Weave.library.overlays.placeAt(Weave.library.overlays.mount(Weave.library.overlays.tipBubbleFor(text)), target) });
+Weave.library.overlays.tipShow = (state, target, text) => Object.assign(Weave.library.overlays.tipHide(state), { bubble: Weave.library.overlays.placeAt(Weave.library.overlays.mount(Weave.library.overlays.tipBubbleFor(text)), target) });
 Weave.library.overlays.tipHide = state => (Weave.library.control.maybe(Weave.library.overlays.unmount)(state.bubble), Object.assign(state, { bubble: undefined }));
 Weave.library.overlays.tipEnter = (state, text) => event => Weave.library.overlays.tipShow(state, Weave.library.browser.currentTargetOf(event), text);
 Weave.library.overlays.tipLeave = state => () => Weave.library.overlays.tipHide(state);

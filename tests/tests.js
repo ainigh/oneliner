@@ -534,12 +534,12 @@ Weave.tests.cases.componentsStateRulesOnlyUseTokens = () => Weave.library.compos
 Weave.tests.cases.componentsVariantsOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.variants).every(Weave.tests.usesTokens);
 Weave.tests.cases.componentsMediaRulesOnlyUseTokens = () => Weave.tests.mediaRuleRows().flatMap(row => Weave.library.composition.values(row.rules)).every(Weave.tests.usesTokens);
 Weave.tests.cases.componentsStyleTextCarriesEveryState = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.values(Weave.library.components.states));
-Weave.tests.cases.componentsStyleTextCarriesEveryVariant = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.variants).map(Weave.library.components.variantSelector));
+Weave.tests.cases.componentsStyleTextCarriesEveryVariant = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.variants).map(variant => Weave.library.components.markSelector(Weave.library.components.variantName, variant)));
 Weave.tests.cases.componentsStyleTextCarriesEveryBreakpoint = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.values(Weave.library.components.breakpoints));
 Weave.tests.cases.componentsStyleTextCarriesEveryMediaQuery = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.tests.mediaRuleRows().map(row => row.query));
 Weave.tests.cases.componentsEaseWaitsForWelcomeMotion = () => Weave.library.components.styleText().includes(Weave.library.browser.mediaQueries.steadyMotion);
 Weave.tests.cases.componentsEveryStateRuleNamesAKnownState = () => Weave.library.composition.values(Weave.library.components.stateRules).every(row => Weave.library.predicates.isDefined(Weave.library.components.states[row.state]));
-Weave.tests.variantOf = element => Weave.library.attributes.data(Weave.library.components.variantKey)(element);
+Weave.tests.variantOf = element => Weave.library.attributes.data(Weave.library.components.variantName)(element);
 Weave.tests.cases.componentsActionButtonCarriesItsVariant = () => Weave.tests.variantOf(Weave.library.components.actionButton({ label: 'Go', variant: Weave.tests.lastVariant() })) === Weave.tests.lastVariant();
 Weave.tests.lastVariant = () => Weave.library.composition.last(Weave.library.composition.keys(Weave.library.components.variants));
 Weave.tests.cases.componentsActionButtonTakesNoVariantUnasked = () => Weave.library.predicates.isDefined(Weave.tests.variantOf(Weave.library.components.actionButton({ label: 'Go' }))) === false;
@@ -555,6 +555,60 @@ Weave.tests.namedSelect = () => Weave.library.components.selectBox({ name: 'pick
 Weave.tests.cases.componentsSelectBoxTakesAnAccessibleName = () => Weave.library.attributes.aria(Weave.library.components.labelKey)(Weave.tests.namedSelect()) === 'Pick one';
 Weave.tests.cases.componentsSelectBoxInventsNoName = () => Weave.library.attributes.aria(Weave.library.components.labelKey)(Weave.library.components.selectBox({ name: 'pick', options: ['a'] })) === null;
 Weave.tests.cases.componentsPageShellIsOneMain = () => Weave.library.browser.tagNameOf(Weave.library.components.page({})) === 'main';
+
+/* the latent bugs a library sweep found, each pinned by the exact condition that showed it. */
+Weave.tests.lastOfJanuary = () => Weave.library.browser.dateFromParts(2026, 0, 31);
+Weave.tests.monthOf = date => Weave.library.browser.dateReaders.month(date);
+Weave.tests.cases.datesAddMonthClampsTheDay = () => Weave.tests.monthOf(Weave.library.dates.add(Weave.library.dates.names.month, 1)(Weave.tests.lastOfJanuary())) === 1;
+Weave.tests.cases.datesDaysInMonthCountsTheLongOnes = () => Weave.library.dates.daysInMonth(Weave.tests.lastOfJanuary()) === 31;
+Weave.tests.cases.datesEndOfMonthStaysInsideIt = () => Weave.tests.monthOf(Weave.library.dates.endOf(Weave.library.dates.names.month)(Weave.tests.lastOfJanuary())) === 0;
+Weave.tests.gridDayNames = () => Weave.library.composition.flatten(Weave.library.dates.monthGrid(Weave.tests.lastOfJanuary())).map(day => day.toDateString());
+Weave.tests.cases.datesMonthGridNeverRepeatsADay = () => Weave.library.composition.unique(Weave.tests.gridDayNames()).length === 42;
+Weave.tests.regionSelector = () => Weave.library.query.attributeSelector(Weave.library.browser.keywords.id, Weave.library.accessibility.regionId);
+Weave.tests.announcedThrice = () => (Weave.library.control.times(3)(() => Weave.library.accessibility.announce('counted')), Weave.library.query.all(Weave.tests.regionSelector()).length);
+Weave.tests.cases.accessibilityAnnounceKeepsOneRegion = () => Weave.tests.announcedThrice() === 1;
+Weave.tests.badEscape = () => Weave.library.control.attemptOr(() => Weave.library.navigation.route('/users/:id')('/users/100%').id, false)();
+Weave.tests.cases.navigationRouteSurvivesABadEscape = () => Weave.tests.badEscape() === '100%';
+Weave.tests.cases.navigationUrlRoundTripsItsHash = () => Weave.library.navigation.buildUrl(Weave.library.navigation.url('/p?a=1#h')) === '/p?a=1#h';
+Weave.tests.onceFired = element => (Weave.library.events.once('weaveping', Weave.library.composition.noop)(element), Weave.library.events.trigger('weaveping')(element), element);
+Weave.tests.cases.eventsOnceLeavesNoRecord = () => Weave.library.events.recordsOf(Weave.tests.onceFired(Weave.library.elements.div({}))).length === 0;
+Weave.tests.stateSelectorFor = state => Weave.library.components.stateSelector({ name: 'pageButton', state });
+Weave.tests.sheetPlaceOf = state => Weave.library.components.styleText().indexOf(Weave.tests.stateSelectorFor(state));
+Weave.tests.cases.componentsSelectionIsEmittedAfterHover = () => Weave.tests.sheetPlaceOf(Weave.library.components.stateNames.here) > Weave.tests.sheetPlaceOf(Weave.library.components.stateNames.hover);
+Weave.tests.cases.componentsDisabledSkipsWhatCannotBeDisabled = () => Weave.library.composition.keys(Weave.library.components.disableable).includes(Weave.library.components.interactive.anchor) === false;
+Weave.tests.cases.componentsBadgeIsAStadiumNotAnEllipse = () => Weave.library.components.rules.badge.borderRadius === Weave.library.components.vars.radiusRound;
+Weave.tests.cases.componentsScrollerHasSomethingToScrollIn = () => Weave.library.components.rules.scroller.flexGrow === Weave.library.components.values.grow;
+Weave.tests.cases.patternsEveryHandleCanStop = () => Weave.library.predicates.isFunction(Weave.library.patterns.todoList({ title: 'T', items: [] }).stop);
+Weave.tests.cancelledTimeout = () => Weave.library.composition.tap(handle => handle.cancel())(Weave.library.control.rejectAfter(50));
+Weave.tests.cases.controlTimeoutHandsBackItsCancel = () => Weave.library.predicates.isFunction(Weave.tests.cancelledTimeout().cancel);
+Weave.tests.toastStack = () => Weave.library.composition.tap(handle => handle.push('Pinned'))(Weave.library.patterns.notifications({}));
+Weave.tests.cases.patternsToastHoldsItsOwnCancel = () => Weave.library.predicates.isFunction(Weave.library.composition.first(Weave.tests.toastStack().state.toasts).cancel);
+Weave.tests.cases.interactionResizeAddsToTheStartSize = () => Weave.library.interaction.resizeStyles({ width: 10, height: 20, dx: 5, dy: 6 })[Weave.library.browser.properties.width] === 15;
+
+/* the overlay layer: a dialog that traps and releases, a popover that goes, and a tip that leaves nothing. */
+Weave.tests.overlaySelector = name => Weave.library.components.classSelector(name);
+Weave.tests.countOverlays = name => Weave.library.query.all(Weave.tests.overlaySelector(name)).length;
+Weave.tests.openedDialog = () => Weave.library.overlays.dialog({ title: 'Open', body: [Weave.library.components.button({ text: 'inside' })] });
+Weave.tests.closedDialog = () => Weave.library.composition.tap(handle => handle.close())(Weave.tests.openedDialog());
+Weave.tests.cases.overlaysDialogMountsAndRemovesItsPair = () => Weave.tests.dialogLeavesNothing(Weave.tests.countOverlays('dialogBox'));
+Weave.tests.dialogLeavesNothing = before => (Weave.tests.closedDialog(), Weave.tests.countOverlays('dialogBox') === before);
+Weave.tests.cases.overlaysDialogLocksAndUnlocksScroll = () => Weave.tests.dialogDepths().join(Weave.tests.comma) === '1,0';
+Weave.tests.comma = ',';
+Weave.tests.dialogDepths = () => Weave.tests.depthPair(Weave.tests.openedDialog());
+Weave.tests.depthPair = handle => [Weave.library.interaction.scrollLocks.depth].concat(Weave.tests.depthAfterClose(handle));
+Weave.tests.depthAfterClose = handle => (handle.close(), [Weave.library.interaction.scrollLocks.depth]);
+Weave.tests.anchorButton = () => Weave.library.elements.appendTo(Weave.library.browser.body())(Weave.library.components.button({ text: 'anchor' }));
+Weave.tests.openedPopover = () => Weave.library.overlays.popover(Weave.tests.anchorButton(), { body: [Weave.library.components.button({ text: 'choice' })] });
+Weave.tests.scrolledAway = handle => (Weave.library.events.trigger(Weave.library.events.types.scroll)(Weave.library.browser.document()), handle);
+Weave.tests.cases.overlaysPopoverClosesOnScroll = () => Weave.tests.popoverGone(Weave.tests.scrolledAway(Weave.tests.openedPopover()));
+Weave.tests.popoverGone = ignored => Weave.library.overlays.openPopovers.length === 0;
+Weave.tests.cases.overlaysOnlyOnePopoverAtATime = () => Weave.tests.twoPopovers() === 1;
+Weave.tests.openedTwice = () => (Weave.tests.openedPopover(), Weave.tests.openedPopover(), Weave.library.overlays.openPopovers.length);
+Weave.tests.twoPopovers = () => Weave.library.composition.tap(Weave.library.overlays.closeAll)(Weave.tests.openedTwice());
+Weave.tests.tippedButton = () => Weave.library.overlays.tipState();
+Weave.tests.tipCycle = state => (Weave.library.overlays.tipShow(state, Weave.tests.anchorButton(), 'one'), Weave.library.overlays.tipShow(state, Weave.tests.anchorButton(), 'two'), Weave.library.overlays.tipHide(state));
+Weave.tests.cases.overlaysTipLeavesNoOrphan = () => Weave.tests.tipRemainder(Weave.tests.tipCycle(Weave.tests.tippedButton())) === 0;
+Weave.tests.tipRemainder = ignored => Weave.tests.countOverlays('tipBubble');
 
 /* async helpers: the fixtures the async rows share, kept out of the rows themselves. */
 Weave.tests.failedResponse = { ok: false, status: 404, url: '/missing', headers: { get: Weave.library.composition.noop } };

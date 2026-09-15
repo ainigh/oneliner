@@ -66,7 +66,7 @@ Weave.library.accessibility.hideVisually = el => Weave.library.style.setCssAll(W
 Weave.library.accessibility.regionId = 'weave-live-region';
 Weave.library.accessibility.regionSpec = politeness => ({ attributes: { [Weave.library.browser.keywords.id]: Weave.library.accessibility.regionId }, aria: { [Weave.library.accessibility.states.live]: politeness }, styles: Weave.library.accessibility.visuallyHidden });
 Weave.library.accessibility.createRegion = politeness => Weave.library.elements.appendTo(Weave.library.browser.body())(Weave.library.elements.div(Weave.library.accessibility.regionSpec(politeness)));
-Weave.library.accessibility.liveRegion = politeness => Weave.library.control.defaultTo(Weave.library.accessibility.createRegion(politeness))(Weave.library.query.byId(Weave.library.accessibility.regionId));
+Weave.library.accessibility.liveRegion = politeness => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.library.composition.identity, () => Weave.library.accessibility.createRegion(politeness))(Weave.library.query.byId(Weave.library.accessibility.regionId));
 Weave.library.accessibility.announce = (message, politeness) => Weave.library.elements.setText(message)(Weave.library.accessibility.liveRegion(Weave.library.control.defaultTo(Weave.library.accessibility.politeness.polite)(politeness)));
 Weave.library.accessibility.reducedMotion = () => Weave.library.predicates.isReducedMotion();
 Weave.library.accessibility.onReducedMotion = handler => Weave.library.observers.onReducedMotion(handler);

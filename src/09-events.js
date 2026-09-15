@@ -8,7 +8,10 @@ Weave.library.events.release = (el, entry) => (Weave.library.browser.removeListe
 Weave.library.events.subscribe = (el, entry) => (Weave.library.browser.addListenerWithOptions(el, entry.type, entry.handler, entry.options), () => Weave.library.events.release(el, entry));
 Weave.library.events.onWithOptions = (type, handler, options) => el => Weave.library.events.subscribe(el, Weave.library.events.record(el, { type, handler, options }));
 Weave.library.events.on = (type, handler) => el => Weave.library.events.onWithOptions(type, handler, undefined)(el);
-Weave.library.events.once = (type, handler) => el => Weave.library.events.onWithOptions(type, handler, { once: true })(el);
+Weave.library.events.onceOptions = { once: true };
+Weave.library.events.onceHandler = (el, handler, holder) => event => (Weave.library.events.release(el, holder.entry), handler(event));
+Weave.library.events.onceEntry = (el, type, handler, holder) => Object.assign(holder, { entry: { type, handler: Weave.library.events.onceHandler(el, handler, holder), options: Weave.library.events.onceOptions } }).entry;
+Weave.library.events.once = (type, handler) => el => Weave.library.events.subscribe(el, Weave.library.events.record(el, Weave.library.events.onceEntry(el, type, handler, {})));
 Weave.library.events.matchingRecords = (el, type, handler) => Weave.library.events.recordsOf(el).filter(entry => Weave.library.control.and(entry.type === type, entry.handler === handler));
 Weave.library.events.off = (type, handler) => el => (Weave.library.events.matchingRecords(el, type, handler).forEach(entry => Weave.library.events.release(el, entry)), el);
 Weave.library.events.offAll = el => (Weave.library.events.recordsOf(el).forEach(entry => Weave.library.events.release(el, entry)), el);

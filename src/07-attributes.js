@@ -42,6 +42,7 @@ Weave.library.attributes.setRole = value => el => Weave.library.attributes.setAt
 /* booleanAttributes: the only place a boolean attribute name is written. */
 Weave.library.attributes.booleanAttributes = {};
 Weave.library.attributes.booleanAttributes.checked = 'checked';
+Weave.library.attributes.booleanAttributes.indeterminate = 'indeterminate';
 Weave.library.attributes.booleanAttributes.disabled = 'disabled';
 Weave.library.attributes.booleanAttributes.selected = 'selected';
 Weave.library.attributes.booleanAttributes.readonly = 'readOnly';
