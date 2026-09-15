@@ -5,9 +5,9 @@ implementation departs from them, the departure is recorded under **Deviations**
 rather than by editing a spec.
 
 Status of every box below is machine-checked by `npm run check`
-(`build` → `audit` → `test` → `audit:rows` → `check:apps` → `check:demos`), currently green:
-**0 audit findings · 278/278 tests · 357/357 row removals · 17/17 application checks ·
-36/36 demo checks · 3007 catalog paths.**
+(`build` → `audit` → `test` → `audit:rows` → `check:apps` → `check:demos` → `check:flagships`),
+currently green: **0 audit findings · 340/340 tests · 450/450 row removals · 24/24 application
+checks · 35/35 demo checks · 48/48 flagship checks · 3,443 catalog paths.**
 
 ---
 
@@ -75,8 +75,9 @@ Status of every box below is machine-checked by `npm run check`
 - [x] `interaction` — focus, keys, shortcuts, pointer gestures, drag and drop, clipboard, scroll lock
 - [x] `accessibility` — state, labels, live regions, trap, modal, roving, audit rules
 - [x] `collections` — nine lift kinds, `lifts` and `unlifted` tables, set operations
-- [x] `components` — the widget set, the token and theme tables, and the one generated stylesheet
-- [x] `patterns` — the stateful set, the keyed repaint, and the state decorators
+- [x] `components` — the widget set, the token, modifier and theme tables, and the one generated stylesheet
+- [x] `overlays` — one host above the page, a z-index ladder inside it, and a release for every open thing
+- [x] `patterns` — the stateful set, the keyed repaint, the state decorators and the layer patterns
 
 ## Contracts
 
@@ -334,6 +335,92 @@ Everything below went in as a table, so each one is a row to add rather than a r
 - [x] **A live reference.** `styleguide.html` draws tokens, themes, variants, tones, states,
       breakpoints, scoped tokens and every widget — each section generated from the table it
       documents, so the page cannot drift. `check:apps` drives it with seven assertions.
+
+## The flagship applications, and the twenty-six bugs they and a sweep of the library found
+
+Two applications were built against the library to find out whether it could carry real work:
+`apps/relay.html`, a dense keyboard-driven team inbox, and `apps/pantry.html`, thumb-first ordering
+from a kitchen. `apps.md` states what each had to be able to do. Both are audited under the same
+rules as the library with no new exemptions, and `scripts/check-flagships.js` drives them through
+forty-eight assertions. Every gap is listed below with the row that closed it.
+
+### What the applications could not say, so the library gained it
+
+- [x] **Nothing sat above the page.** The whole sheet had zero `position` and zero `z-index`
+      declarations. `src/23-overlays.js` is a new layer between `components` and `patterns`: one
+      host, one z-index ladder, and a release for every open thing. Dialogs, drawers and sheets
+      share one path; popovers anchor off a rectangle and close on a click away, escape or a
+      scroll; toasts get a pinned host; tips are a visible bubble rather than a hidden note.
+- [x] **`accessibility.modal` was wired into nothing, and half-broken.** Escape released the focus
+      trap but left the escape listener attached, the page scroll locked and the element on screen.
+      It now closes fully, takes an `onClose`, and leaves the decision to its owner so a stacked
+      layer never closes the one beneath it. Scroll locks count, so a confirm over a dialog no
+      longer leaves the page unscrollable.
+- [x] **An application shell.** `shell` and `pane`, with the pane widths as a modifier table, so a
+      three pane inbox needs no dimension in application code.
+- [x] **A row you can click.** `rowButton`, in `interactive` and `pressable`, so it gets hover,
+      focus, press and a selected state from the tables that already existed.
+- [x] **One mechanism for data attributes.** `variants` and `sizes` were two copies of the same
+      idea, and panes would have been a third. `components.modifiers` is one row per attribute and
+      one emitter; `marksOf` runs in `baseSpec`, so every component picks up its marks from its own
+      spec. `markNames` and `toneNames` let an application ask for a value by name.
+- [x] **Virtual lists that change.** A virtual list could not be given new items, its rows could
+      carry no marks of their own, and it forced the caller to write two dimensions. It now has
+      `show`, a `rowSpec`, defaults for the row height and window, and a `fill` mode that takes its
+      height from the box it was given.
+- [x] **Media, choices, steps and a thumb bar.** A picture box that looks right before the picture
+      arrives, a radio set that reports which value was chosen, a step track, and a tab bar that
+      pins itself to the bottom of a phone.
+- [x] **Forms that point at the problem.** A failing field now carries `aria-invalid`, shows its
+      message in `fieldError`, and takes the focus.
+- [x] **Alerts that carry an action**, so a toast can offer an undo, and checkboxes that can be
+      half-checked, so a bulk selection can be partial.
+
+### Bugs no test could have caught
+
+jsdom does no layout, runs in UTC and never hovers, so none of these was visible from the suite.
+Each is now pinned by a test row naming the exact condition that showed it.
+
+- [x] **A month step overflowed instead of clamping.** 31 January plus a month was 3 March, so the
+      calendar skipped February entirely; `endOf('month')` answered 28 days and `daysInMonth` was
+      wrong for every long month. `dates.clampedDate` fixes all three at the root.
+- [x] **A day step lost an hour across the daylight-saving fall back**, so `monthGrid` emitted one
+      day twice — with a colliding `data-key`, which also confused the reconciler — and dropped
+      another. Days now step in calendar days, not milliseconds.
+- [x] **Hover was emitted after selection at equal specificity**, so hovering the current page or
+      the selected day painted accent text on an accent ground. States are emitted in a decided
+      order now, and selection wins.
+- [x] **`announce()` appended a new live region on every call**, because `defaultTo` is eager —
+      unbounded DOM growth and duplicate ids, which the library's own audit calls a violation.
+- [x] **`events.once` never left the registry**, so `interaction.sortable` pinned a closure to the
+      document for the life of the page.
+- [x] **Every network request left an uncancelled thirty second timer**, and a toast's expiry
+      outlived `stop()` and repainted a detached tree.
+- [x] **A malformed percent-escape took the router down**; `decodeSafely` already existed.
+- [x] **The URL parser and serialiser disagreed about the hash**, so `buildUrl(url(x))` double-hashed
+      and hash routing missed.
+- [x] **Five more styling bugs**: `:disabled` generated for anchors that cannot be disabled, a
+      scroller whose only bound was an inert percentage, badge and switch rendered as ellipses
+      rather than stadiums, a hover border the same colour as the resting one, and `resizable`
+      sizing to the raw pointer delta while sliding away at the same time.
+- [x] **Patterns built by `view()` had no `stop`**, though the lifecycle comment promised one.
+- [x] **`predicates.isEmpty(null)` threw**, because `Object.keys(null)` does.
+- [x] **`control.selectByKey` reached through to `Object.prototype`**, so a lookup for `valueOf` or
+      `constructor` answered a function instead of the fallback. This is how the first flagship bug
+      was found: `Weave.library.forms.valueOf` does not exist, and resolved to `Object.prototype.valueOf`.
+- [x] **`patterns.restoreFocus` built the selector `[name=]`** whenever focus sat on anything
+      without a name — a submit button, a row button, a div. That is not a valid selector, so every
+      repaint threw. It now tries name, then id, then `data-key`.
+- [x] **`browser.matchMedia` called the global unguarded**, so any host without it threw rather
+      than degrading.
+- [x] **A radio group could not say which value was chosen**: the event target only knows it is
+      checked, so a choice group reported `true` for every option.
+- [x] **Escape closed every open dialog at once**, and the sheet emitted the variant hover block
+      before the variant it modifies.
+- [x] **`patterns.queryBox` built a search box with no accessible name**, so `dataGrid`,
+      `commandPalette` and `virtualGrid` each shipped an unlabelled control. All eighteen patterns
+      now pass the library's own accessibility audit, and so do both flagships after every
+      interaction the harness performs.
 
 ## Not done
 
