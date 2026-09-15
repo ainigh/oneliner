@@ -541,8 +541,9 @@ Weave.library.browser.pageScrollX = () => scrollX;
 Weave.library.browser.pageScrollY = () => scrollY;
 Weave.library.browser.scrollWindowTo = options => (scrollTo(options), undefined);
 Weave.library.browser.devicePixelRatio = () => devicePixelRatio;
+Weave.library.browser.functionType = 'function';
 Weave.library.browser.mediaStub = { matches: false, media: '', addEventListener: Weave.library.composition.noop, removeEventListener: Weave.library.composition.noop, addListener: Weave.library.composition.noop, removeListener: Weave.library.composition.noop };
-Weave.library.browser.hasMatchMedia = () => typeof matchMedia === 'function';
+Weave.library.browser.hasMatchMedia = () => typeof matchMedia === Weave.library.browser.functionType;
 Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.library.browser.hasMatchMedia, () => matchMedia(query), () => Weave.library.browser.mediaStub)(query);
 
 /* events: registration, dispatch and every getter the event object exposes. */
@@ -629,8 +630,11 @@ Weave.library.browser.measure = (label, from) => performance.measure(label, from
 
 /* observers: one constructor each, plus the three verbs they share. */
 Weave.library.browser.createMutationObserver = callback => new MutationObserver(callback);
-Weave.library.browser.createIntersectionObserver = (callback, options) => new IntersectionObserver(callback, options);
-Weave.library.browser.createResizeObserver = callback => new ResizeObserver(callback);
+Weave.library.browser.hasIntersectionObserver = () => typeof IntersectionObserver === Weave.library.browser.functionType;
+Weave.library.browser.createIntersectionObserver = (callback, options) => Weave.library.control.either(Weave.library.browser.hasIntersectionObserver, () => new IntersectionObserver(callback, options), () => Weave.library.browser.observerStub)(callback);
+Weave.library.browser.observerStub = { observe: Weave.library.composition.noop, unobserve: Weave.library.composition.noop, disconnect: Weave.library.composition.noop };
+Weave.library.browser.hasResizeObserver = () => typeof ResizeObserver === Weave.library.browser.functionType;
+Weave.library.browser.createResizeObserver = callback => Weave.library.control.either(Weave.library.browser.hasResizeObserver, () => new ResizeObserver(callback), () => Weave.library.browser.observerStub)(callback);
 Weave.library.browser.observe = (observer, el, options) => (observer.observe(el, options), observer);
 Weave.library.browser.unobserve = (observer, el) => (observer.unobserve(el), observer);
 Weave.library.browser.disconnect = observer => (observer.disconnect(), observer);
@@ -2535,6 +2539,7 @@ Weave.library.components.childrenOf = (spec, key) => Weave.library.composition.c
 /* blueprints: one row per plain container. The key is the class, the value is the part it is made of. */
 Weave.library.components.blueprints = {};
 Weave.library.components.blueprints.view = Weave.library.components.parts.box;
+Weave.library.components.blueprints.holder = Weave.library.components.parts.box;
 Weave.library.components.blueprints.page = Weave.library.components.parts.main;
 Weave.library.components.blueprints.display = Weave.library.components.parts.display;
 Weave.library.components.blueprints.truncate = Weave.library.components.parts.inline;
@@ -2725,7 +2730,7 @@ Weave.library.components.tokens.shadowLifted = '0 10px 30px rgba(17, 24, 39, 0.1
 Weave.library.components.tokens.fontMono = 'ui-monospace, SFMono-Regular, Menlo, monospace';
 Weave.library.components.tokens.compactWidth = '640px';
 Weave.library.components.tokens.pageWidth = '1100px';
-Weave.library.components.tokens.listWidth = '340px';
+Weave.library.components.tokens.listWidth = '460px';
 Weave.library.components.tokens.fontSizeDisplay = '28px';
 Weave.library.components.tokens.tracking = '-0.01em';
 Weave.library.components.tokens.radiusLarge = '18px';
@@ -2752,6 +2757,7 @@ Weave.library.components.tokens.toastWidth = 'min(360px, calc(100vw - 32px))';
 Weave.library.components.tokens.tipWidth = '240px';
 Weave.library.components.tokens.centreShift = 'translate(-50%, -50%)';
 Weave.library.components.tokens.mediaRatio = '4 / 3';
+Weave.library.components.tokens.cellWidth = '132px';
 Weave.library.components.variablePrefix = '--weave-';
 Weave.library.components.variableName = name => Weave.library.components.variablePrefix + Weave.library.composition.kebabCase(name);
 Weave.library.components.variableOpen = 'var(';
@@ -2791,6 +2797,7 @@ Weave.library.components.values.absolute = 'absolute';
 Weave.library.components.values.relative = 'relative';
 Weave.library.components.values.sticky = 'sticky';
 Weave.library.components.values.clip = 'hidden';
+Weave.library.components.values.contents = 'contents';
 Weave.library.components.values.half = '50%';
 Weave.library.components.values.heavy = '700';
 Weave.library.components.values.ellipsis = 'ellipsis';
@@ -2802,6 +2809,7 @@ Weave.library.components.accentLine = Weave.library.components.vars.line + Weave
 /* rules: the only place a component look is written. One row per class, values are token references. */
 Weave.library.components.rules = {};
 Weave.library.components.rules.page = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceLoose, padding: Weave.library.components.vars.spaceLoose, maxWidth: Weave.library.components.vars.pageWidth, margin: Weave.library.components.values.auto };
+Weave.library.components.rules.holder = { display: Weave.library.components.values.contents };
 Weave.library.components.rules.view = { fontFamily: Weave.library.components.vars.font, fontSize: Weave.library.components.vars.fontSize, lineHeight: Weave.library.components.vars.leading, color: Weave.library.components.vars.ink };
 Weave.library.components.rules.panel = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space, padding: Weave.library.components.vars.spaceLoose, background: Weave.library.components.vars.surface, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radius, flexGrow: Weave.library.components.values.grow };
 Weave.library.components.rules.stack = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space };
@@ -2851,7 +2859,7 @@ Weave.library.components.rules.pageHeader = { display: Weave.library.components.
 Weave.library.components.rules.pageFooter = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.between, gap: Weave.library.components.vars.space, paddingTop: Weave.library.components.vars.space, borderTop: Weave.library.components.hairline, color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall };
 Weave.library.components.rules.body = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceLoose, flexGrow: Weave.library.components.values.grow };
 Weave.library.components.rules.listRow = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.space };
-Weave.library.components.rules.timestamp = { color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.rules.timestamp = { color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall, whiteSpace: Weave.library.components.values.nowrap, flexShrink: Weave.library.components.values.zero };
 
 /* states: the only place a pseudo class or a state attribute is written. One row, one selector suffix. */
 Weave.library.components.states = {};
@@ -3148,7 +3156,7 @@ Weave.library.components.rules.sticky = { position: Weave.library.components.val
 
 /* layout utilities: the three rules every dense list needs, so an application never writes them. */
 Weave.library.components.rules.display = { margin: Weave.library.components.values.zero, fontSize: Weave.library.components.vars.fontSizeDisplay, fontWeight: Weave.library.components.values.heavy, letterSpacing: Weave.library.components.vars.tracking };
-Weave.library.components.rules.truncate = { display: Weave.library.components.values.block, overflow: Weave.library.components.values.clip, textOverflow: Weave.library.components.values.ellipsis, whiteSpace: Weave.library.components.values.nowrap, minWidth: Weave.library.components.values.zero };
+Weave.library.components.rules.truncate = { display: Weave.library.components.values.block, overflow: Weave.library.components.values.clip, textOverflow: Weave.library.components.values.ellipsis, whiteSpace: Weave.library.components.values.nowrap, minWidth: Weave.library.components.values.zero, flexShrink: Weave.library.components.values.grow };
 Weave.library.components.rules.fill = { flexGrow: Weave.library.components.values.grow, minWidth: Weave.library.components.values.zero, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
 
 /* sizes: one row per control size, spent as a data attribute exactly as a variant is. */
@@ -3168,6 +3176,10 @@ Weave.library.components.modifiers = {};
 Weave.library.components.modifiers.variant = { on: Weave.library.components.interactive.button, styles: Weave.library.components.variants };
 Weave.library.components.modifiers.size = { on: Weave.library.components.interactive.button, styles: Weave.library.components.sizes };
 Weave.library.components.modifiers.pane = { on: 'pane', styles: Weave.library.components.paneSizes };
+Weave.library.components.cellSizes = {};
+Weave.library.components.cellSizes.fixed = { width: Weave.library.components.vars.cellWidth, flexShrink: Weave.library.components.values.zero };
+Weave.library.components.cellSizes.grow = { flexGrow: Weave.library.components.values.grow, flexBasis: Weave.library.components.values.zero };
+Weave.library.components.modifiers.cell = { on: 'truncate', styles: Weave.library.components.cellSizes };
 Weave.library.components.markSelector = (key, value) => Weave.library.query.dataSelector(key, value);
 Weave.library.components.markBlock = (row, key) => ([value, style]) => Weave.library.components.blockFor(Weave.library.components.classSelector(row.on) + Weave.library.components.markSelector(key, value), style);
 Weave.library.components.markRow = ([key, row]) => Weave.library.composition.pairs(row.styles).map(Weave.library.components.markBlock(row, key));
@@ -3352,7 +3364,7 @@ Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle
 Weave.library.patterns.merged = (handle, changes) => Object.assign(handle, { state: Weave.library.composition.merge(handle.state, changes) });
 Weave.library.patterns.updater = handle => change => Weave.library.patterns.repaint(Weave.library.patterns.merged(handle, change(handle.state)));
 Weave.library.patterns.wired = handle => Object.assign(handle, { update: Weave.library.patterns.updater(handle) });
-Weave.library.patterns.view = (render, state) => Weave.library.patterns.holding(Weave.library.patterns.repaint(Weave.library.patterns.wired({ element: Weave.library.components.view({}), render, state })), Weave.library.composition.noop);
+Weave.library.patterns.view = (render, state) => Weave.library.patterns.holding(Weave.library.patterns.repaint(Weave.library.patterns.wired({ element: Weave.library.components.holder({}), render, state })), Weave.library.composition.noop);
 Weave.library.patterns.mount = host => handle => (Weave.library.components.installStyles(), Weave.library.elements.append([handle.element])(host), handle);
 
 /* labels: the only place a word the reader sees is written. One row, one word, every pattern. */
@@ -3564,11 +3576,11 @@ Weave.library.patterns.virtualListener = update => Weave.library.patterns.virtua
 Weave.library.patterns.virtualRestore = state => el => Weave.library.browser.setScrollTop(el, state.offset);
 Weave.library.patterns.virtualSized = spec => Weave.library.composition.merge({ rowHeight: Weave.library.patterns.defaults.rowHeight, height: Weave.library.patterns.defaults.listHeight }, spec);
 Weave.library.patterns.virtualMetrics = (spec, state) => Weave.library.composition.merge(spec, { height: Weave.library.control.defaultTo(spec.height)(state.height), items: Weave.library.control.defaultTo(spec.items)(state.items) });
-Weave.library.patterns.virtualCssHeight = spec => Weave.library.control.either(() => spec.fill === true, () => Weave.library.components.values.full, () => spec.height)(spec);
-Weave.library.patterns.virtualStyles = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualCssHeight(spec)), { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto });
-Weave.library.patterns.needsFit = (spec, state, el) => Weave.library.control.and(spec.fill === true, Weave.library.style.outerHeight(el) !== state.height);
-Weave.library.patterns.virtualFit = (spec, state, update, el) => Weave.library.control.when(() => Weave.library.patterns.needsFit(spec, state, el), () => update(() => ({ height: Weave.library.style.outerHeight(el) })))(el);
-Weave.library.patterns.virtualRef = (spec, state, update) => el => (Weave.library.patterns.virtualRestore(state)(el), Weave.library.patterns.virtualFit(spec, state, update, el));
+Weave.library.patterns.virtualOverflow = { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto };
+Weave.library.patterns.virtualFilled = { flexGrow: 1, minHeight: 0, [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto };
+Weave.library.patterns.virtualFixed = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(spec.height), Weave.library.patterns.virtualOverflow);
+Weave.library.patterns.virtualStyles = spec => Weave.library.control.either(() => spec.fill === true, () => Weave.library.patterns.virtualFilled, () => Weave.library.patterns.virtualFixed(spec))(spec);
+Weave.library.patterns.virtualRef = (spec, state, update) => el => Weave.library.patterns.virtualRestore(state)(el);
 Weave.library.patterns.virtualBoxPart = (spec, state, update) => ({ ref: Weave.library.patterns.virtualRef(spec, state, update), children: [Weave.library.patterns.virtualInnerBox(spec, state)] });
 Weave.library.patterns.virtualBoxHead = (spec, update) => ({ styles: Weave.library.patterns.virtualStyles(spec), data: Weave.library.patterns.virtualScrollerData(), onScroll: Weave.library.patterns.virtualListener(update) });
 Weave.library.patterns.virtualBoxSpec = (spec, state, update) => Weave.library.composition.merge(Weave.library.patterns.virtualBoxHead(spec, update), Weave.library.patterns.virtualBoxPart(spec, state, update));
@@ -3577,7 +3589,12 @@ Weave.library.patterns.virtualState = () => ({ offset: 0 });
 Weave.library.patterns.virtualBody = spec => (state, update) => Weave.library.patterns.virtualBox(Weave.library.patterns.virtualMetrics(spec, state), state, update);
 Weave.library.patterns.virtualShow = handle => items => handle.update(() => ({ items, offset: 0 }));
 Weave.library.patterns.virtualHandle = handle => Object.assign(handle, { show: Weave.library.patterns.virtualShow(handle) });
-Weave.library.patterns.virtualList = spec => Weave.library.patterns.virtualHandle(Weave.library.patterns.view(Weave.library.patterns.virtualBody(Weave.library.patterns.virtualSized(spec)), Weave.library.patterns.virtualState()));
+Weave.library.patterns.virtualScrollerOf = handle => Weave.library.query.oneWithin(Weave.library.query.dataSelector(Weave.library.elements.keyName, Weave.library.patterns.virtualScrollerKey))(handle.element);
+Weave.library.patterns.virtualHeightTo = (handle, height) => Weave.library.control.when(() => height !== handle.state.height, () => handle.update(() => ({ height })))(height);
+Weave.library.patterns.virtualMeasure = handle => () => Weave.library.control.maybe(box => Weave.library.patterns.virtualHeightTo(handle, Weave.library.style.outerHeight(box)))(Weave.library.patterns.virtualScrollerOf(handle));
+Weave.library.patterns.virtualWatch = handle => Weave.library.patterns.holding(handle, Weave.library.observers.onResize(Weave.library.patterns.virtualMeasure(handle))(Weave.library.patterns.virtualScrollerOf(handle)));
+Weave.library.patterns.virtualFill = (spec, handle) => Weave.library.control.either(() => spec.fill === true, () => Weave.library.patterns.virtualWatch(handle), Weave.library.composition.identity)(handle);
+Weave.library.patterns.virtualList = spec => Weave.library.patterns.virtualFill(spec, Weave.library.patterns.virtualHandle(Weave.library.patterns.view(Weave.library.patterns.virtualBody(Weave.library.patterns.virtualSized(spec)), Weave.library.patterns.virtualState())));
 
 /* virtualGrid: the search box of the data grid over a virtual list, so no query ever draws the whole table. */
 Weave.library.patterns.virtualCell = row => column => Weave.library.components.note({ text: String(Weave.library.components.cellValue(row, column)) });

@@ -37,7 +37,7 @@ Weave.application.threadCount = 1200;
 Weave.application.folderKeys = Weave.library.composition.keys(Weave.application.folders);
 Weave.application.tagKeys = Weave.library.composition.keys(Weave.application.tags);
 Weave.application.pickFrom = (list, index, stride) => list[(index * stride) % list.length];
-Weave.application.momentAt = index => Weave.library.dates.add(Weave.library.dates.names.day, -(index % 60))(Weave.library.dates.today());
+Weave.application.momentAt = index => Weave.library.dates.add(Weave.library.dates.names.day, -(index % 60) - 1)(Weave.library.dates.today());
 Weave.application.threadWords = index => ({ from: Weave.application.pickFrom(Weave.application.people, index, 3), subject: Weave.application.pickFrom(Weave.application.subjects, index, 5), snippet: Weave.application.pickFrom(Weave.application.snippets, index, 11) });
 Weave.application.threadFiling = index => ({ folder: Weave.application.pickFrom(Weave.application.folderKeys, index, 7), tag: Weave.application.pickFrom(Weave.application.tagKeys, index, 13) });
 Weave.application.threadFlags = index => ({ id: index + 1, unread: index % 3 === 0, starred: index % 11 === 0, at: Weave.application.momentAt(index), replies: index % 4 });
@@ -85,8 +85,11 @@ Weave.application.railBody = (state, ignored) => Weave.library.components.pane({
 
 /* the list: a virtual list of the visible threads, under a toolbar that acts on the checked ones. */
 Weave.application.rowCheck = (state, thread) => Weave.library.components.checkMark({ checked: Weave.application.isChecked(state, thread), label: thread.subject, onChoose: Weave.application.toggleCheck(thread) });
-Weave.application.rowSender = thread => Weave.library.control.either(() => thread.unread, () => Weave.library.components.strong({ text: thread.from }), () => Weave.library.components.note({ text: thread.from }))(thread);
-Weave.application.rowSubject = thread => Weave.library.components.truncate({ text: thread.subject + Weave.application.dash + thread.snippet });
+Weave.application.senderCell = () => Weave.library.components.markNames.cell.fixed;
+Weave.application.rowSender = thread => Weave.library.components.truncate({ cell: Weave.application.senderCell(), text: thread.from, classes: Weave.application.unreadClasses(thread) });
+Weave.application.unreadClasses = thread => Weave.library.control.either(() => thread.unread, () => [Weave.library.components.classOf(Weave.application.strongName)], () => [])(thread);
+Weave.application.strongName = 'strong';
+Weave.application.rowSubject = thread => Weave.library.components.truncate({ cell: Weave.library.components.markNames.cell.grow, text: thread.subject + Weave.application.dash + thread.snippet });
 Weave.application.dash = ' — ';
 Weave.application.rowTag = thread => Weave.library.components.tag({ text: thread.tag });
 Weave.application.rowTime = thread => Weave.library.components.timestamp({ text: Weave.library.formatting.relative(thread.at) });

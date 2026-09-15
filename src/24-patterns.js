@@ -15,7 +15,7 @@ Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle
 Weave.library.patterns.merged = (handle, changes) => Object.assign(handle, { state: Weave.library.composition.merge(handle.state, changes) });
 Weave.library.patterns.updater = handle => change => Weave.library.patterns.repaint(Weave.library.patterns.merged(handle, change(handle.state)));
 Weave.library.patterns.wired = handle => Object.assign(handle, { update: Weave.library.patterns.updater(handle) });
-Weave.library.patterns.view = (render, state) => Weave.library.patterns.holding(Weave.library.patterns.repaint(Weave.library.patterns.wired({ element: Weave.library.components.view({}), render, state })), Weave.library.composition.noop);
+Weave.library.patterns.view = (render, state) => Weave.library.patterns.holding(Weave.library.patterns.repaint(Weave.library.patterns.wired({ element: Weave.library.components.holder({}), render, state })), Weave.library.composition.noop);
 Weave.library.patterns.mount = host => handle => (Weave.library.components.installStyles(), Weave.library.elements.append([handle.element])(host), handle);
 
 /* labels: the only place a word the reader sees is written. One row, one word, every pattern. */
@@ -227,11 +227,11 @@ Weave.library.patterns.virtualListener = update => Weave.library.patterns.virtua
 Weave.library.patterns.virtualRestore = state => el => Weave.library.browser.setScrollTop(el, state.offset);
 Weave.library.patterns.virtualSized = spec => Weave.library.composition.merge({ rowHeight: Weave.library.patterns.defaults.rowHeight, height: Weave.library.patterns.defaults.listHeight }, spec);
 Weave.library.patterns.virtualMetrics = (spec, state) => Weave.library.composition.merge(spec, { height: Weave.library.control.defaultTo(spec.height)(state.height), items: Weave.library.control.defaultTo(spec.items)(state.items) });
-Weave.library.patterns.virtualCssHeight = spec => Weave.library.control.either(() => spec.fill === true, () => Weave.library.components.values.full, () => spec.height)(spec);
-Weave.library.patterns.virtualStyles = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(Weave.library.patterns.virtualCssHeight(spec)), { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto });
-Weave.library.patterns.needsFit = (spec, state, el) => Weave.library.control.and(spec.fill === true, Weave.library.style.outerHeight(el) !== state.height);
-Weave.library.patterns.virtualFit = (spec, state, update, el) => Weave.library.control.when(() => Weave.library.patterns.needsFit(spec, state, el), () => update(() => ({ height: Weave.library.style.outerHeight(el) })))(el);
-Weave.library.patterns.virtualRef = (spec, state, update) => el => (Weave.library.patterns.virtualRestore(state)(el), Weave.library.patterns.virtualFit(spec, state, update, el));
+Weave.library.patterns.virtualOverflow = { [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto };
+Weave.library.patterns.virtualFilled = { flexGrow: 1, minHeight: 0, [Weave.library.browser.properties.overflow]: Weave.library.components.values.auto };
+Weave.library.patterns.virtualFixed = spec => Weave.library.composition.merge(Weave.library.patterns.virtualHeight(spec.height), Weave.library.patterns.virtualOverflow);
+Weave.library.patterns.virtualStyles = spec => Weave.library.control.either(() => spec.fill === true, () => Weave.library.patterns.virtualFilled, () => Weave.library.patterns.virtualFixed(spec))(spec);
+Weave.library.patterns.virtualRef = (spec, state, update) => el => Weave.library.patterns.virtualRestore(state)(el);
 Weave.library.patterns.virtualBoxPart = (spec, state, update) => ({ ref: Weave.library.patterns.virtualRef(spec, state, update), children: [Weave.library.patterns.virtualInnerBox(spec, state)] });
 Weave.library.patterns.virtualBoxHead = (spec, update) => ({ styles: Weave.library.patterns.virtualStyles(spec), data: Weave.library.patterns.virtualScrollerData(), onScroll: Weave.library.patterns.virtualListener(update) });
 Weave.library.patterns.virtualBoxSpec = (spec, state, update) => Weave.library.composition.merge(Weave.library.patterns.virtualBoxHead(spec, update), Weave.library.patterns.virtualBoxPart(spec, state, update));
@@ -240,7 +240,12 @@ Weave.library.patterns.virtualState = () => ({ offset: 0 });
 Weave.library.patterns.virtualBody = spec => (state, update) => Weave.library.patterns.virtualBox(Weave.library.patterns.virtualMetrics(spec, state), state, update);
 Weave.library.patterns.virtualShow = handle => items => handle.update(() => ({ items, offset: 0 }));
 Weave.library.patterns.virtualHandle = handle => Object.assign(handle, { show: Weave.library.patterns.virtualShow(handle) });
-Weave.library.patterns.virtualList = spec => Weave.library.patterns.virtualHandle(Weave.library.patterns.view(Weave.library.patterns.virtualBody(Weave.library.patterns.virtualSized(spec)), Weave.library.patterns.virtualState()));
+Weave.library.patterns.virtualScrollerOf = handle => Weave.library.query.oneWithin(Weave.library.query.dataSelector(Weave.library.elements.keyName, Weave.library.patterns.virtualScrollerKey))(handle.element);
+Weave.library.patterns.virtualHeightTo = (handle, height) => Weave.library.control.when(() => height !== handle.state.height, () => handle.update(() => ({ height })))(height);
+Weave.library.patterns.virtualMeasure = handle => () => Weave.library.control.maybe(box => Weave.library.patterns.virtualHeightTo(handle, Weave.library.style.outerHeight(box)))(Weave.library.patterns.virtualScrollerOf(handle));
+Weave.library.patterns.virtualWatch = handle => Weave.library.patterns.holding(handle, Weave.library.observers.onResize(Weave.library.patterns.virtualMeasure(handle))(Weave.library.patterns.virtualScrollerOf(handle)));
+Weave.library.patterns.virtualFill = (spec, handle) => Weave.library.control.either(() => spec.fill === true, () => Weave.library.patterns.virtualWatch(handle), Weave.library.composition.identity)(handle);
+Weave.library.patterns.virtualList = spec => Weave.library.patterns.virtualFill(spec, Weave.library.patterns.virtualHandle(Weave.library.patterns.view(Weave.library.patterns.virtualBody(Weave.library.patterns.virtualSized(spec)), Weave.library.patterns.virtualState())));
 
 /* virtualGrid: the search box of the data grid over a virtual list, so no query ever draws the whole table. */
 Weave.library.patterns.virtualCell = row => column => Weave.library.components.note({ text: String(Weave.library.components.cellValue(row, column)) });
