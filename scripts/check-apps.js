@@ -15,6 +15,11 @@ function settle(dom) {
   return new Promise(resolve => setTimeout(() => resolve(dom), 250));
 }
 
+/* tests.html runs the whole table in the browser host, including the async rows, so it needs longer than a paint. */
+function settleSuite(dom) {
+  return new Promise(resolve => setTimeout(() => resolve(dom), 2000));
+}
+
 function expect(name, ok, detail) {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${ok ? '' : ` — ${detail}`}`);
   if (!ok) failures.push(name);
@@ -63,7 +68,7 @@ open('sample.html').then(settle).then(dom => {
   expect('studio steps forward again', tally() !== '1,2,1', tally());
   const stored = Weave.library.storage.local.get('weave.studio.queue');
   expect('studio persists the store when the host allows it', stored === undefined || stored.rows.length === 4, JSON.stringify(stored));
-  return open('tests.html').then(settle);
+  return open('tests.html').then(settleSuite);
 }).then(dom => {
   const text = dom.window.document.querySelector('#output').textContent;
   expect('tests.html runs the same table', /^\d+\/\d+ passed$/.test(text.split('\n')[0]) && !text.includes('FAIL'), text.slice(0, 200));
