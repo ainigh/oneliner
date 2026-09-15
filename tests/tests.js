@@ -179,8 +179,8 @@ Weave.tests.clicks = [];
 Weave.tests.cases.componentsTableUsesColumns = () => Weave.library.query.allWithin(Weave.tests.selectorFor('tableCell'))(Weave.library.components.table({ columns: Weave.tests.sampleColumns, rows: Weave.tests.sampleRows })).length === 2;
 Weave.tests.cases.componentsTableFormatsCells = () => Weave.library.elements.textOf(Weave.library.components.table({ columns: [{ key: 'label', label: 'L', format: value => value.toUpperCase() }], rows: Weave.tests.sampleRows })).includes('ONE');
 Weave.tests.cases.componentsFieldNamesItsControl = () => Weave.library.attributes.attribute(Weave.library.browser.keywords.name)(Weave.library.query.oneWithin(Weave.tests.selectorFor('control'))(Weave.library.components.field({ label: 'L', name: 'who' }))) === 'who';
-Weave.tests.cases.componentsStyleTextCoversEveryRule = () => Weave.library.composition.keys(Weave.library.components.rules).every(name => Weave.library.components.styleText().includes(Weave.tests.selectorFor(name)));
-Weave.tests.cases.componentsStyleTextCoversEveryToken = () => Weave.library.composition.keys(Weave.library.components.tokens).every(name => Weave.library.components.styleText().includes(Weave.library.components.variableName(name)));
+Weave.tests.cases.componentsStyleTextCoversEveryRule = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.rules).map(Weave.tests.selectorFor));
+Weave.tests.cases.componentsStyleTextCoversEveryToken = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.tokens).map(Weave.library.components.variableName));
 Weave.tests.cases.componentsRulesOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.rules).every(Weave.tests.usesTokens);
 Weave.tests.knownValues = () => Weave.library.composition.values(Weave.library.components.values).concat(Weave.library.composition.values(Weave.library.components.vars), [Weave.library.components.hairline, Weave.library.components.accentLine]);
 Weave.tests.usesTokens = style => Weave.library.composition.values(style).every(value => Weave.tests.knownValues().includes(value));
@@ -452,6 +452,56 @@ Weave.tests.cases.patternsRepaintKeepsTheSameForm = () => Weave.tests.withPatter
 Weave.tests.keepsTheForm = handle => Weave.tests.sameFormAfter(handle, Weave.tests.formIn(handle));
 Weave.tests.sameFormAfter = (handle, before) => Weave.tests.formIn(Weave.tests.repaintOften(handle)) === before;
 
+/* theming and the second wave of components, plus the notifications pattern. */
+Weave.tests.countWithin = (element, selector) => Weave.library.query.allWithin(selector)(element).length;
+Weave.tests.isTokenKey = name => Weave.library.composition.keys(Weave.library.components.tokens).includes(name);
+Weave.tests.themeKeys = theme => Weave.library.composition.keys(theme).every(Weave.tests.isTokenKey);
+Weave.tests.cases.componentsThemesOnlyNameTokens = () => Weave.library.composition.values(Weave.library.components.themes).every(Weave.tests.themeKeys);
+Weave.tests.cases.componentsStyleTextCarriesTheDarkSelector = () => Weave.library.components.styleText().includes(Weave.library.components.themeSelector(Weave.library.components.themeNames.dark));
+Weave.tests.cases.componentsStyleTextCarriesTheSchemeQuery = () => Weave.library.components.styleText().includes(Weave.library.browser.mediaQueries.darkScheme);
+Weave.tests.containsAll = (text, parts) => parts.every(part => text.includes(part));
+Weave.tests.toneSelectors = () => Weave.library.composition.keys(Weave.library.components.tones).map(Weave.library.components.toneSelector);
+Weave.tests.keyframesHeadings = () => Weave.library.composition.keys(Weave.library.components.keyframes).map(name => Weave.library.components.keyframesOpen + name);
+Weave.tests.cases.componentsStyleTextCarriesEveryTone = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.tests.toneSelectors());
+Weave.tests.cases.componentsStyleTextCarriesEveryKeyframes = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.tests.keyframesHeadings());
+Weave.tests.clearTheme = result => (Weave.library.components.setTheme(undefined), result);
+Weave.tests.readsTheme = name => (Weave.library.components.setTheme(name), Weave.tests.clearTheme(Weave.library.components.theme() === name));
+Weave.tests.cases.componentsSetThemeSetsTheAttribute = () => Weave.tests.readsTheme(Weave.library.components.themeNames.dark);
+Weave.tests.secondToggle = first => (Weave.library.components.toggleTheme(), Weave.tests.clearTheme(Weave.library.control.and(first === Weave.library.components.themeNames.dark, Weave.library.components.theme() === Weave.library.components.themeNames.light)));
+Weave.tests.togglesTwice = () => (Weave.library.components.setTheme(undefined), Weave.library.components.toggleTheme(), Weave.tests.secondToggle(Weave.library.components.theme()));
+Weave.tests.cases.componentsToggleThemeFlipsDarkAndLight = () => Weave.tests.togglesTwice();
+Weave.tests.cases.componentsSchemeNameMapsBothWays = () => Weave.tests.mapsBothSchemes();
+Weave.tests.mapsBothSchemes = () => Weave.library.control.and(Weave.library.components.schemeName(true) === Weave.library.components.themeNames.dark, Weave.library.components.schemeName(false) === Weave.library.components.themeNames.light);
+Weave.tests.toneOf = element => Weave.library.attributes.data(Weave.library.components.toneKey)(element);
+Weave.tests.alertSample = () => Weave.library.components.alert({ tone: Weave.tests.lastTone(), title: 'Gone', text: 'It went' });
+Weave.tests.cases.componentsAlertCarriesToneAndRole = () => Weave.tests.readsAlert(Weave.tests.alertSample());
+Weave.tests.lastTone = () => Weave.library.composition.last(Weave.library.composition.keys(Weave.library.components.tones));
+Weave.tests.roleOf = element => Weave.library.attributes.attribute(Weave.library.browser.keywords.role)(element);
+Weave.tests.readsAlert = element => Weave.library.control.and(Weave.tests.toneOf(element) === Weave.tests.lastTone(), Weave.tests.roleOf(element) === Weave.library.accessibility.roles.alert);
+Weave.tests.cases.componentsAlertCloses = () => Weave.tests.countsOneClick(Weave.library.query.oneWithin(Weave.tests.selectorFor('button'))(Weave.library.components.alert({ title: 'Saved', onClose: () => Weave.tests.clicks.push(1) })));
+Weave.tests.cases.componentsStatusDotCarriesItsTone = () => Weave.tests.toneOf(Weave.library.components.statusDot({})) === Weave.library.components.defaultTone();
+Weave.tests.cases.componentsBadgeShowsItsCount = () => Weave.library.elements.textOf(Weave.library.components.badge({ count: 7 })) === '7';
+Weave.tests.cases.componentsKbdDrawsAKeyCapEach = () => Weave.tests.countWithin(Weave.library.components.kbd({ keys: ['Ctrl', 'K'] }), Weave.tests.selectorFor('keyCap')) === 2;
+Weave.tests.cases.componentsSkeletonDrawsItsLines = () => Weave.tests.countWithin(Weave.library.components.skeleton({ lines: 3 }), Weave.tests.selectorFor('skeletonLine')) === 3;
+Weave.tests.cases.componentsAvatarGroupDrawsEachName = () => Weave.tests.countWithin(Weave.library.components.avatarGroup({ names: ['Ada Lovelace', 'Alan Turing'] }), Weave.tests.selectorFor('avatar')) === 2;
+Weave.tests.switchSample = () => Weave.library.query.oneWithin(Weave.tests.selectorFor('switchControl'))(Weave.library.components.switchField({ label: 'Alerts', checked: true }));
+Weave.tests.cases.componentsSwitchFieldIsASwitch = () => Weave.tests.readsSwitch(Weave.tests.switchSample());
+Weave.tests.checkedOf = control => Weave.library.attributes.aria(Weave.library.accessibility.states.checked)(control);
+Weave.tests.readsSwitch = control => Weave.library.control.and(Weave.tests.roleOf(control) === Weave.library.accessibility.roles.switch, Weave.tests.checkedOf(control) === Weave.library.browser.keywords.true);
+Weave.tests.sliderSample = () => Weave.library.query.oneWithin(Weave.tests.selectorFor('sliderControl'))(Weave.library.components.sliderField({ label: 'Size', name: 'size', min: 0, max: 10, step: 1, value: 4 }));
+Weave.tests.cases.componentsSliderFieldIsARange = () => Weave.library.attributes.attribute(Weave.library.browser.keywords.type)(Weave.tests.sliderSample()) === Weave.library.elements.inputTypes.range;
+Weave.tests.stepped = [];
+Weave.tests.stepperSample = () => Weave.library.components.stepperField({ label: 'How many', name: 'many', value: 2, min: 0, max: 5, onChange: value => Weave.tests.stepped.push(value) });
+Weave.tests.stepsUp = field => (Weave.tests.stepped.splice(0), Weave.library.browser.click(Weave.library.query.allWithin(Weave.tests.selectorFor('button'))(field)[1]), Weave.library.composition.first(Weave.tests.stepped) === 3);
+Weave.tests.cases.componentsStepperFieldStepsItsValue = () => Weave.tests.stepsUp(Weave.tests.stepperSample());
+Weave.tests.cases.componentsDropdownHoldsAMenu = () => Weave.tests.countWithin(Weave.library.components.dropdown({ label: 'More', items: [{ label: 'One' }] }), Weave.tests.selectorFor('menu')) === 1;
+Weave.tests.tooltipSample = () => Weave.library.components.tooltip({ text: 'Save', hint: 'Writes the file to disk' });
+Weave.tests.tooltipDescription = tip => Weave.library.attributes.aria(Weave.library.accessibility.states.describedby)(Weave.library.query.oneWithin(Weave.tests.selectorFor('tooltipTarget'))(tip));
+Weave.tests.tooltipNoteId = tip => Weave.library.attributes.id(Weave.library.query.oneWithin(Weave.tests.selectorFor('tooltipNote'))(tip));
+Weave.tests.describesItsChild = tip => Weave.tests.tooltipDescription(tip) === Weave.tests.tooltipNoteId(tip);
+Weave.tests.cases.componentsTooltipDescribesItsChild = () => Weave.tests.describesItsChild(Weave.tests.tooltipSample());
+Weave.tests.pushesOneToast = handle => (handle.push('Saved'), Weave.tests.countIn(handle, Weave.tests.selectorFor('alert')) === 1);
+Weave.tests.cases.patternsNotificationsPush = () => Weave.tests.withPattern(Weave.library.patterns.notifications({ timeout: 5 }), Weave.tests.pushesOneToast);
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);
@@ -471,6 +521,7 @@ Weave.tests.asyncCases.effectsIgnoreCancelledResolves = () => Weave.library.comp
 Weave.tests.asyncCases.patternsVirtualListScrollsToTheMiddle = () => Weave.tests.scrolledVirtual(Weave.tests.firstKeyAfterScroll);
 Weave.tests.asyncCases.patternsVirtualListKeepsItsScrollTop = () => Weave.tests.scrolledVirtual(Weave.tests.keepsItsScrollTop);
 Weave.tests.asyncCases.effectsCancelledRejectionIsNamed = () => Weave.tests.rejectsWith(Weave.library.control.errors.cancelled, Weave.tests.cancelledEffect());
+Weave.tests.asyncCases.patternsNotificationsExpire = () => Weave.tests.expiresAToast(Weave.tests.spawn(Weave.library.patterns.notifications({ timeout: 5 })));
 
 /* async helpers: the fixtures the async rows share, kept out of the rows themselves. */
 Weave.tests.failedResponse = { ok: false, status: 404, url: '/missing', headers: { get: Weave.library.composition.noop } };
@@ -482,6 +533,8 @@ Weave.tests.markHook = reason => Weave.library.composition.merge(reason, { seen:
 Weave.tests.withErrorHook = () => Weave.tests.releaseHook(Weave.library.network.reportError(Weave.tests.pushHook()));
 Weave.tests.pushHook = () => (Weave.library.network.hooks.onError.push(Weave.tests.markHook), { name: 'Whatever' });
 Weave.tests.releaseHook = promise => (Weave.library.network.hooks.onError.pop(), promise);
+Weave.tests.pushThenWait = handle => (handle.push('Saved'), Weave.library.timing.delay(30));
+Weave.tests.expiresAToast = handle => Weave.library.composition.then(() => Weave.tests.reportFixture(Weave.tests.countIn(handle, Weave.tests.selectorFor('alert')) === 0, handle.element))(Weave.tests.pushThenWait(handle));
 Weave.tests.cancelledEffect = () => Weave.library.composition.rejected(Weave.library.control.error(Weave.library.control.errors.cancelled, {}));
 /* resource rows: the async half of the request pattern, resolved by hand through a deferred. */
 Weave.tests.asyncCases.patternsResourceShowsWhatItLoaded = () => Weave.library.composition.then(text => text.includes('landed'))(Weave.tests.withResource(Weave.tests.pending()));

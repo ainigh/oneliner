@@ -12,7 +12,7 @@ function open(file) {
 }
 
 function settle(dom) {
-  return new Promise(resolve => setTimeout(() => resolve(dom), 250));
+  return new Promise(resolve => setTimeout(() => resolve(dom), 750));
 }
 
 /* tests.html runs the whole table in the browser host, including the async rows, so the harness waits for the run to finish rather than guessing how long it takes. */
