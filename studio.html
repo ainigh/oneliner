@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave studio — one store, two views, and a way back</title>
+</head>
+<body>
+<script src="dist/weave.js"></script>
+<script>
+/* application: a review desk. One store holds the submissions, two views watch it, and the pile remembers both where it was and how it got there. */
+Weave.application = {};
+Weave.application.storageKey = 'weave.studio.queue';
+Weave.application.verdicts = { accept: 'Accepted', revise: 'Revise', reject: 'Declined' };
+Weave.application.labels = { desk: 'Review desk', queue: 'Submissions', tally: 'Where the pile stands', undo: 'Undo', redo: 'Redo', clear: 'Start over' };
+Weave.application.submissions = [{ label: 'A grammar of one-liners', author: 'Ada Lovelace', verdict: Weave.application.verdicts.revise }, { label: 'Tables before code', author: 'Grace Hopper', verdict: Weave.application.verdicts.accept }, { label: 'What a blast radius buys', author: 'Alan Turing', verdict: Weave.application.verdicts.reject }, { label: 'The audit refused it twice', author: 'Barbara Liskov', verdict: Weave.application.verdicts.revise }];
+Weave.application.verdictList = () => Weave.library.composition.values(Weave.application.verdicts);
+Weave.application.store = Weave.library.patterns.persist(Weave.application.storageKey)(Weave.library.patterns.withHistory(Weave.library.patterns.store({ rows: Weave.application.submissions })));
+Weave.application.countOf = (state, verdict) => state.rows.filter(row => row.verdict === verdict).length;
+Weave.application.tallyTile = state => verdict => Weave.library.components.statTile({ label: verdict, value: Weave.application.countOf(state, verdict) });
+Weave.application.tally = state => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: Weave.application.labels.tally }), Weave.library.components.tiles({ children: Weave.application.verdictList().map(Weave.application.tallyTile(state)) })] });
+Weave.application.nextVerdict = row => Weave.application.verdictList()[(Weave.application.verdictList().indexOf(row.verdict) + 1) % Weave.application.verdictList().length];
+Weave.application.rejudged = (other, row) => Weave.library.control.either(() => other.label === row.label, () => Weave.library.composition.merge(other, { verdict: Weave.application.nextVerdict(other) }), () => other)(other);
+Weave.application.judge = (state, update, row) => () => update(() => ({ rows: state.rows.map(other => Weave.application.rejudged(other, row)) }));
+Weave.application.cardParts = (state, update, row) => [Weave.library.components.subtitle({ text: row.label }), Weave.library.components.note({ text: row.author }), Weave.library.components.actionButton({ label: row.verdict, onAction: Weave.application.judge(state, update, row) })];
+Weave.application.card = (state, update) => row => Weave.library.components.card({ data: { key: row.label }, children: Weave.application.cardParts(state, update, row) });
+Weave.application.queue = (state, update) => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: Weave.application.labels.queue }), Weave.library.components.stack({ children: state.rows.map(Weave.application.card(state, update)) })] });
+Weave.application.reset = () => (Weave.library.patterns.forget(Weave.application.storageKey), Weave.application.store.update(() => ({ rows: Weave.application.submissions })));
+Weave.application.steps = [[Weave.application.labels.undo, () => Weave.application.store.undo()], [Weave.application.labels.redo, () => Weave.application.store.redo()], [Weave.application.labels.clear, () => Weave.application.reset()]];
+Weave.application.step = ([label, onAction]) => Weave.library.components.actionButton({ label, onAction });
+Weave.application.bar = () => Weave.library.components.toolbar({ items: Weave.application.steps.map(Weave.application.step) });
+Weave.application.header = () => Weave.library.components.pageHeader({ children: [Weave.library.components.title({ text: Weave.application.labels.desk }), Weave.application.bar()] });
+Weave.application.show = render => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.library.patterns.connect(Weave.application.store)(render));
+Weave.application.start = () => (Weave.library.elements.append([Weave.application.header()])(Weave.library.browser.body()), Weave.application.show(Weave.application.queue), Weave.application.show(Weave.application.tally));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

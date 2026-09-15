@@ -69,6 +69,8 @@ Weave.library.browser.keywords.dot = '.';
 Weave.library.browser.keywords.hash = '#';
 Weave.library.browser.keywords.slash = '/';
 Weave.library.browser.keywords.plus = '+';
+Weave.library.browser.keywords.draggable = 'draggable';
+Weave.library.browser.keywords.move = 'move';
 
 Weave.library.browser.properties = {};
 Weave.library.browser.properties.display = 'display';
@@ -146,6 +148,7 @@ Weave.library.browser.mimeTypes.form = 'application/x-www-form-urlencoded';
 Weave.library.browser.mimeTypes.multipart = 'multipart/form-data';
 Weave.library.browser.mimeTypes.text = 'text/plain';
 Weave.library.browser.mimeTypes.html = 'text/html';
+Weave.library.browser.mimeTypes.identifier = 'application/x-weave-identifier';
 
 Weave.library.browser.httpMethods = {};
 Weave.library.browser.httpMethods.get = 'GET';
@@ -262,6 +265,10 @@ Weave.library.browser.createEvent = (type, init) => new CustomEvent(type, init);
 Weave.library.browser.createKeyboardEvent = (type, init) => new KeyboardEvent(type, init);
 Weave.library.browser.createMouseEvent = (type, init) => new MouseEvent(type, init);
 Weave.library.browser.createPointerEvent = (type, init) => new PointerEvent(type, init);
+Weave.library.browser.setTransferData = (event, type, value) => (event.dataTransfer.setData(type, value), event);
+Weave.library.browser.transferDataOf = (event, type) => event.dataTransfer.getData(type);
+Weave.library.browser.setDropEffect = (event, value) => (event.dataTransfer.dropEffect = value, event);
+Weave.library.browser.withTransfer = (event, transfer) => Object.assign(event, { dataTransfer: transfer });
 Weave.library.browser.preventDefault = event => (event.preventDefault(), event);
 Weave.library.browser.stopPropagation = event => (event.stopPropagation(), event);
 Weave.library.browser.stopImmediatePropagation = event => (event.stopImmediatePropagation(), event);
@@ -414,3 +421,32 @@ Weave.library.browser.setTitle = text => (document.title = text, text);
 Weave.library.browser.visibilityState = () => document.visibilityState;
 Weave.library.browser.isPageVisible = () => document.visibilityState === Weave.library.browser.keywords.visible;
 Weave.library.browser.deepClone = value => structuredClone(value);
+
+/* dates: the only place the Date constructor is named. Every calendar value starts here. */
+Weave.library.browser.timestamp = () => Date.now();
+Weave.library.browser.currentDate = () => new Date();
+Weave.library.browser.createDate = value => new Date(value);
+Weave.library.browser.dateFromParts = (year, month, day, hours = 0, minutes = 0) => new Date(year, month, day, hours, minutes);
+Weave.library.browser.dateTimeValue = date => date.getTime();
+Weave.library.browser.isoOf = date => date.toISOString();
+Weave.library.browser.isValidDate = date => Number.isFinite(date.getTime());
+
+/* dateParts: one row per readable field of a Date. The generator below turns each row into a reader. */
+Weave.library.browser.dateParts = {};
+Weave.library.browser.dateParts.year = 'getFullYear';
+Weave.library.browser.dateParts.month = 'getMonth';
+Weave.library.browser.dateParts.day = 'getDate';
+Weave.library.browser.dateParts.hours = 'getHours';
+Weave.library.browser.dateParts.minutes = 'getMinutes';
+Weave.library.browser.dateParts.seconds = 'getSeconds';
+Weave.library.browser.dateParts.milliseconds = 'getMilliseconds';
+Weave.library.browser.dateParts.weekday = 'getDay';
+Weave.library.browser.datePart = method => date => date[method]();
+Weave.library.browser.dateReaders = {};
+Weave.library.composition.defineEach(Weave.library.browser.dateReaders, Weave.library.browser.datePart)(Weave.library.browser.dateParts);
+
+/* intl: the only place a locale formatter is constructed. One function per formatter the library needs. */
+Weave.library.browser.formatNumber = (value, locale, options) => new Intl.NumberFormat(locale, options).format(value);
+Weave.library.browser.formatDate = (date, locale, options) => new Intl.DateTimeFormat(locale, options).format(date);
+Weave.library.browser.formatRelative = (value, unit, locale) => new Intl.RelativeTimeFormat(locale).format(value, unit);
+Weave.library.browser.formatList = (items, locale) => new Intl.ListFormat(locale).format(items);

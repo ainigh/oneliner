@@ -88,6 +88,12 @@ Weave.library.interaction.optionHandler = handler => event => Weave.library.cont
 Weave.library.interaction.dropRow = options => ([type, key]) => [type, Weave.library.interaction.optionHandler(options[key])];
 Weave.library.interaction.dropListeners = options => Weave.library.composition.fromPairs(Weave.library.composition.pairs(Weave.library.interaction.dropOptions).map(Weave.library.interaction.dropRow(options)));
 Weave.library.interaction.droppable = (options = {}) => el => Weave.library.events.combine([Weave.library.events.onAll(Weave.library.interaction.dropListeners(options))(el), Weave.library.events.on(Weave.library.events.types.dragover, Weave.library.browser.preventDefault)(el)]);
+Weave.library.interaction.markDraggable = el => Weave.library.attributes.setAttribute(Weave.library.browser.keywords.draggable, Weave.library.browser.keywords.true)(el);
+Weave.library.interaction.writeTransfer = (options, event) => (Weave.library.browser.setTransferData(event, Weave.library.browser.mimeTypes.identifier, options.identifier), Weave.library.browser.setDropEffect(event, Weave.library.browser.keywords.move));
+Weave.library.interaction.dragStarted = options => event => (Weave.library.interaction.writeTransfer(options, event), Weave.library.interaction.optionHandler(options.onStart)(event));
+Weave.library.interaction.dragSourceListeners = options => ({ [Weave.library.events.types.dragstart]: Weave.library.interaction.dragStarted(options), [Weave.library.events.types.dragend]: Weave.library.interaction.optionHandler(options.onEnd) });
+Weave.library.interaction.dragSource = (options = {}) => el => Weave.library.events.onAll(Weave.library.interaction.dragSourceListeners(options))(Weave.library.interaction.markDraggable(el));
+Weave.library.interaction.droppedData = event => Weave.library.browser.transferDataOf(event, Weave.library.browser.mimeTypes.identifier);
 Weave.library.interaction.sortable = (options = {}) => list => Weave.library.events.delegate(Weave.library.events.types.pointerdown, Weave.library.control.defaultTo(Weave.library.browser.keywords.all)(options.handle), Weave.library.interaction.sortHandler(options, list))(list);
 Weave.library.interaction.sortHandler = (options, list) => (event, item) => Weave.library.interaction.sortWith(options, list, item);
 Weave.library.interaction.sortWith = (options, list, item) => Weave.library.events.once(Weave.library.events.types.pointerup, event => Weave.library.interaction.dropAt(options, list, item, event))(Weave.library.browser.document());

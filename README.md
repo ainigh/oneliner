@@ -52,6 +52,12 @@ because the audit refused the alternative.
 | how a spec key becomes a listener | `components.handlers` | — |
 | what a button looks like | `components.rules.button` | — |
 | how any stateful pattern repaints | `patterns.view` | — |
+| how a repaint decides what to keep | `elements.morph` | — |
+| the dark palette | `components.themes.dark` | — |
+| what a tone colour is | `components.tokens.tone*` | — |
+| how a class spends a tone | `components.toneRules` | — |
+| what a pattern falls back on | `patterns.defaults` | — |
+| how a request's phase is drawn | `patterns.panes` | — |
 | the word "Add" everywhere | `patterns.labels.add` | — |
 | how an attribute selector is built | `query.attributeSelector` | — |
 | which errors the library can produce | `control.errors` | — |
@@ -75,12 +81,14 @@ because the audit refused the alternative.
 ## The layers
 
 `composition` → `predicates` → `control` → `browser` → `elements` → `query` → `attributes` → `style` →
-`timing` → `events` → `effects` → `forms` → `network` → `observers` → `storage` → `navigation` →
-`interaction` → `accessibility` → `collections` → `components` → `patterns`, then `application`.
+`events` → `timing` → `dates` → `formatting` → `effects` → `forms` → `network` → `observers` →
+`storage` → `navigation` → `interaction` → `accessibility` → `collections` → `components` →
+`patterns`, then `application`.
 
-`browser` is the only layer that names a global. `collections` lifts every layer below it.
-`components` turns one spec into one element. `patterns` gives a component state. An application
-composes patterns and holds data — nothing else.
+`browser` is the only layer that names a global — `Date` and `Intl` included, which is why `dates`
+does calendar arithmetic with no locale in it and `formatting` does locale with no arithmetic in it.
+`collections` lifts every layer below it. `components` turns one spec into one element. `patterns`
+gives a component state. An application composes patterns and holds data — nothing else.
 
 ## Components and patterns
 
@@ -92,10 +100,11 @@ Weave.library.components.field({ label: 'Email', name: 'email', type: 'email' })
 Weave.library.components.tabs({ active: 'open', items: [{ key: 'open', label: 'Open', onAction: show }] });
 ```
 
-Containers come from one table, so adding `blueprints.badge = parts.inline` adds
-`components.badge(spec)` with its own class and its own row in the stylesheet. Composite widgets —
-`table`, `menu`, `tabs`, `tree`, `form`, `modal`, `pagination`, `accordion` — are built from those
-same containers and never reach past them.
+Containers come from one table, so adding `blueprints.pill = parts.inline` adds
+`components.pill(spec)` with its own class and its own row in the stylesheet. Composite widgets —
+`table`, `menu`, `tabs`, `tree`, `form`, `modal`, `pagination`, `accordion`, `alert`, `dropdown`,
+`tooltip`, `switchField`, `sliderField`, `stepperField`, `kbd`, `badge`, `skeleton`, `avatarGroup`,
+`statusDot` — are built from those same containers and never reach past them.
 
 A pattern is a component with state. Every one returns the same handle, `{ element, state, update }`,
 and every one repaints through `patterns.view`:
@@ -108,14 +117,66 @@ Weave.library.patterns.masterDetail({ items, detail: person => Weave.library.com
 ```
 
 The set is `todoList`, `board`, `dataGrid`, `masterDetail`, `wizard`, `commandPalette`, `chat`,
-`explorer` and `dashboard`. A pattern only ever composes components and other patterns, so a fix to
-`components.table` lands in `dataGrid`, in every demo that uses one, and nowhere twice.
+`explorer`, `dashboard`, `calendar`, `virtualList`, `virtualGrid`, `resource`, `entryForm` and
+`notifications`. A pattern only ever composes components and other patterns, so a fix to
+`components.table` lands in `dataGrid`, in `virtualGrid`, in `calendar`, in every demo that uses
+one, and nowhere twice.
 
 `update` takes a function of the current state, so a repaint can never read a stale one:
 
 ```js
 Weave.application.close = handle => handle.update(state => ({ open: state.open.filter(isDone) }));
 ```
+
+## A repaint keeps what still matches
+
+`patterns.view` does not empty the host and rebuild it. It calls `elements.morph`, which patches the
+live tree into the shape of a freshly rendered one and keeps every node that still matches: a caret
+stays where it was, a scroll offset survives, an open `<details>` stays open. Give a repeated child
+`data: { key }` and the key decides the match, so a reordered list moves its nodes instead of
+rebuilding them. Listeners are rewired from the fresh tree every time — that is what keeps a handler
+closing over current state, and it means a listener attached from outside the render does not
+survive a repaint.
+
+`elements.liveProperties` is the one place the properties the platform stops mirroring from
+attributes — `value`, `checked`, `selected`, `disabled` — are named.
+
+## State that outlives one pattern
+
+Four decorators take a handle **or** a store, because both answer to `state` and `update`:
+
+```js
+Weave.application.store = Weave.library.patterns.persist('desk')(Weave.library.patterns.withHistory(Weave.library.patterns.store({ rows })));
+Weave.application.queue = Weave.library.patterns.connect(Weave.application.store)(Weave.application.render);
+```
+
+| Decorator | What it adds |
+|---|---|
+| `patterns.store` / `patterns.connect` | one state many views watch, so two views of one dataset stop copying it |
+| `patterns.withHistory` | `undo`, `redo`, `canUndo`, `canRedo` — two rows of `patterns.timeTravel`, one stack each way |
+| `patterns.persistIn(view, key)` | writes state to any storage view on every update and shows what it finds on the way in; `persist(key)` is that against local storage |
+| `patterns.linkTo(name)` | keeps one state key in the page address, so a view can be linked to |
+
+`patterns.stop(handle)` releases every subscription the handle collected and takes its element out
+of the page. `studio.html` is the reference application for all of it.
+
+## Three patterns that were missing a rung
+
+`patterns.resource` makes a request a state rather than a branch. `patterns.phases` names the three
+phases and `patterns.panes` holds one render each, so a fourth phase is a row:
+
+```js
+Weave.library.patterns.resource({ title: 'Stock', load: () => Weave.library.network.getJson('/api/stock'), ready: rows => Weave.library.components.table({ columns, rows }) });
+```
+
+`patterns.entryForm` wires `forms.validators` to the form component, so a rule that fails shows the
+message that already sits beside it in `forms.messages`, and a submit is refused while anything is
+broken.
+
+`patterns.virtualList` renders a fixed window — the visible rows plus twice `patterns.defaults.overscan`
+— however many items there are, with a full-height inner box so the scrollbar stays honest and
+`timing.throttleFrame` so a scroll storm repaints once per frame. `patterns.virtualGrid` is that
+under a search box. `dataGrid` is unchanged and still the right answer when the caller wants pages.
 
 ## Styling
 
@@ -124,7 +185,16 @@ There is no stylesheet file. `components.tokens` holds every dimension, colour a
 `components.states` holds the only pseudo-classes in the system. `components.styleText()` renders
 the sheet and `components.installStyles()` injects it once, however many patterns are mounted.
 
-To restyle the whole system, change tokens. To restyle one widget, change its row.
+A theme is a row of token overrides. `components.themes.dark` is one, and the sheet carries a block
+per theme plus a `prefers-color-scheme` block scoped so the operating system wins unless the page
+has chosen. `components.setTheme(name)`, `components.toggleTheme()` and `components.followScheme()`
+are the runtime side; the last returns its unsubscribe. `components.tones` maps a tone name to a
+colour token and `components.toneRules` says how a class spends it, so `alert`, `statusDot` and
+anything else toned share one palette. `components.keyframes` is the only place an animation is
+written.
+
+To restyle the whole system, change tokens. To restyle one widget, change its row. To restyle every
+widget at night, change one theme row.
 
 ## Three examples
 
@@ -152,8 +222,8 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `catalog.json` | Every path in the bundle, emitted by the audit. |
 | `tests/tests.js` | One table row per test case, in the same style. `cases` are synchronous, `asyncCases` resolve to a boolean. |
 | `tests.html` | The browser half of the test contract. |
-| `sample.html`, `todo.html` | The two reference applications, written against the library directly. |
-| `demos/*.html` | Six domain applications, written only against patterns. |
+| `sample.html`, `todo.html`, `studio.html` | The reference applications, written against the library directly. |
+| `demos/*.html` | Seven domain applications, written only against patterns. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
 
 ## Commands
@@ -163,32 +233,34 @@ npm run build       # src/ → dist/weave.js and dist/weave.module.js
 npm run audit       # the style rules, plus catalog.json
 npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
-npm run check:apps  # drive sample.html, todo.html and tests.html in jsdom
-npm run check:demos # drive all six demo applications in jsdom
+npm run check:apps  # drive sample.html, todo.html, studio.html and tests.html in jsdom
+npm run check:demos # drive all seven demo applications in jsdom
 npm run check       # all of the above
 ```
 
 ## The demos
 
-`demos/index.html` links six applications in six domains. Each one exists to put the patterns under
-load in a different shape, and each is short because the patterns do the work:
+`demos/index.html` links seven applications in seven domains. Each one exists to put the patterns
+under load in a different shape, and each is short because the patterns do the work:
 
 | Demo | Domain | What it exercises |
 |---|---|---|
 | `crm.html` | sales | dashboard, data grid and master detail over one dataset |
-| `board.html` | engineering | a kanban board driven by a command palette |
+| `board.html` | engineering | a kanban board you can drag a card across, driven by a command palette |
 | `helpdesk.html` | support | a ticket queue whose detail pane is a live chat |
-| `warehouse.html` | logistics | sorting and paging over 23 rows, plus a booking wizard |
+| `warehouse.html` | logistics | sorting and paging over 23 rows, a 2,000 row virtual ledger, plus a booking wizard |
 | `school.html` | education | a curriculum tree beside its reading, and a todo list |
 | `clinic.html` | healthcare | a day schedule and a three step intake form |
+| `agenda.html` | conferences | a calendar of sessions, with prices and a countdown |
 
-None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all six.
+None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all seven.
 
 ## Extending
 
 There is no plugin API. Extending Weave means adding lines: a row to a table
-(`Weave.library.elements.tags.myWidget = {...}` adds a builder) or a new layer after `collections`
-that honours the dependency direction. `Weave.library.collections.lifts` takes rows for new layers,
+(`Weave.library.elements.tags.myWidget = {...}` adds a builder) or a new layer that honours the
+dependency direction — `dates` and `formatting` went in between `timing` and `effects` that way,
+each as one file, one row in the audit's layer list, and its tables in the audit's required list. `Weave.library.collections.lifts` takes rows for new layers,
 so lifting extends too, and `Weave.library.collections.kinds` says how: a `curried*` kind lifts a
 function that takes its arguments before the element, so `Weave.library.collections.query.find('.row')`
 and `Weave.library.collections.style.css('display')` read the same way as their single-element twins.

@@ -5,8 +5,9 @@ implementation departs from them, the departure is recorded under **Deviations**
 rather than by editing a spec.
 
 Status of every box below is machine-checked by `npm run check`
-(`build` → `audit` → `test` → `audit:rows` → `check:apps`), currently green:
-**0 audit findings · 103/103 tests · 293/293 row removals · 9/9 application checks.**
+(`build` → `audit` → `test` → `audit:rows` → `check:apps` → `check:demos`), currently green:
+**0 audit findings · 278/278 tests · 357/357 row removals · 17/17 application checks ·
+36/36 demo checks · 3007 catalog paths.**
 
 ---
 
@@ -62,6 +63,8 @@ Status of every box below is machine-checked by `npm run check`
 - [x] `attributes` — attribute / property / data / class / value / aria, with `valueReaders` and `valueWriters`
 - [x] `style` — computed and inline css, `unitlessProperties`, `defaultDisplays`, box tables, offsets, scroll
 - [x] `timing` — delay, interval, frames, idle, debounce, throttle, `throttleFrame`, stopwatch, measure
+- [x] `dates` — calendar arithmetic over `Date` values obtained through `browser`, including `monthGrid`
+- [x] `formatting` — locale-aware number, money, percent, date, time, relative and list text through `Intl`
 - [x] `events` — registration, delegation, trigger, ready, `types` table (101 rows) and generated handlers, `getters` table, `nativeTriggers`
 - [x] `effects` — Web Animations engine, `defaults` / `easings` / `presets` tables, queue and parallel
 - [x] `forms` — values, serialize, fill, clear, snapshot, dirty, submit interception, `validators` and `messages`
@@ -72,6 +75,8 @@ Status of every box below is machine-checked by `npm run check`
 - [x] `interaction` — focus, keys, shortcuts, pointer gestures, drag and drop, clipboard, scroll lock
 - [x] `accessibility` — state, labels, live regions, trap, modal, roving, audit rules
 - [x] `collections` — nine lift kinds, `lifts` and `unlifted` tables, set operations
+- [x] `components` — the widget set, the token and theme tables, and the one generated stylesheet
+- [x] `patterns` — the stateful set, the keyed repaint, and the state decorators
 
 ## Contracts
 
@@ -229,27 +234,61 @@ todo adder and the chat composer, the split view shared by `masterDetail` and `e
 attribute-selector builder now shared by `query.dataSelector` and the focus restorer — all three
 exist because the audit refused to let them be written twice.
 
-## Gaps the demos uncovered
+## Gaps the demos uncovered — all five closed
 
-Building six applications against the library found five things it cannot yet do. None is fixed here.
+Building six applications against the library found five things it could not do. Every one is fixed,
+and each fix landed where the one-place rule said it had to.
 
-- [ ] **No date layer.** A calendar pattern is blocked on it. Worse, the boundary already leaks:
-      `composition.now` calls `Date.now()`, and `Date` is not in `Audit.policy.globals`, so the one
-      rule that keeps platform names inside `browser` does not currently cover it. Fixing it means a
-      `browser` date group, the policy row, and a way for `composition` to reach it.
-- [ ] **No number or date formatting.** Both `crm.html` and `warehouse.html` had to write their own
-      currency helper. That is the exact redundancy this project exists to remove, and it belongs in
-      `composition` beside `pixels` and `number`.
-- [ ] **The board cannot be dragged.** `interaction.draggable` and `interaction.droppable` exist and
-      are lifted, but no pattern uses them; `board` moves cards with buttons.
-- [ ] **No virtualisation.** `dataGrid` pages instead, which is honest but caps the row count.
-- [ ] **A pattern repaints wholesale.** `patterns.view` empties and rebuilds. It is one place, so it
-      is one place to fix, but a keyed reconciler would be the fix.
+- [x] **No date layer.** `Date` and `Intl` are rows in `Audit.policy.globals` now, so the rule that
+      keeps platform names inside `browser` covers them. `composition.now` named `Date` and is gone;
+      the epoch clock is `browser.timestamp()` (`browser.now()` was already the monotonic one).
+      `dates` is a layer between `timing` and `formatting`: calendar arithmetic with no locale in it,
+      including `monthGrid`, which is always six Monday-first weeks built from `range` and `chunk`.
+- [x] **No number or date formatting.** `formatting` is the locale half, through `Intl`:
+      `money`, `percent`, `compact`, `decimal`, `unit`, `date`/`time`/`dateTime`, `relative` and
+      `list`. `crm.html`'s hand-written currency helper is gone, which also fixed a live bug: the
+      helper was referenced one line before it was defined, so the Value column never formatted.
+- [x] **The board cannot be dragged.** `interaction.draggable` (a pointer free-drag) and
+      `interaction.droppable` (the HTML5 drop) were never a pair. `interaction.dragSource` is the
+      missing partner, and `patterns.board` now moves a card by drag **and** by the arrow buttons,
+      which stay because they are the keyboard path. A lane highlights through `components.states.over`.
+- [x] **No virtualisation.** `patterns.virtualList` renders the visible rows plus twice
+      `patterns.defaults.overscan`, however many items there are: 10,000 items put 18 rows in the
+      document. `patterns.virtualGrid` is that under a search box. `dataGrid` still pages, on purpose.
+- [x] **A pattern repaints wholesale.** `elements.morph` is the keyed reconciler, and
+      `patterns.view` is one call to it, so every pattern in the system gained it at once. A caret,
+      a scroll offset and an open `<details>` survive a repaint; a `data-key` decides what moves
+      rather than what is rebuilt; twenty repaints of one form still leave one listener on it.
 
-## Not done
+## Added on top of the closed gaps
+
+- [x] **State that outlives one pattern.** `patterns.store` and `patterns.connect` let many views
+      watch one state. `patterns.withHistory` adds undo and redo from one two-row table.
+      `patterns.persistIn` writes to any storage view and reads back on the way in.
+      `patterns.linkTo` keeps one state key in the page address. All four take a handle **or** a
+      store, because both answer to `state` and `update`. `patterns.stop` releases what they held.
+- [x] **Three patterns that were missing a rung.** `patterns.resource` makes a request a state, with
+      one render per phase in `patterns.panes`. `patterns.entryForm` wires `forms.validators` to the
+      form component, so a failing rule finally shows the message beside it. `patterns.calendar`
+      draws a month from `dates.monthGrid` through the existing `table` component.
+- [x] **Theming.** `components.themes` is one row of token overrides per theme, emitted as a block
+      per theme plus a `prefers-color-scheme` block the page can override. `components.tones` and
+      `components.toneRules` give `alert` and `statusDot` one palette; `components.keyframes` is the
+      only place an animation is written.
+- [x] **Eleven more components.** `alert`, `badge`, `statusDot`, `kbd`, `skeleton`, `avatarGroup`,
+      `switchField`, `sliderField`, `stepperField`, `dropdown`, `tooltip` — each one a part, a class
+      from its key, and a rules row of token references.
+- [x] **A seventh demo and a third reference application.** `demos/agenda.html` puts the calendar,
+      the money and the relative formatter under load. `studio.html` is the reference application for
+      the state decorators: one store, two views that both repaint, undo across them, and the queue
+      still there after a reload.
+
+## Closed since
+
+- [x] The signature column (spec 2 §17). It never needed writing by hand: every definition is one
+      arrow on one line, so `catalog.json` now carries a `takes` field for every function among its
+      3007 paths, read with the same masking the style rules use.
 
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).
-- [ ] A `signatures.json` sidecar (spec 2 §17). `catalog.json` carries path, layer, shape and line;
-      the hand-written signature column is not filled in.
