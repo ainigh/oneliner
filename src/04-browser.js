@@ -69,6 +69,8 @@ Weave.library.browser.keywords.dot = '.';
 Weave.library.browser.keywords.hash = '#';
 Weave.library.browser.keywords.slash = '/';
 Weave.library.browser.keywords.plus = '+';
+Weave.library.browser.keywords.draggable = 'draggable';
+Weave.library.browser.keywords.move = 'move';
 
 Weave.library.browser.properties = {};
 Weave.library.browser.properties.display = 'display';
@@ -146,6 +148,7 @@ Weave.library.browser.mimeTypes.form = 'application/x-www-form-urlencoded';
 Weave.library.browser.mimeTypes.multipart = 'multipart/form-data';
 Weave.library.browser.mimeTypes.text = 'text/plain';
 Weave.library.browser.mimeTypes.html = 'text/html';
+Weave.library.browser.mimeTypes.identifier = 'application/x-weave-identifier';
 
 Weave.library.browser.httpMethods = {};
 Weave.library.browser.httpMethods.get = 'GET';
@@ -262,6 +265,10 @@ Weave.library.browser.createEvent = (type, init) => new CustomEvent(type, init);
 Weave.library.browser.createKeyboardEvent = (type, init) => new KeyboardEvent(type, init);
 Weave.library.browser.createMouseEvent = (type, init) => new MouseEvent(type, init);
 Weave.library.browser.createPointerEvent = (type, init) => new PointerEvent(type, init);
+Weave.library.browser.setTransferData = (event, type, value) => (event.dataTransfer.setData(type, value), event);
+Weave.library.browser.transferDataOf = (event, type) => event.dataTransfer.getData(type);
+Weave.library.browser.setDropEffect = (event, value) => (event.dataTransfer.dropEffect = value, event);
+Weave.library.browser.withTransfer = (event, transfer) => Object.assign(event, { dataTransfer: transfer });
 Weave.library.browser.preventDefault = event => (event.preventDefault(), event);
 Weave.library.browser.stopPropagation = event => (event.stopPropagation(), event);
 Weave.library.browser.stopImmediatePropagation = event => (event.stopImmediatePropagation(), event);

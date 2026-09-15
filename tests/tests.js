@@ -246,6 +246,33 @@ Weave.tests.sameAfterUpdate = (handle, before) => (handle.update(state => ({ fil
 Weave.tests.cases.patternsRepaintKeepsTheHostNode = () => Weave.tests.withPattern(Weave.library.patterns.todoList({ title: 'T', items: Weave.tests.sampleRows }), Weave.tests.keepsTheHost);
 Weave.tests.keepsTheHost = handle => (handle.update(() => ({})), Weave.library.predicates.isConnected(handle.element));
 
+/* dragging the board: a stub dataTransfer, because jsdom ships no DragEvent or DataTransfer. */
+Weave.tests.dragId = 'no-such-card';
+Weave.tests.transferOn = store => Object.assign(store, { setData: (type, value) => Object.assign(store.data, { [type]: value }), getData: type => store.data[type], dropEffect: '' });
+Weave.tests.transfer = () => Weave.tests.transferOn({ data: {} });
+Weave.tests.transferFor = identifier => Weave.tests.filledTransfer(Weave.tests.transfer(), identifier);
+Weave.tests.filledTransfer = (transfer, identifier) => (transfer.setData(Weave.library.browser.mimeTypes.identifier, identifier), transfer);
+Weave.tests.dragEvent = (type, transfer) => Weave.library.browser.withTransfer(Weave.library.browser.createEvent(type, { bubbles: true, cancelable: true }), transfer);
+Weave.tests.fireDrag = (el, type, transfer) => (Weave.library.events.dispatchEvent(Weave.tests.dragEvent(type, transfer))(el), transfer);
+Weave.tests.madeDraggable = el => (Weave.library.interaction.dragSource({ identifier: Weave.tests.dragId })(el), el);
+Weave.tests.draggedSource = () => Weave.tests.madeDraggable(Weave.library.elements.div());
+Weave.tests.startedDrag = () => Weave.tests.fireDrag(Weave.tests.draggedSource(), Weave.library.events.types.dragstart, Weave.tests.transfer());
+Weave.tests.cases.interactionDragSourceMarksTheElement = () => Weave.library.attributes.attribute(Weave.library.browser.keywords.draggable)(Weave.tests.draggedSource()) === Weave.library.browser.keywords.true;
+Weave.tests.cases.interactionDragStartWritesTheIdentifier = () => Weave.tests.startedDrag().getData(Weave.library.browser.mimeTypes.identifier) === Weave.tests.dragId;
+Weave.tests.cases.interactionDragStartSetsTheDropEffect = () => Weave.tests.startedDrag().dropEffect === Weave.library.browser.keywords.move;
+Weave.tests.cases.interactionDroppableReadsTheIdentifier = () => Weave.tests.droppedOn(Weave.library.elements.div(), []) === Weave.tests.dragId;
+Weave.tests.droppedOn = (el, seen) => (Weave.library.interaction.droppable({ onDrop: event => seen.push(Weave.library.interaction.droppedData(event)) })(el), Weave.tests.fireDrag(el, Weave.library.events.types.drop, Weave.tests.startedDrag()), Weave.library.composition.first(seen));
+Weave.tests.laneIn = (handle, index) => Weave.library.query.allWithin(Weave.tests.selectorFor('panel'))(handle.element)[index];
+Weave.tests.firstCardId = handle => Weave.library.composition.first(handle.state.cards)[Weave.library.patterns.idKey];
+Weave.tests.dropOnLane = (handle, index, identifier) => Weave.tests.fireDrag(Weave.tests.laneIn(handle, index), Weave.library.events.types.drop, Weave.tests.transferFor(identifier));
+Weave.tests.cases.patternsBoardDropMovesACard = () => Weave.tests.withPattern(Weave.library.patterns.board(Weave.tests.boardSpec), Weave.tests.dropsOnTheSecondLane);
+Weave.tests.dropsOnTheSecondLane = handle => (Weave.tests.dropOnLane(handle, 1, Weave.tests.firstCardId(handle)), Weave.library.composition.first(handle.state.cards).column === 'b');
+Weave.tests.cases.patternsBoardDropIgnoresAnUnknownCard = () => Weave.tests.withPattern(Weave.library.patterns.board(Weave.tests.boardSpec), Weave.tests.dropsNothing);
+Weave.tests.dropsNothing = handle => (Weave.tests.dropOnLane(handle, 1, Weave.tests.dragId), Weave.library.composition.first(handle.state.cards).column === 'a');
+Weave.tests.cases.patternsBoardCardsAreDragSources = () => Weave.tests.withPattern(Weave.library.patterns.board(Weave.tests.boardSpec), Weave.tests.cardIsDraggable);
+Weave.tests.cardIsDraggable = handle => Weave.library.attributes.attribute(Weave.library.browser.keywords.draggable)(Weave.library.query.oneWithin(Weave.tests.selectorFor('card'))(handle.element)) === Weave.library.browser.keywords.true;
+Weave.tests.cases.patternsBoardButtonsStillMoveACard = () => Weave.tests.withPattern(Weave.library.patterns.board(Weave.tests.boardSpec), Weave.tests.movesRight);
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);

@@ -350,6 +350,8 @@ Weave.library.browser.keywords.dot = '.';
 Weave.library.browser.keywords.hash = '#';
 Weave.library.browser.keywords.slash = '/';
 Weave.library.browser.keywords.plus = '+';
+Weave.library.browser.keywords.draggable = 'draggable';
+Weave.library.browser.keywords.move = 'move';
 
 Weave.library.browser.properties = {};
 Weave.library.browser.properties.display = 'display';
@@ -427,6 +429,7 @@ Weave.library.browser.mimeTypes.form = 'application/x-www-form-urlencoded';
 Weave.library.browser.mimeTypes.multipart = 'multipart/form-data';
 Weave.library.browser.mimeTypes.text = 'text/plain';
 Weave.library.browser.mimeTypes.html = 'text/html';
+Weave.library.browser.mimeTypes.identifier = 'application/x-weave-identifier';
 
 Weave.library.browser.httpMethods = {};
 Weave.library.browser.httpMethods.get = 'GET';
@@ -543,6 +546,10 @@ Weave.library.browser.createEvent = (type, init) => new CustomEvent(type, init);
 Weave.library.browser.createKeyboardEvent = (type, init) => new KeyboardEvent(type, init);
 Weave.library.browser.createMouseEvent = (type, init) => new MouseEvent(type, init);
 Weave.library.browser.createPointerEvent = (type, init) => new PointerEvent(type, init);
+Weave.library.browser.setTransferData = (event, type, value) => (event.dataTransfer.setData(type, value), event);
+Weave.library.browser.transferDataOf = (event, type) => event.dataTransfer.getData(type);
+Weave.library.browser.setDropEffect = (event, value) => (event.dataTransfer.dropEffect = value, event);
+Weave.library.browser.withTransfer = (event, transfer) => Object.assign(event, { dataTransfer: transfer });
 Weave.library.browser.preventDefault = event => (event.preventDefault(), event);
 Weave.library.browser.stopPropagation = event => (event.stopPropagation(), event);
 Weave.library.browser.stopImmediatePropagation = event => (event.stopImmediatePropagation(), event);
@@ -1963,6 +1970,12 @@ Weave.library.interaction.optionHandler = handler => event => Weave.library.cont
 Weave.library.interaction.dropRow = options => ([type, key]) => [type, Weave.library.interaction.optionHandler(options[key])];
 Weave.library.interaction.dropListeners = options => Weave.library.composition.fromPairs(Weave.library.composition.pairs(Weave.library.interaction.dropOptions).map(Weave.library.interaction.dropRow(options)));
 Weave.library.interaction.droppable = (options = {}) => el => Weave.library.events.combine([Weave.library.events.onAll(Weave.library.interaction.dropListeners(options))(el), Weave.library.events.on(Weave.library.events.types.dragover, Weave.library.browser.preventDefault)(el)]);
+Weave.library.interaction.markDraggable = el => Weave.library.attributes.setAttribute(Weave.library.browser.keywords.draggable, Weave.library.browser.keywords.true)(el);
+Weave.library.interaction.writeTransfer = (options, event) => (Weave.library.browser.setTransferData(event, Weave.library.browser.mimeTypes.identifier, options.identifier), Weave.library.browser.setDropEffect(event, Weave.library.browser.keywords.move));
+Weave.library.interaction.dragStarted = options => event => (Weave.library.interaction.writeTransfer(options, event), Weave.library.interaction.optionHandler(options.onStart)(event));
+Weave.library.interaction.dragSourceListeners = options => ({ [Weave.library.events.types.dragstart]: Weave.library.interaction.dragStarted(options), [Weave.library.events.types.dragend]: Weave.library.interaction.optionHandler(options.onEnd) });
+Weave.library.interaction.dragSource = (options = {}) => el => Weave.library.events.onAll(Weave.library.interaction.dragSourceListeners(options))(Weave.library.interaction.markDraggable(el));
+Weave.library.interaction.droppedData = event => Weave.library.browser.transferDataOf(event, Weave.library.browser.mimeTypes.identifier);
 Weave.library.interaction.sortable = (options = {}) => list => Weave.library.events.delegate(Weave.library.events.types.pointerdown, Weave.library.control.defaultTo(Weave.library.browser.keywords.all)(options.handle), Weave.library.interaction.sortHandler(options, list))(list);
 Weave.library.interaction.sortHandler = (options, list) => (event, item) => Weave.library.interaction.sortWith(options, list, item);
 Weave.library.interaction.sortWith = (options, list, item) => Weave.library.events.once(Weave.library.events.types.pointerup, event => Weave.library.interaction.dropAt(options, list, item, event))(Weave.library.browser.document());
@@ -2183,7 +2196,7 @@ Weave.library.collections.lifts.events = { action: ['offAll'], curriedSubscriber
 Weave.library.collections.lifts.effects = { action: ['stop', 'finish', 'pause', 'resume'], effect: ['whenAnimationEnds', 'whenTransitionEnds'], curriedEffect: ['animate', 'transition', 'fadeIn', 'fadeOut', 'fadeToggle', 'fadeTo', 'slideDown', 'slideUp', 'slideToggle', 'showAnimated', 'hideAnimated', 'toggleAnimated', 'pulse', 'shake', 'flash', 'delay', 'queue', 'parallel'], predicate: ['isAnimating'] };
 Weave.library.collections.lifts.forms = { action: ['reset', 'clear', 'snapshot', 'disable', 'enable', 'focusFirstInvalid'], setter: ['fill'], getter: ['values', 'serialize', 'serializeArray'], predicate: ['isValid'], curriedSubscriber: ['onSubmit', 'onSubmitAsync', 'onChange'] };
 Weave.library.collections.lifts.observers = { curriedSubscriber: ['onMutation', 'onChildren', 'onSubtree', 'onAttributes', 'onText', 'onAdded', 'onRemoved', 'onIntersect', 'onEnterViewport', 'onLeaveViewport', 'lazy', 'onResize', 'onScroll'], effect: ['onceVisible'] };
-Weave.library.collections.lifts.interaction = { action: ['focus', 'blur', 'disable', 'enable', 'inert', 'uninert', 'selectText'], curriedSubscriber: ['onKey', 'onKeys', 'shortcut', 'onOutsideClick', 'onLongPress', 'onDoubleTap', 'onSwipe', 'draggable', 'droppable', 'resizable'], subscriber: ['preventContextMenu'], curriedEffect: ['scrollTo'] };
+Weave.library.collections.lifts.interaction = { action: ['focus', 'blur', 'disable', 'enable', 'inert', 'uninert', 'selectText'], curriedSubscriber: ['onKey', 'onKeys', 'shortcut', 'onOutsideClick', 'onLongPress', 'onDoubleTap', 'onSwipe', 'draggable', 'dragSource', 'droppable', 'resizable'], subscriber: ['preventContextMenu'], curriedEffect: ['scrollTo'] };
 Weave.library.collections.lifts.accessibility = { action: ['expand', 'collapse', 'toggleExpanded', 'hideFromTree', 'showInTree', 'hideVisually'], setter: ['setState', 'setLabel'], getter: ['label', 'audit'], curriedFirst: ['state'], predicate: ['isExpanded'], subscriber: ['trapFocus', 'modal'] };
 Weave.library.collections.lifts.network = { curriedEffect: ['load', 'loadInto'] };
 Weave.library.collections.unlifted = {};
@@ -2526,10 +2539,12 @@ Weave.library.components.states = {};
 Weave.library.components.states.hover = ':hover';
 Weave.library.components.states.chosen = '[aria-selected="true"]';
 Weave.library.components.states.here = '[aria-current="true"]';
+Weave.library.components.states.over = '[data-over="true"]';
 Weave.library.components.stateRules = {};
 Weave.library.components.stateRules.buttonHover = { name: 'button', state: 'hover', style: { borderColor: Weave.library.components.vars.accent } };
 Weave.library.components.stateRules.tabChosen = { name: 'tab', state: 'chosen', style: { borderBottom: Weave.library.components.accentLine, color: Weave.library.components.vars.accent } };
 Weave.library.components.stateRules.pageHere = { name: 'pageButton', state: 'here', style: { background: Weave.library.components.vars.accent, color: Weave.library.components.vars.accentInk } };
+Weave.library.components.stateRules.panelOver = { name: 'panel', state: 'over', style: { borderColor: Weave.library.components.vars.accent, background: Weave.library.components.vars.sunken } };
 
 /* stylesheet: one generator turns the three tables above into the one sheet the page installs. */
 Weave.library.components.declaration = ([property, value]) => Weave.library.composition.kebabCase(property) + ': ' + value + ';';
@@ -2625,8 +2640,9 @@ Weave.library.patterns.todoBody = spec => (state, update) => Weave.library.compo
 Weave.library.patterns.todoState = spec => ({ items: Weave.library.patterns.rowsOf(spec), filter: Weave.library.patterns.defaultFilter });
 Weave.library.patterns.todoList = spec => Weave.library.patterns.view(Weave.library.patterns.todoBody(spec), Weave.library.patterns.todoState(spec));
 
-/* board: cards in columns, moved one column at a time. The columns are the caller's table. */
+/* board: cards in columns, moved by the arrow buttons or by dragging a card onto a lane. The columns are the caller's table. */
 Weave.library.patterns.columnKey = 'column';
+Weave.library.patterns.overKey = 'over';
 Weave.library.patterns.boardKeys = spec => spec.columns.map(column => column.key);
 Weave.library.patterns.boardIndex = (spec, card) => Weave.library.patterns.boardKeys(spec).indexOf(card[Weave.library.patterns.columnKey]);
 Weave.library.patterns.boardTarget = (spec, card, step) => Weave.library.patterns.boardKeys(spec)[Weave.library.patterns.stepper(spec.columns.length, step)(Weave.library.patterns.boardIndex(spec, card))];
@@ -2635,9 +2651,20 @@ Weave.library.patterns.boardShift = (spec, state, update, card, step) => () => u
 Weave.library.patterns.boardMove = (spec, state, update, card) => ([label, step]) => Weave.library.components.actionButton({ label, onAction: Weave.library.patterns.boardShift(spec, state, update, card, step) });
 Weave.library.patterns.boardSteps = [[Weave.library.patterns.labels.left, Weave.library.patterns.stepBack], [Weave.library.patterns.labels.right, Weave.library.patterns.stepForward]];
 Weave.library.patterns.boardMoves = (spec, state, update, card) => Weave.library.components.toolbar({ items: Weave.library.patterns.boardSteps.map(Weave.library.patterns.boardMove(spec, state, update, card)) });
-Weave.library.patterns.boardCard = (spec, state, update) => card => Weave.library.components.card({ children: [Weave.library.components.subtitle({ text: card.label }), Weave.library.components.note({ text: card.note }), Weave.library.patterns.boardMoves(spec, state, update, card)] });
+Weave.library.patterns.boardGrip = card => el => Weave.library.interaction.dragSource({ identifier: card[Weave.library.patterns.idKey] })(el);
+Weave.library.patterns.boardCardParts = (spec, state, update, card) => [Weave.library.components.subtitle({ text: card.label }), Weave.library.components.note({ text: card.note }), Weave.library.patterns.boardMoves(spec, state, update, card)];
+Weave.library.patterns.boardCard = (spec, state, update) => card => Weave.library.components.card({ data: { key: card[Weave.library.patterns.idKey] }, ref: Weave.library.patterns.boardGrip(card), children: Weave.library.patterns.boardCardParts(spec, state, update, card) });
 Weave.library.patterns.boardCards = (spec, state, update, column) => state.cards.filter(card => card[Weave.library.patterns.columnKey] === column.key).map(Weave.library.patterns.boardCard(spec, state, update));
-Weave.library.patterns.boardColumn = (spec, state, update) => column => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: column.label }), Weave.library.components.stack({ children: Weave.library.patterns.boardCards(spec, state, update, column) })] });
+Weave.library.patterns.boardLanded = column => () => ({ [Weave.library.patterns.columnKey]: column.key });
+Weave.library.patterns.boardMoved = (state, column, identifier) => Weave.library.patterns.replaced(state.cards, { [Weave.library.patterns.idKey]: identifier }, Weave.library.patterns.boardLanded(column));
+Weave.library.patterns.boardDropped = (state, update, column) => event => update(() => ({ cards: Weave.library.patterns.boardMoved(state, column, Weave.library.interaction.droppedData(Weave.library.events.preventDefault(event))) }));
+Weave.library.patterns.boardOver = value => event => Weave.library.attributes.setData(Weave.library.patterns.overKey, value)(Weave.library.browser.currentTargetOf(event));
+Weave.library.patterns.boardEnter = Weave.library.patterns.boardOver(Weave.library.browser.keywords.true);
+Weave.library.patterns.boardLeave = Weave.library.patterns.boardOver(Weave.library.browser.keywords.false);
+Weave.library.patterns.boardDropOptions = (state, update, column) => ({ onEnter: Weave.library.patterns.boardEnter, onLeave: Weave.library.patterns.boardLeave, onDrop: Weave.library.patterns.boardDropped(state, update, column) });
+Weave.library.patterns.boardLane = (state, update, column) => el => Weave.library.interaction.droppable(Weave.library.patterns.boardDropOptions(state, update, column))(el);
+Weave.library.patterns.boardColumnParts = (spec, state, update, column) => [Weave.library.components.subtitle({ text: column.label }), Weave.library.components.stack({ children: Weave.library.patterns.boardCards(spec, state, update, column) })];
+Weave.library.patterns.boardColumn = (spec, state, update) => column => Weave.library.components.panel({ data: { key: column.key }, ref: Weave.library.patterns.boardLane(state, update, column), children: Weave.library.patterns.boardColumnParts(spec, state, update, column) });
 Weave.library.patterns.boardBody = spec => (state, update) => Weave.library.components.tiles({ children: spec.columns.map(Weave.library.patterns.boardColumn(spec, state, update)) });
 Weave.library.patterns.boardState = spec => ({ cards: Weave.library.control.defaultTo([])(spec.cards).map(Weave.library.patterns.withId) });
 Weave.library.patterns.board = spec => Weave.library.patterns.view(Weave.library.patterns.boardBody(spec), Weave.library.patterns.boardState(spec));
