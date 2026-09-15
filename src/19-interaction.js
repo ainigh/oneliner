@@ -27,6 +27,7 @@ Weave.library.interaction.onKey = (name, handler) => el => Weave.library.events.
 Weave.library.interaction.onKeys = obj => el => Weave.library.events.combine(Weave.library.composition.pairs(obj).map(([name, handler]) => Weave.library.interaction.onKey(name, handler)(el)));
 Weave.library.interaction.keyHelper = (value, name) => handler => el => Weave.library.interaction.onKey(name, handler)(el);
 Weave.library.composition.defineEachPrefixed(Weave.library.interaction, 'on', Weave.library.interaction.keyHelper)(Weave.library.browser.keyNames);
+Weave.library.interaction.isTyping = () => Weave.library.predicates.matches(Weave.library.browser.selectors.editable)(Weave.library.browser.activeElement());
 Weave.library.interaction.shortcutSeparator = '+';
 Weave.library.interaction.parseShortcut = combo => combo.toLowerCase().split(Weave.library.interaction.shortcutSeparator).map(Weave.library.composition.trim);
 Weave.library.interaction.isMacPlatform = () => Weave.library.browser.platform().toLowerCase().startsWith(Weave.library.interaction.macPrefix);
@@ -71,8 +72,10 @@ Weave.library.interaction.translation = state => 'translate(' + Weave.library.co
 Weave.library.interaction.dragMove = (options, state, el) => event => Weave.library.control.when(() => state.dragging, () => Weave.library.interaction.applyDrag(options, state, el, event))(event);
 Weave.library.interaction.updateDrag = (state, event) => Object.assign(state, { dx: Weave.library.browser.clientXOf(event) - state.x, dy: Weave.library.browser.clientYOf(event) - state.y });
 Weave.library.interaction.moveElement = (state, el) => Weave.library.style.setCss(Weave.library.browser.properties.transform, Weave.library.interaction.translation(state))(el);
-Weave.library.interaction.applyDrag = (options, state, el, event) => (Weave.library.interaction.moveElement(Weave.library.interaction.updateDrag(state, event), el), Weave.library.control.maybe(f => f(state, event))(options.onMove));
-Weave.library.interaction.dragStart = (options, state, el) => event => (Object.assign(state, Weave.library.interaction.pointerPosition(event), { dragging: true }), Weave.library.control.maybe(f => f(state, event))(options.onStart));
+Weave.library.interaction.maybeMove = (options, state, el) => Weave.library.control.unless(() => options.move === false, () => Weave.library.interaction.moveElement(state, el))(state);
+Weave.library.interaction.applyDrag = (options, state, el, event) => (Weave.library.interaction.maybeMove(options, Weave.library.interaction.updateDrag(state, event), el), Weave.library.control.maybe(f => f(state, event))(options.onMove));
+Weave.library.interaction.startSize = el => ({ width: Weave.library.style.outerWidth(el), height: Weave.library.style.outerHeight(el) });
+Weave.library.interaction.dragStart = (options, state, el) => event => (Object.assign(state, Weave.library.interaction.pointerPosition(event), Weave.library.interaction.startSize(el), { dragging: true }), Weave.library.control.maybe(f => f(state, event))(options.onStart));
 Weave.library.interaction.dragEnd = (options, state) => event => (Object.assign(state, { dragging: false }), Weave.library.control.maybe(f => f(state, event))(options.onEnd));
 Weave.library.interaction.draggable = (options = {}) => el => Weave.library.interaction.dragWith(options, el, { x: 0, y: 0, dx: 0, dy: 0, dragging: false });
 Weave.library.interaction.onDocument = (type, handler) => Weave.library.events.on(type, handler)(Weave.library.browser.document());
@@ -101,9 +104,9 @@ Weave.library.interaction.dropAt = (options, list, item, event) => Weave.library
 Weave.library.interaction.childAtPoint = (list, el) => Weave.library.control.guard(child => Weave.library.predicates.contains(list, child))(el);
 Weave.library.interaction.targetChild = (list, event) => Weave.library.control.maybe(el => Weave.library.interaction.childAtPoint(list, el))(Weave.library.browser.elementFromPoint(Weave.library.browser.clientXOf(event), Weave.library.browser.clientYOf(event)));
 Weave.library.interaction.reorder = (options, item, target) => (Weave.library.elements.insertBefore(Weave.library.control.defaultTo(target)(Weave.library.query.closest(Weave.library.browser.keywords.all)(target)))(item), Weave.library.control.maybe(f => f(item))(options.onEnd));
-Weave.library.interaction.resizeStyles = state => ({ [Weave.library.browser.properties.width]: state.dx, [Weave.library.browser.properties.height]: state.dy });
+Weave.library.interaction.resizeStyles = state => ({ [Weave.library.browser.properties.width]: state.width + state.dx, [Weave.library.browser.properties.height]: state.height + state.dy });
 Weave.library.interaction.resizeMove = el => state => Weave.library.style.setCssAll(Weave.library.interaction.resizeStyles(state))(el);
-Weave.library.interaction.resizable = (options = {}) => el => Weave.library.interaction.draggable(Weave.library.composition.merge(options, { onMove: Weave.library.interaction.resizeMove(el) }))(el);
+Weave.library.interaction.resizable = (options = {}) => el => Weave.library.interaction.draggable(Weave.library.composition.merge(options, { onMove: Weave.library.interaction.resizeMove(el), move: false }))(el);
 Weave.library.interaction.copyText = text => Weave.library.composition.then(Weave.library.composition.always)(Weave.library.browser.writeClipboardText(text));
 Weave.library.interaction.pasteText = () => Weave.library.browser.readClipboardText();
 Weave.library.interaction.copyFrom = el => Weave.library.interaction.copyText(Weave.library.control.either(Weave.library.predicates.isFormControl, Weave.library.attributes.value, Weave.library.elements.textOf)(el));
@@ -118,8 +121,13 @@ Weave.library.interaction.currentOverflow = () => Weave.library.style.inlineCss(
 Weave.library.interaction.setOverflow = value => Weave.library.style.setCss(Weave.library.browser.properties.overflow, value)(Weave.library.browser.body());
 Weave.library.interaction.rememberOverflow = () => Weave.library.attributes.setData(Weave.library.interaction.lockKey, Weave.library.interaction.currentOverflow())(Weave.library.browser.body());
 Weave.library.interaction.savedOverflow = () => Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(Weave.library.attributes.data(Weave.library.interaction.lockKey)(Weave.library.browser.body()));
-Weave.library.interaction.lockScroll = () => (Weave.library.interaction.rememberOverflow(), Weave.library.interaction.setOverflow(Weave.library.browser.keywords.hidden));
-Weave.library.interaction.unlockScroll = () => Weave.library.interaction.setOverflow(Weave.library.interaction.savedOverflow());
+Weave.library.interaction.scrollLocks = {};
+Weave.library.interaction.scrollLocks.depth = 0;
+Weave.library.interaction.deepenLock = step => Object.assign(Weave.library.interaction.scrollLocks, { depth: Math.max(0, Weave.library.interaction.scrollLocks.depth + step) }).depth;
+Weave.library.interaction.holdScroll = () => (Weave.library.interaction.rememberOverflow(), Weave.library.interaction.setOverflow(Weave.library.browser.keywords.hidden));
+Weave.library.interaction.freeScroll = () => Weave.library.interaction.setOverflow(Weave.library.interaction.savedOverflow());
+Weave.library.interaction.lockScroll = () => Weave.library.control.when(depth => depth === 1, Weave.library.interaction.holdScroll)(Weave.library.interaction.deepenLock(1));
+Weave.library.interaction.unlockScroll = () => Weave.library.control.when(depth => depth === 0, Weave.library.interaction.freeScroll)(Weave.library.interaction.deepenLock(-1));
 Weave.library.interaction.disable = el => Weave.library.attributes.setBooleanAttribute(Weave.library.attributes.booleanAttributes.disabled, true)(el);
 Weave.library.interaction.enable = el => Weave.library.attributes.setBooleanAttribute(Weave.library.attributes.booleanAttributes.disabled, false)(el);
 Weave.library.interaction.inert = el => Weave.library.attributes.setBooleanAttribute(Weave.library.attributes.booleanAttributes.inert, true)(el);

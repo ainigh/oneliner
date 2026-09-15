@@ -66,7 +66,7 @@ Weave.library.accessibility.hideVisually = el => Weave.library.style.setCssAll(W
 Weave.library.accessibility.regionId = 'weave-live-region';
 Weave.library.accessibility.regionSpec = politeness => ({ attributes: { [Weave.library.browser.keywords.id]: Weave.library.accessibility.regionId }, aria: { [Weave.library.accessibility.states.live]: politeness }, styles: Weave.library.accessibility.visuallyHidden });
 Weave.library.accessibility.createRegion = politeness => Weave.library.elements.appendTo(Weave.library.browser.body())(Weave.library.elements.div(Weave.library.accessibility.regionSpec(politeness)));
-Weave.library.accessibility.liveRegion = politeness => Weave.library.control.defaultTo(Weave.library.accessibility.createRegion(politeness))(Weave.library.query.byId(Weave.library.accessibility.regionId));
+Weave.library.accessibility.liveRegion = politeness => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.library.composition.identity, () => Weave.library.accessibility.createRegion(politeness))(Weave.library.query.byId(Weave.library.accessibility.regionId));
 Weave.library.accessibility.announce = (message, politeness) => Weave.library.elements.setText(message)(Weave.library.accessibility.liveRegion(Weave.library.control.defaultTo(Weave.library.accessibility.politeness.polite)(politeness)));
 Weave.library.accessibility.reducedMotion = () => Weave.library.predicates.isReducedMotion();
 Weave.library.accessibility.onReducedMotion = handler => Weave.library.observers.onReducedMotion(handler);
@@ -84,9 +84,11 @@ Weave.library.accessibility.cycleForward = (el, event) => Weave.library.control.
 Weave.library.accessibility.trapFocus = el => Weave.library.accessibility.trapWith(el, Weave.library.interaction.restoreFocus());
 Weave.library.accessibility.trapWith = (el, restore) => Weave.library.accessibility.releaseWith(Weave.library.events.on(Weave.library.events.types.keydown, Weave.library.accessibility.trapStep(el))(Weave.library.browser.document()), restore, el);
 Weave.library.accessibility.releaseWith = (unsubscribe, restore, el) => (Weave.library.interaction.focusFirst(el), () => (unsubscribe(), restore()));
-Weave.library.accessibility.modal = el => Weave.library.accessibility.modalWith(el, Weave.library.accessibility.trapFocus(el));
-Weave.library.accessibility.modalWith = (el, release) => Weave.library.accessibility.modalRelease(el, release, Weave.library.events.onKey('escape', () => release())(Weave.library.browser.document()));
-Weave.library.accessibility.modalRelease = (el, release, escape) => (Weave.library.interaction.lockScroll(), () => (escape(), release(), Weave.library.interaction.unlockScroll()));
+Weave.library.accessibility.modal = (el, onClose) => Weave.library.accessibility.modalWith(el, { close: Weave.library.composition.noop, onClose });
+Weave.library.accessibility.modalWith = (el, state) => Weave.library.accessibility.modalHold(state, Weave.library.accessibility.trapFocus(el), Weave.library.interaction.onEscape(() => Weave.library.accessibility.modalEscape(state))(Weave.library.browser.document()));
+Weave.library.accessibility.modalHold = (state, trap, escape) => (Weave.library.interaction.lockScroll(), Object.assign(state, { close: Weave.library.control.once(() => Weave.library.accessibility.modalEnd(trap, escape)) }).close);
+Weave.library.accessibility.modalEnd = (trap, escape) => (escape(), trap(), Weave.library.interaction.unlockScroll());
+Weave.library.accessibility.modalEscape = state => Weave.library.control.defaultTo(state.close)(state.onClose)();
 Weave.library.accessibility.rovingIndex = 'tabindex';
 Weave.library.accessibility.setRoving = (items, index) => items.forEach((item, position) => Weave.library.attributes.setAttribute(Weave.library.accessibility.rovingIndex, Weave.library.accessibility.rovingValue(position === index))(item));
 Weave.library.accessibility.rovingValue = active => Weave.library.control.either(() => active, () => Weave.library.accessibility.zeroText, () => Weave.library.accessibility.minusOneText)(active);

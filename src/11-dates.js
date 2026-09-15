@@ -38,7 +38,9 @@ Weave.library.dates.marks.separator = '-';
 
 /* adders: the two units a millisecond count cannot express. Every other unit shifts by its span. */
 Weave.library.dates.monthsInYear = 12;
-Weave.library.dates.shiftMonths = (count, date) => Weave.library.browser.dateFromParts(Weave.library.browser.dateReaders.year(date), Weave.library.browser.dateReaders.month(date) + count, Weave.library.browser.dateReaders.day(date));
+Weave.library.dates.lastDayOf = (year, month) => Weave.library.browser.dateReaders.day(Weave.library.browser.dateFromParts(year, month + 1, 0));
+Weave.library.dates.clampedDate = (year, month, day) => Weave.library.browser.dateFromParts(year, month, Math.min(day, Weave.library.dates.lastDayOf(year, month)));
+Weave.library.dates.shiftMonths = (count, date) => Weave.library.dates.clampedDate(Weave.library.browser.dateReaders.year(date), Weave.library.browser.dateReaders.month(date) + count, Weave.library.browser.dateReaders.day(date));
 Weave.library.dates.adders = {};
 Weave.library.dates.adders.month = (count, date) => Weave.library.dates.shiftMonths(count, date);
 Weave.library.dates.adders.year = (count, date) => Weave.library.dates.shiftMonths(count * Weave.library.dates.monthsInYear, date);
@@ -91,7 +93,7 @@ Weave.library.dates.diff = unit => (a, b) => Math.round((Weave.library.dates.mil
 
 /* grids: a week and a month laid out as plain arrays of days, built by range and chunk, never a loop. */
 Weave.library.dates.gridLength = 42;
-Weave.library.dates.dayAfter = (start, count) => Weave.library.dates.startOf(Weave.library.dates.names.day)(Weave.library.dates.add(Weave.library.dates.names.day, count)(start));
+Weave.library.dates.dayAfter = (start, count) => Weave.library.browser.dateFromParts(Weave.library.browser.dateReaders.year(start), Weave.library.browser.dateReaders.month(start), Weave.library.browser.dateReaders.day(start) + count);
 Weave.library.dates.daysFrom = (start, count) => Weave.library.composition.range(count).map(index => Weave.library.dates.dayAfter(start, index));
 Weave.library.dates.weekdays = date => Weave.library.dates.daysFrom(Weave.library.dates.startOf(Weave.library.dates.names.week)(date), Weave.library.dates.weekLength);
 Weave.library.dates.gridStart = date => Weave.library.dates.startOf(Weave.library.dates.names.week)(Weave.library.dates.startOf(Weave.library.dates.names.month)(date));

@@ -1,0 +1,30 @@
+const { JSDOM } = require('jsdom');
+JSDOM.fromFile('apps/relay.html', {runScripts:'dangerously', resources:'usable', pretendToBeVisual:true}).then(dom => {
+  const w = dom.window, d = w.document;
+  setTimeout(() => {
+    const W = w.eval('Weave'), A = W.application;
+    const lp = () => d.querySelector('[data-pane="list"]');
+    const rows = () => [...lp().querySelectorAll('.weave-row-button')];
+    const countText = () => lp().querySelector('.weave-sticky .weave-note').textContent;
+    const btn = label => [...d.querySelectorAll('.weave-button')].find(b=>b.textContent.trim()===label);
+    console.log('inbox count:', A.threads.filter(t=>t.folder==='inbox').length, 'countText:', JSON.stringify(countText().slice(0,20)));
+    const selAll = lp().querySelector('.weave-toolbar input[type=checkbox]');
+    selAll.checked = true; selAll.dispatchEvent(new w.Event('change', {bubbles:true}));
+    console.log('checked after select-all:', A.store.state.checked.length);
+    console.log('rows rendered still:', rows().length, 'first row id text', rows()[0].textContent.slice(0,20));
+    const archive = btn('Archive');
+    console.log('archive button found:', !!archive);
+    archive.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+    console.log('after archive: inbox threads =', A.threads.filter(t=>t.folder==='inbox').length);
+    console.log('store.checked still:', A.store.state.checked.length);
+    console.log('list rows still shown:', rows().length, 'handle items:', A.listHandle.state.items.length);
+    console.log('countText after move:', JSON.stringify(countText().slice(0,30)));
+    console.log('toast count:', d.querySelectorAll('.weave-toast-slot').length);
+    const undo = [...d.querySelectorAll('.weave-button')].find(b=>b.textContent.trim()==='Undo');
+    console.log('undo button:', !!undo);
+    undo.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
+    console.log('after undo: inbox threads =', A.threads.filter(t=>t.folder==='inbox').length, '(should be back to original)');
+    console.log('handle items after undo:', A.listHandle.state.items.length);
+    dom.window.close();
+  }, 400);
+}).catch(e=>console.error(e));

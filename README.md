@@ -77,18 +77,40 @@ because the audit refused the alternative.
 11. `? :`, `&&`, `||`, `??` and `?.` live only in `Weave.library.control`.
 12. `throw` appears once (`control.fail`), `try` appears once (`control.attempt`).
 13. No `async` / `await` — Promise chains only. 14. No `this`. 15. `new` only in `browser` and `composition`.
+16. Nothing is written that nothing spends. A design token no rule references, or a CSS keyword nothing uses, is a build failure.
+
+## The two flagship applications
+
+`apps/relay.html` and `apps/pantry.html` are the proof that the library is usable, and the reason
+most of it exists. They are as unlike each other as two applications can be, so that a capability
+which only works by accident in one is caught by the other. Both are written only against
+`Weave.library.*`, both are audited under the same rules as the library with no new exemptions, and
+`scripts/check-flagships.js` drives both through forty-eight assertions.
+
+| | Relay | Pantry |
+|---|---|---|
+| shape | a dense, keyboard-driven team inbox | thumb-first ordering from a kitchen |
+| layout | a three pane shell, fixed to the viewport | a bounded page and a bar for the thumb |
+| scale | twelve hundred threads, a few dozen rows in the document | twelve dishes, and skeletons before them |
+| over the page | a compose dialog, a command palette, a help sheet | a dish dialog, a basket that is a sheet on a phone and a drawer on a desk |
+| input | j, k, c, ?, ctrl+k, and a search that filters as you type | radio sets that reprice, a stepper, a validated checkout |
+| feedback | a pinned toast carrying an undo | a step track that advances on its own |
+
+`apps.md` says what each one had to be able to do. Every gap either of them uncovered is written
+down in `checklist.md` beside the row that closed it.
 
 ## The layers
 
 `composition` → `predicates` → `control` → `browser` → `elements` → `query` → `attributes` → `style` →
 `events` → `timing` → `dates` → `formatting` → `effects` → `forms` → `network` → `observers` →
 `storage` → `navigation` → `interaction` → `accessibility` → `collections` → `components` →
-`patterns`, then `application`.
+`overlays` → `patterns`, then `application`.
 
 `browser` is the only layer that names a global — `Date` and `Intl` included, which is why `dates`
 does calendar arithmetic with no locale in it and `formatting` does locale with no arithmetic in it.
-`collections` lifts every layer below it. `components` turns one spec into one element. `patterns`
-gives a component state. An application composes patterns and holds data — nothing else.
+`collections` lifts every layer below it. `components` turns one spec into one element. `overlays`
+is the only layer that positions anything, and the only one that puts a node above the page.
+`patterns` gives a component state. An application composes patterns and holds data — nothing else.
 
 ## Components and patterns
 
@@ -180,21 +202,69 @@ under a search box. `dataGrid` is unchanged and still the right answer when the 
 
 ## Styling
 
-There is no stylesheet file. `components.tokens` holds every dimension, colour and duration;
-`components.rules` holds one row per class, whose values may only be token references;
-`components.states` holds the only pseudo-classes in the system. `components.styleText()` renders
-the sheet and `components.installStyles()` injects it once, however many patterns are mounted.
+There is no stylesheet file. The sheet is generated from tables, and `components.sheetExtras` is the
+one place that says which blocks it carries and in what order. `components.styleText()` renders it;
+`components.installStyles()` injects it once, however many patterns are mounted.
+
+`styleguide.html` is the live reference: every section on it is generated from the table it
+documents, so the page cannot drift from the system.
+
+| Table | What it is the only place for | How you use it |
+|---|---|---|
+| `components.tokens` | every dimension, colour, duration and face | change one row, the whole system moves |
+| `components.values` | every bare CSS keyword | referenced by rules, never written twice |
+| `components.rules` | one row per class, values may only be token references | change one row, one widget moves |
+| `components.hostRules` | the rules on the document itself, keyed by `components.hostSelectors` | the page ground, its type and its margin |
+| `components.themes` | one row of token overrides per theme | `setTheme`, `toggleTheme`, `followScheme` |
+| `components.tones` / `toneRules` | a tone's colour, and how a class spends it | one palette for `alert`, `statusDot`, anything toned |
+| `components.variants` | one row per button intent | `actionButton({ label, variant })` |
+| `components.interactive` / `pressable` | the classes that behave like controls | hover, focus, press and rest are generated onto them |
+| `components.states` / `stateRules` | the only pseudo-classes and state attributes | `:hover`, `:focus-visible`, `:active`, `:disabled`, `aria-selected`, … |
+| `components.breakpoints` | the only viewport width queries | named once, spent by `mediaRules` |
+| `components.mediaRules` | one row per query, rules keyed by class | the compact layout, reduced motion, print |
+| `components.keyframes` | the only place an animation timeline is written | referenced by a token, spent by a rule |
+| `components.sheetExtras` | the blocks the sheet carries, in cascade order | a later row wins; the compact block is last |
 
 A theme is a row of token overrides. `components.themes.dark` is one, and the sheet carries a block
 per theme plus a `prefers-color-scheme` block scoped so the operating system wins unless the page
 has chosen. `components.setTheme(name)`, `components.toggleTheme()` and `components.followScheme()`
-are the runtime side; the last returns its unsubscribe. `components.tones` maps a tone name to a
-colour token and `components.toneRules` says how a class spends it, so `alert`, `statusDot` and
-anything else toned share one palette. `components.keyframes` is the only place an animation is
-written.
+are the runtime side; the last returns its unsubscribe.
+
+Focus, hover, press and rest are not written per widget. `components.interactive` names the classes
+that behave like controls and `components.pressable` the subset that answers a pointer; the four
+state styles are generated onto every one of them, so a new control gets the whole set by adding one
+row. The same table drives the transition, emitted inside a `prefers-reduced-motion: no-preference`
+block, so motion is asked for rather than opted out of.
+
+`components.applyTokens(overrides)(element)` sets the same custom properties on one element, so a
+section can be branded without a theme and without a rule:
+
+```js
+Weave.application.brand = panel => Weave.library.components.applyTokens({ accent: '#7c3aed', radius: '14px' })(panel);
+```
 
 To restyle the whole system, change tokens. To restyle one widget, change its row. To restyle every
-widget at night, change one theme row.
+widget at night, change one theme row. To restyle one subtree, set tokens on it.
+
+## Above the page
+
+`overlays` is the layer between `components` and `patterns`, and the only place the system positions
+anything. There is one host, appended once, and a z-index ladder inside it — scrim, drawer, dialog,
+popover, toast, tip — so nothing in an application ever picks a number.
+
+| Call | What opens |
+|---|---|
+| `patterns.dialog(spec)` | a centred layer over a scrim: focus trapped, escape closes it, the page keeps its scroll position and gets its scrollbar back |
+| `patterns.drawer(spec)` / `patterns.sheet(spec)` | the same layer, against the side or the bottom edge |
+| `patterns.confirm(spec)` | that dialog with two actions, answering a promise |
+| `patterns.menu(anchor, spec)` / `patterns.menuAt(spec)` | a popover placed from the anchor's own rectangle, dismissed by a click away, escape or a scroll. At most one is open at a time |
+| `patterns.notifications({})` | a toast host pinned to the corner; `push(message, tone, action)` can carry an undo |
+| `overlays.tip(text)(element)` | a bubble that follows a target, on hover and on focus |
+| `patterns.shortcuts(map)` | one row per key or combination, bound to the document and held back while the reader is typing |
+
+A layer's `body` and `actions` may each be a value or a function of `close`, so an action can close
+the thing it sits in without the caller holding a handle. Layers stack: the scroll lock counts, and
+escape closes only the top one.
 
 ## Three examples
 
@@ -222,7 +292,10 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `catalog.json` | Every path in the bundle, emitted by the audit. |
 | `tests/tests.js` | One table row per test case, in the same style. `cases` are synchronous, `asyncCases` resolve to a boolean. |
 | `tests.html` | The browser half of the test contract. |
+| `apps/*.html` | The two flagship applications. The reason most of the library exists. |
+| `apps.md` | What each flagship had to be able to do. |
 | `sample.html`, `todo.html`, `studio.html` | The reference applications, written against the library directly. |
+| `styleguide.html` | The live reference for the styling system, generated from its own tables. |
 | `demos/*.html` | Seven domain applications, written only against patterns. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
 
@@ -233,8 +306,9 @@ npm run build       # src/ → dist/weave.js and dist/weave.module.js
 npm run audit       # the style rules, plus catalog.json
 npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
-npm run check:apps  # drive sample.html, todo.html, studio.html and tests.html in jsdom
+npm run check:apps  # drive sample.html, todo.html, studio.html, styleguide.html and tests.html in jsdom
 npm run check:demos # drive all seven demo applications in jsdom
+npm run check:flagships # drive Relay and Pantry the way a person would use them
 npm run check       # all of the above
 ```
 
@@ -259,7 +333,8 @@ None of them contains a tag name, a class, a colour or a dimension. `check:demos
 
 There is no plugin API. Extending Weave means adding lines: a row to a table
 (`Weave.library.elements.tags.myWidget = {...}` adds a builder) or a new layer that honours the
-dependency direction — `dates` and `formatting` went in between `timing` and `effects` that way,
+dependency direction — `overlays` went in between `components` and `patterns` that way, and
+`dates` and `formatting` between `timing` and `effects`,
 each as one file, one row in the audit's layer list, and its tables in the audit's required list. `Weave.library.collections.lifts` takes rows for new layers,
 so lifting extends too, and `Weave.library.collections.kinds` says how: a `curried*` kind lifts a
 function that takes its arguments before the element, so `Weave.library.collections.query.find('.row')`

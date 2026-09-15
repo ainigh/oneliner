@@ -1,0 +1,35 @@
+const { JSDOM } = require('jsdom');
+const dom = new JSDOM('<!doctype html><html><body></body></html>', {runScripts:'outside-only', pretendToBeVisual:true});
+const w = dom.window, d = w.document;
+const W = w.eval(require('fs').readFileSync('dist/weave.js','utf8') + '\nWeave;');
+const L = W.library;
+const esc = () => d.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+const st = t => console.log(t, JSON.stringify({dialogs:d.querySelectorAll('.weave-dialog-box').length, pops:L.overlays.openPopovers.length, docL:L.events.recordsOf(d).length, lock:L.interaction.scrollLocks.depth}));
+console.log('== escape with two dialogs ==');
+const closes=[];
+const a = L.overlays.dialog({title:'A', onClose:()=>closes.push('A')});
+const b = L.overlays.dialog({title:'B', onClose:()=>closes.push('B')});
+st('two open'); esc(); st('after ONE escape'); console.log('onClose fired:', closes);
+console.log('== escape with popover + dialog ==');
+const anchor = L.elements.appendTo(d.body)(L.elements.button({text:'a'}));
+const p = L.overlays.popover(anchor, {body:[], onClose:()=>console.log('popover onClose')});
+const g = L.overlays.dialog({title:'G', onClose:()=>console.log('dialog onClose')});
+st('pop+dialog'); esc(); st('after ONE escape');
+console.log('== popover with DETACHED anchor ==');
+const det = L.elements.button({text:'detached'});
+try { const q = L.overlays.popover(det, {body:[]}); console.log('opened ok, box in host:', d.querySelectorAll('.weave-popover-box').length); q.close(); }
+catch(e){ console.log('THREW:', e.message, 'orphan boxes:', d.querySelectorAll('.weave-popover-box').length, 'pops:', L.overlays.openPopovers.length); }
+st('after detached anchor');
+console.log('== tips ==');
+const t1 = L.elements.appendTo(d.body)(L.elements.button({text:'t'}));
+const rel = L.overlays.tip('hello')(t1);
+t1.dispatchEvent(new w.Event('mouseenter',{bubbles:false}));
+console.log('bubbles after enter:', d.querySelectorAll('.weave-tip-bubble').length);
+t1.dispatchEvent(new w.Event('mouseenter',{bubbles:false}));
+console.log('bubbles after 2nd enter:', d.querySelectorAll('.weave-tip-bubble').length);
+t1.dispatchEvent(new w.Event('mouseleave',{bubbles:false}));
+console.log('bubbles after leave:', d.querySelectorAll('.weave-tip-bubble').length);
+t1.dispatchEvent(new w.Event('focusin',{bubbles:true}));
+console.log('bubbles after focusin:', d.querySelectorAll('.weave-tip-bubble').length);
+rel();
+console.log('bubbles after release:', d.querySelectorAll('.weave-tip-bubble').length, 'listeners on t1:', L.events.recordsOf(t1).length);

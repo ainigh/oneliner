@@ -89,6 +89,7 @@ Weave.library.browser.selectors.enabled = ':not([disabled]):not([tabindex="-1"])
 Weave.library.browser.selectors.submittable = 'input:not([type=submit]):not([type=button]):not([type=reset]):not([disabled]), select:not([disabled]), textarea:not([disabled])';
 Weave.library.browser.selectors.formControl = 'input, select, textarea, button';
 Weave.library.browser.selectors.anchor = 'a[href]';
+Weave.library.browser.selectors.editable = 'input, textarea, select, [contenteditable="true"]';
 
 Weave.library.browser.keyNames = {};
 Weave.library.browser.keyNames.enter = 'Enter';
@@ -141,6 +142,9 @@ Weave.library.browser.mediaQueries.lightScheme = '(prefers-color-scheme: light)'
 Weave.library.browser.mediaQueries.hover = '(hover: hover)';
 Weave.library.browser.mediaQueries.coarsePointer = '(pointer: coarse)';
 Weave.library.browser.mediaQueries.print = 'print';
+Weave.library.browser.mediaQueries.steadyMotion = '(prefers-reduced-motion: no-preference)';
+Weave.library.browser.maxWidthOpen = '(max-width: ';
+Weave.library.browser.upToWidth = width => Weave.library.browser.maxWidthOpen + width + Weave.library.composition.closeParen;
 
 Weave.library.browser.mimeTypes = {};
 Weave.library.browser.mimeTypes.json = 'application/json';
@@ -254,12 +258,17 @@ Weave.library.browser.pageScrollX = () => scrollX;
 Weave.library.browser.pageScrollY = () => scrollY;
 Weave.library.browser.scrollWindowTo = options => (scrollTo(options), undefined);
 Weave.library.browser.devicePixelRatio = () => devicePixelRatio;
-Weave.library.browser.matchMedia = query => matchMedia(query);
+Weave.library.browser.functionType = 'function';
+Weave.library.browser.mediaStub = { matches: false, media: '', addEventListener: Weave.library.composition.noop, removeEventListener: Weave.library.composition.noop, addListener: Weave.library.composition.noop, removeListener: Weave.library.composition.noop };
+Weave.library.browser.hasMatchMedia = () => typeof matchMedia === Weave.library.browser.functionType;
+Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.library.browser.hasMatchMedia, () => matchMedia(query), () => Weave.library.browser.mediaStub)(query);
 
 /* events: registration, dispatch and every getter the event object exposes. */
 Weave.library.browser.addListener = (el, [type, handler]) => (el.addEventListener(type, handler), el);
 Weave.library.browser.addListenerWithOptions = (el, type, handler, options) => (el.addEventListener(type, handler, options), el);
 Weave.library.browser.removeListener = (el, type, handler, options) => (el.removeEventListener(type, handler, options), el);
+Weave.library.browser.createKeyEvent = (type, key) => new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+Weave.library.browser.dispatchKey = (el, type, key) => (Weave.library.browser.dispatch(el, Weave.library.browser.createKeyEvent(type, key)), el);
 Weave.library.browser.dispatch = (el, event) => el.dispatchEvent(event);
 Weave.library.browser.createEvent = (type, init) => new CustomEvent(type, init);
 Weave.library.browser.createKeyboardEvent = (type, init) => new KeyboardEvent(type, init);
@@ -338,8 +347,11 @@ Weave.library.browser.measure = (label, from) => performance.measure(label, from
 
 /* observers: one constructor each, plus the three verbs they share. */
 Weave.library.browser.createMutationObserver = callback => new MutationObserver(callback);
-Weave.library.browser.createIntersectionObserver = (callback, options) => new IntersectionObserver(callback, options);
-Weave.library.browser.createResizeObserver = callback => new ResizeObserver(callback);
+Weave.library.browser.hasIntersectionObserver = () => typeof IntersectionObserver === Weave.library.browser.functionType;
+Weave.library.browser.createIntersectionObserver = (callback, options) => Weave.library.control.either(Weave.library.browser.hasIntersectionObserver, () => new IntersectionObserver(callback, options), () => Weave.library.browser.observerStub)(callback);
+Weave.library.browser.observerStub = { observe: Weave.library.composition.noop, unobserve: Weave.library.composition.noop, disconnect: Weave.library.composition.noop };
+Weave.library.browser.hasResizeObserver = () => typeof ResizeObserver === Weave.library.browser.functionType;
+Weave.library.browser.createResizeObserver = callback => Weave.library.control.either(Weave.library.browser.hasResizeObserver, () => new ResizeObserver(callback), () => Weave.library.browser.observerStub)(callback);
 Weave.library.browser.observe = (observer, el, options) => (observer.observe(el, options), observer);
 Weave.library.browser.unobserve = (observer, el) => (observer.unobserve(el), observer);
 Weave.library.browser.disconnect = observer => (observer.disconnect(), observer);

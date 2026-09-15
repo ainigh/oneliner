@@ -1,0 +1,169 @@
+:root { --weave-space: 8px; --weave-space-tight: 4px; --weave-space-loose: 16px; --weave-space-wide: 24px; --weave-radius: 8px; --weave-radius-small: 4px; --weave-line: 1px; --weave-ink: #111827; --weave-muted: #6b7280; --weave-edge: #d9dee5; --weave-surface: #ffffff; --weave-sunken: #f5f6f8; --weave-accent: #2563eb; --weave-accent-ink: #ffffff; --weave-danger: #b00020; --weave-font: system-ui, -apple-system, Segoe UI, sans-serif; --weave-font-size: 14px; --weave-font-size-large: 20px; --weave-font-size-small: 12px; --weave-leading: 1.5; --weave-shadow: 0 1px 2px rgba(17, 24, 39, 0.08); --weave-tile-track: repeat(auto-fill, minmax(200px, 1fr)); --weave-rail-width: 220px; --weave-control-height: 32px; --weave-dot-size: 10px; --weave-tone-info: #2563eb; --weave-tone-success: #127a56; --weave-tone-warning: #8a5a00; --weave-tone-danger: #b00020; --weave-pulse: pulse 1s ease-in-out infinite alternate; --weave-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.35); --weave-press: translateY(1px); --weave-ease: all 120ms ease; --weave-shadow-lifted: 0 10px 30px rgba(17, 24, 39, 0.18); --weave-font-mono: ui-monospace, SFMono-Regular, Menlo, monospace; --weave-compact-width: 640px; --weave-page-width: 1100px; --weave-list-width: 340px; --weave-font-size-display: 28px; --weave-font-size-micro: 11px; --weave-tracking: -0.01em; --weave-radius-large: 18px; --weave-radius-round: 999px; --weave-control-height-small: 26px; --weave-control-height-large: 40px; --weave-ink-soft: #374151; --weave-accent-soft: #eef4ff; --weave-accent-edge: #bcd0ff; --weave-shadow-overlay: 0 24px 60px rgba(17, 24, 39, 0.28); --weave-scrim: rgba(17, 24, 39, 0.45); --weave-layer-sticky: 5; --weave-layer-overlay: 900; --weave-layer-scrim: 10; --weave-layer-drawer: 20; --weave-layer-dialog: 30; --weave-layer-popover: 40; --weave-layer-toast: 50; --weave-layer-tip: 60; --weave-dialog-width: min(560px, calc(100% - 32px)); --weave-dialog-max-height: min(80vh, 720px); --weave-drawer-width: min(400px, 100%); --weave-sheet-max-height: 82vh; --weave-popover-width: 200px; --weave-toast-width: min(360px, calc(100vw - 32px)); --weave-tip-width: 240px; --weave-centre-shift: translate(-50%, -50%); --weave-media-ratio: 4 / 3; }
+.weave-page { display: flex; flex-direction: column; gap: var(--weave-space-loose); padding: var(--weave-space-loose); max-width: var(--weave-page-width); margin: auto; }
+.weave-view { font-family: var(--weave-font); font-size: var(--weave-font-size); line-height: var(--weave-leading); color: var(--weave-ink); }
+.weave-panel { display: flex; flex-direction: column; gap: var(--weave-space); padding: var(--weave-space-loose); background: var(--weave-surface); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); flex-grow: 1; }
+.weave-stack { display: flex; flex-direction: column; gap: var(--weave-space); }
+.weave-row { display: flex; gap: var(--weave-space); align-items: center; flex-wrap: wrap; }
+.weave-spread { display: flex; gap: var(--weave-space); align-items: center; justify-content: space-between; }
+.weave-tiles { display: grid; gap: var(--weave-space-loose); grid-template-columns: var(--weave-tile-track); }
+.weave-scroller { overflow: auto; flex-grow: 1; min-height: 0; }
+.weave-divider { border-top: var(--weave-line) solid var(--weave-edge); margin: var(--weave-space); }
+.weave-card { display: flex; flex-direction: column; gap: var(--weave-space-tight); padding: var(--weave-space-loose); background: var(--weave-surface); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); box-shadow: var(--weave-shadow); }
+.weave-title { margin: var(--weave-space-tight); font-size: var(--weave-font-size-large); }
+.weave-subtitle { margin: var(--weave-space-tight); font-size: var(--weave-font-size); }
+.weave-note { margin: var(--weave-space-tight); color: var(--weave-muted); font-size: var(--weave-font-size-small); }
+.weave-value { font-size: var(--weave-font-size-large); font-weight: 600; }
+.weave-tag { display: inline-flex; padding: var(--weave-space-tight); border-radius: var(--weave-radius-small); background: var(--weave-sunken); font-size: var(--weave-font-size-small); }
+.weave-pill { display: inline-flex; padding: var(--weave-space-tight); border-radius: var(--weave-radius); background: var(--weave-accent); color: var(--weave-accent-ink); font-size: var(--weave-font-size-small); }
+.weave-avatar { display: inline-flex; align-items: center; justify-content: center; width: var(--weave-control-height); height: var(--weave-control-height); border-radius: 100%; background: var(--weave-sunken); font-size: var(--weave-font-size-small); }
+.weave-button { min-height: var(--weave-control-height); padding: var(--weave-space); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); background: var(--weave-surface); color: var(--weave-ink); cursor: pointer; font-family: var(--weave-font); font-size: var(--weave-font-size); }
+.weave-anchor { color: var(--weave-accent); }
+.weave-item-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-field { display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-field-label { color: var(--weave-muted); font-size: var(--weave-font-size-small); }
+.weave-control { min-height: var(--weave-control-height); padding: var(--weave-space); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); font-family: var(--weave-font); font-size: var(--weave-font-size); }
+.weave-text-area { padding: var(--weave-space); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); font-family: var(--weave-font); }
+.weave-select-box { min-height: var(--weave-control-height); padding: var(--weave-space-tight); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); font-family: var(--weave-font); }
+.weave-search-box { min-height: var(--weave-control-height); padding: var(--weave-space); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); font-family: var(--weave-font); width: 100%; }
+.weave-check-field { display: flex; gap: var(--weave-space-tight); align-items: center; }
+.weave-table { width: 100%; border-collapse: collapse; font-size: var(--weave-font-size); }
+.weave-table-header { text-align: left; padding: var(--weave-space); border-bottom: var(--weave-line) solid var(--weave-edge); color: var(--weave-muted); font-size: var(--weave-font-size-small); }
+.weave-table-cell { padding: var(--weave-space); border-bottom: var(--weave-line) solid var(--weave-edge); }
+.weave-toolbar { display: flex; gap: var(--weave-space-tight); flex-wrap: wrap; align-items: center; }
+.weave-menu { list-style: none; margin: 0; padding: var(--weave-space-tight); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); background: var(--weave-surface); box-shadow: var(--weave-shadow); }
+.weave-tabs { display: flex; gap: var(--weave-space-tight); border-bottom: var(--weave-line) solid var(--weave-edge); }
+.weave-tab { padding: var(--weave-space); border: none; background: transparent; cursor: pointer; font-family: var(--weave-font); font-size: var(--weave-font-size); }
+.weave-breadcrumb { display: flex; gap: var(--weave-space); font-size: var(--weave-font-size-small); }
+.weave-tree { list-style: none; margin: 0; padding-left: var(--weave-space-loose); }
+.weave-disclosure { border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); padding: var(--weave-space); }
+.weave-disclosure-summary { cursor: pointer; font-weight: 600; }
+.weave-accordion { display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-modal { border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); padding: var(--weave-space-wide); box-shadow: var(--weave-shadow-lifted); }
+.weave-toast { padding: var(--weave-space); border-radius: var(--weave-radius-small); background: var(--weave-sunken); border: var(--weave-line) solid var(--weave-edge); }
+.weave-stat-tile { display: flex; flex-direction: column; gap: var(--weave-space-tight); padding: var(--weave-space-loose); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); background: var(--weave-surface); }
+.weave-empty-state { padding: var(--weave-space-wide); text-align: center; color: var(--weave-muted); }
+.weave-pagination { display: flex; gap: var(--weave-space-tight); }
+.weave-page-button { min-width: var(--weave-control-height); min-height: var(--weave-control-height); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); background: var(--weave-surface); cursor: pointer; }
+.weave-rail { width: var(--weave-rail-width); display: flex; flex-direction: column; gap: var(--weave-space); }
+.weave-page-header { display: flex; align-items: center; justify-content: space-between; gap: var(--weave-space); padding-bottom: var(--weave-space); border-bottom: var(--weave-line) solid var(--weave-edge); }
+.weave-page-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--weave-space); padding-top: var(--weave-space); border-top: var(--weave-line) solid var(--weave-edge); color: var(--weave-muted); font-size: var(--weave-font-size-small); }
+.weave-body { display: flex; flex-direction: column; gap: var(--weave-space-loose); flex-grow: 1; }
+.weave-list-row { display: flex; align-items: center; gap: var(--weave-space); }
+.weave-timestamp { color: var(--weave-muted); font-size: var(--weave-font-size-small); }
+.weave-day-button { width: 100%; min-height: var(--weave-control-height); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); background: var(--weave-surface); color: var(--weave-ink); cursor: pointer; font-family: var(--weave-font); font-size: var(--weave-font-size); }
+.weave-alert { display: flex; flex-direction: column; gap: var(--weave-space-tight); padding: var(--weave-space-loose); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); background: var(--weave-surface); }
+.weave-status-dot { display: inline-flex; width: var(--weave-dot-size); height: var(--weave-dot-size); border-radius: 100%; background: var(--weave-muted); }
+.weave-badge { display: inline-flex; justify-content: center; min-width: var(--weave-space-loose); padding: var(--weave-space-tight); border-radius: var(--weave-radius-round); background: var(--weave-accent); color: var(--weave-accent-ink); font-size: var(--weave-font-size-small); }
+.weave-kbd { display: inline-flex; gap: var(--weave-space-tight); align-items: center; }
+.weave-key-cap { padding: var(--weave-space-tight); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); background: var(--weave-sunken); font-size: var(--weave-font-size-small); font-family: var(--weave-font-mono); }
+.weave-skeleton { display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-skeleton-line { height: var(--weave-space); border-radius: var(--weave-radius-small); background: var(--weave-sunken); animation: var(--weave-pulse); }
+.weave-avatar-group { display: inline-flex; gap: var(--weave-space-tight); align-items: center; }
+.weave-switch-field { display: flex; gap: var(--weave-space-tight); align-items: center; }
+.weave-switch-control { width: var(--weave-space-wide); height: var(--weave-space-loose); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-round); background: var(--weave-sunken); cursor: pointer; }
+.weave-slider-field { display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-slider-control { width: 100%; }
+.weave-stepper-field { display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-dropdown { border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); padding: var(--weave-space); }
+.weave-tooltip { display: inline-flex; gap: var(--weave-space-tight); }
+.weave-tooltip-target { border-bottom: var(--weave-line) solid var(--weave-edge); cursor: pointer; }
+.weave-overlay-host { position: fixed; inset: 0; z-index: var(--weave-layer-overlay); pointer-events: none; }
+.weave-scrim { position: fixed; inset: 0; background: var(--weave-scrim); z-index: var(--weave-layer-scrim); pointer-events: auto; }
+.weave-dialog-box { position: fixed; left: 50%; top: 50%; transform: var(--weave-centre-shift); width: var(--weave-dialog-width); max-height: var(--weave-dialog-max-height); overflow-y: auto; z-index: var(--weave-layer-dialog); pointer-events: auto; background: var(--weave-surface); border-radius: var(--weave-radius-large); box-shadow: var(--weave-shadow-overlay); padding: var(--weave-space-wide); display: flex; flex-direction: column; gap: var(--weave-space-loose); }
+.weave-drawer-box { position: fixed; top: 0; right: 0; bottom: 0; width: var(--weave-drawer-width); z-index: var(--weave-layer-drawer); pointer-events: auto; background: var(--weave-surface); box-shadow: var(--weave-shadow-overlay); padding: var(--weave-space-loose); display: flex; flex-direction: column; gap: var(--weave-space); overflow-y: auto; }
+.weave-sheet-box { position: fixed; left: 0; right: 0; bottom: 0; max-height: var(--weave-sheet-max-height); z-index: var(--weave-layer-drawer); pointer-events: auto; background: var(--weave-surface); border-top-left-radius: var(--weave-radius-large); border-top-right-radius: var(--weave-radius-large); box-shadow: var(--weave-shadow-overlay); padding: var(--weave-space-loose); display: flex; flex-direction: column; gap: var(--weave-space); overflow-y: auto; }
+.weave-popover-box { position: absolute; min-width: var(--weave-popover-width); z-index: var(--weave-layer-popover); pointer-events: auto; background: var(--weave-surface); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); box-shadow: var(--weave-shadow-overlay); padding: var(--weave-space-tight); display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-toast-host { position: fixed; right: var(--weave-space-loose); bottom: var(--weave-space-loose); width: var(--weave-toast-width); z-index: var(--weave-layer-toast); pointer-events: none; display: flex; flex-direction: column; gap: var(--weave-space); }
+.weave-toast-slot { pointer-events: auto; }
+.weave-actions { display: flex; gap: var(--weave-space); justify-content: flex-end; flex-wrap: wrap; }
+.weave-tip-bubble { position: absolute; max-width: var(--weave-tip-width); z-index: var(--weave-layer-tip); pointer-events: none; background: var(--weave-ink); color: var(--weave-surface); padding: var(--weave-space-tight); border-radius: var(--weave-radius-small); font-size: var(--weave-font-size-small); box-shadow: var(--weave-shadow-lifted); }
+.weave-shell { position: fixed; inset: 0; display: flex; background: var(--weave-sunken); overflow: hidden; }
+.weave-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; background: var(--weave-surface); border-right: var(--weave-line) solid var(--weave-edge); padding: var(--weave-space-loose); gap: var(--weave-space); }
+.weave-row-button { display: flex; align-items: center; gap: var(--weave-space); width: 100%; padding: var(--weave-space-tight); border: none; border-radius: var(--weave-radius-small); background: transparent; color: var(--weave-ink); cursor: pointer; text-align: left; font-family: var(--weave-font); font-size: var(--weave-font-size); }
+.weave-strong { font-weight: 700; }
+.weave-sticky { position: sticky; top: 0; z-index: var(--weave-layer-sticky); background: var(--weave-surface); }
+.weave-display { margin: 0; font-size: var(--weave-font-size-display); font-weight: 700; letter-spacing: var(--weave-tracking); }
+.weave-truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.weave-fill { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--weave-space-tight); }
+.weave-media { position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: var(--weave-media-ratio); margin: 0; border-radius: var(--weave-radius); background: var(--weave-sunken); overflow: hidden; font-size: var(--weave-font-size-display); }
+.weave-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+.weave-choices { display: flex; flex-direction: column; gap: var(--weave-space-tight); border: none; margin: 0; padding: 0; }
+.weave-choice-group { display: flex; flex-direction: column; gap: var(--weave-space-tight); border: none; padding: 0; }
+.weave-choice-legend { color: var(--weave-muted); font-size: var(--weave-font-size-small); padding: 0; }
+.weave-choice-field { display: flex; align-items: center; gap: var(--weave-space); padding: var(--weave-space-tight); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius-small); cursor: pointer; }
+.weave-steps { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--weave-space-loose); flex-wrap: wrap; align-items: center; }
+.weave-step { display: flex; align-items: center; gap: var(--weave-space-tight); color: var(--weave-muted); font-size: var(--weave-font-size-small); }
+.weave-tab-bar { display: flex; gap: var(--weave-space-tight); align-items: center; justify-content: space-between; padding: var(--weave-space-tight); background: var(--weave-surface); border: var(--weave-line) solid var(--weave-edge); border-radius: var(--weave-radius); }
+.weave-field-error { color: var(--weave-danger); font-size: var(--weave-font-size-small); }
+.weave-card:hover { box-shadow: var(--weave-shadow-lifted); }
+.weave-button:hover { border-color: var(--weave-accent); background: var(--weave-accent-soft); }
+.weave-tab:hover { border-color: var(--weave-accent); background: var(--weave-accent-soft); }
+.weave-page-button:hover { border-color: var(--weave-accent); background: var(--weave-accent-soft); }
+.weave-day-button:hover { border-color: var(--weave-accent); background: var(--weave-accent-soft); }
+.weave-switch-control:hover { border-color: var(--weave-accent); background: var(--weave-accent-soft); }
+.weave-row-button:hover { border-color: var(--weave-accent); background: var(--weave-accent-soft); }
+.weave-button:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-control:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-text-area:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-select-box:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-search-box:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-tab:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-page-button:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-day-button:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-switch-control:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-slider-control:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-disclosure-summary:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-anchor:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-row-button:focus-visible { outline: var(--weave-line) solid var(--weave-accent); outline-offset: var(--weave-line); box-shadow: var(--weave-focus-ring); }
+.weave-button:active { transform: var(--weave-press); }
+.weave-tab:active { transform: var(--weave-press); }
+.weave-page-button:active { transform: var(--weave-press); }
+.weave-day-button:active { transform: var(--weave-press); }
+.weave-switch-control:active { transform: var(--weave-press); }
+.weave-row-button:active { transform: var(--weave-press); }
+.weave-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-control:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-text-area:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-select-box:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-search-box:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-tab:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-page-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-day-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-switch-control:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-slider-control:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-row-button:disabled { opacity: 0.4; cursor: not-allowed; }
+.weave-control[aria-invalid="true"] { border-color: var(--weave-danger); }
+.weave-tab[aria-selected="true"] { border-bottom: var(--weave-line) solid var(--weave-accent); color: var(--weave-accent); }
+.weave-day-button[aria-selected="true"] { background: var(--weave-accent); color: var(--weave-accent-ink); }
+.weave-row-button[aria-selected="true"] { background: var(--weave-accent-soft); color: var(--weave-accent); }
+.weave-page-button[aria-current="true"] { background: var(--weave-accent); color: var(--weave-accent-ink); }
+.weave-day-button[aria-current="true"] { border-color: var(--weave-accent); font-weight: 600; }
+.weave-step[aria-current="true"] { color: var(--weave-ink); font-weight: 700; }
+.weave-panel[data-over="true"] { border-color: var(--weave-accent); background: var(--weave-sunken); }
+body { margin: 0; padding: var(--weave-space-loose); background: var(--weave-sunken); color: var(--weave-ink); font-family: var(--weave-font); font-size: var(--weave-font-size); line-height: var(--weave-leading); }
+:root[data-theme=dark] { --weave-ink: #e8ecf3; --weave-muted: #9aa4b2; --weave-edge: #2b3442; --weave-surface: #0f1722; --weave-sunken: #172130; --weave-accent: #7aa2ff; --weave-accent-ink: #0b1220; --weave-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); --weave-shadow-lifted: 0 10px 30px rgba(0, 0, 0, 0.6); --weave-focus-ring: 0 0 0 3px rgba(122, 162, 255, 0.45); }
+@media (prefers-color-scheme: dark){:root:not([data-theme=light]) { --weave-ink: #e8ecf3; --weave-muted: #9aa4b2; --weave-edge: #2b3442; --weave-surface: #0f1722; --weave-sunken: #172130; --weave-accent: #7aa2ff; --weave-accent-ink: #0b1220; --weave-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); --weave-shadow-lifted: 0 10px 30px rgba(0, 0, 0, 0.6); --weave-focus-ring: 0 0 0 3px rgba(122, 162, 255, 0.45); }}
+@media (prefers-reduced-motion: no-preference){.weave-button, .weave-control, .weave-text-area, .weave-select-box, .weave-search-box, .weave-tab, .weave-page-button, .weave-day-button, .weave-switch-control, .weave-slider-control, .weave-disclosure-summary, .weave-anchor, .weave-row-button { transition: var(--weave-ease); }}
+.weave-alert[data-tone=info] { border-color: var(--weave-tone-info); color: var(--weave-tone-info); }
+.weave-alert[data-tone=success] { border-color: var(--weave-tone-success); color: var(--weave-tone-success); }
+.weave-alert[data-tone=warning] { border-color: var(--weave-tone-warning); color: var(--weave-tone-warning); }
+.weave-alert[data-tone=danger] { border-color: var(--weave-tone-danger); color: var(--weave-tone-danger); }
+.weave-status-dot[data-tone=info] { background: var(--weave-tone-info); }
+.weave-status-dot[data-tone=success] { background: var(--weave-tone-success); }
+.weave-status-dot[data-tone=warning] { background: var(--weave-tone-warning); }
+.weave-status-dot[data-tone=danger] { background: var(--weave-tone-danger); }
+.weave-button[data-variant=primary]:hover { background: var(--weave-accent); border-color: var(--weave-accent); color: var(--weave-accent-ink); box-shadow: var(--weave-shadow-lifted); }
+.weave-button[data-variant=quiet]:hover { background: transparent; border-color: transparent; color: var(--weave-muted); box-shadow: var(--weave-shadow-lifted); }
+.weave-button[data-variant=grave]:hover { background: var(--weave-danger); border-color: var(--weave-danger); color: var(--weave-accent-ink); box-shadow: var(--weave-shadow-lifted); }
+@keyframes pulse{from { opacity: 0.4; } to { opacity: 1; }}
+@media (max-width: 640px){.weave-rail { width: 100%; } .weave-tiles { grid-template-columns: 100%; } .weave-page-header { flex-wrap: wrap; align-items: flex-start; } .weave-panel { padding: var(--weave-space); } .weave-table { font-size: var(--weave-font-size-small); } .weave-modal { padding: var(--weave-space-loose); } .weave-page { padding: var(--weave-space); } .weave-tab-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--weave-layer-sticky); border-radius: 0; }}
+@media (prefers-reduced-motion: reduce){.weave-skeleton-line { animation: none; }}
+@media print{.weave-toolbar { display: none; } .weave-pagination { display: none; } .weave-card { box-shadow: none; }}
+.weave-button[data-variant=primary] { background: var(--weave-accent); border-color: var(--weave-accent); color: var(--weave-accent-ink); }
+.weave-button[data-variant=quiet] { background: transparent; border-color: transparent; color: var(--weave-muted); }
+.weave-button[data-variant=grave] { background: var(--weave-danger); border-color: var(--weave-danger); color: var(--weave-accent-ink); }
+.weave-button[data-size=small] { min-height: var(--weave-control-height-small); padding: var(--weave-space-tight); font-size: var(--weave-font-size-small); }
+.weave-button[data-size=large] { min-height: var(--weave-control-height-large); padding: var(--weave-space-loose); font-size: var(--weave-font-size-large); }
+.weave-pane[data-pane=rail] { width: var(--weave-rail-width); flex-shrink: 0; }
+.weave-pane[data-pane=list] { width: var(--weave-list-width); flex-shrink: 0; }
+.weave-pane[data-pane=main] { flex-grow: 1; }
