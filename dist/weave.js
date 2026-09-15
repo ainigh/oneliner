@@ -2727,15 +2727,12 @@ Weave.library.components.tokens.compactWidth = '640px';
 Weave.library.components.tokens.pageWidth = '1100px';
 Weave.library.components.tokens.listWidth = '340px';
 Weave.library.components.tokens.fontSizeDisplay = '28px';
-Weave.library.components.tokens.fontSizeMicro = '11px';
 Weave.library.components.tokens.tracking = '-0.01em';
 Weave.library.components.tokens.radiusLarge = '18px';
 Weave.library.components.tokens.radiusRound = '999px';
 Weave.library.components.tokens.controlHeightSmall = '26px';
 Weave.library.components.tokens.controlHeightLarge = '40px';
-Weave.library.components.tokens.inkSoft = '#374151';
 Weave.library.components.tokens.accentSoft = '#eef4ff';
-Weave.library.components.tokens.accentEdge = '#bcd0ff';
 Weave.library.components.tokens.shadowOverlay = '0 24px 60px rgba(17, 24, 39, 0.28)';
 Weave.library.components.tokens.scrim = 'rgba(17, 24, 39, 0.45)';
 Weave.library.components.tokens.layerSticky = '5';
@@ -2789,19 +2786,16 @@ Weave.library.components.values.grow = Weave.library.components.values.one;
 Weave.library.components.values.notAllowed = 'not-allowed';
 Weave.library.components.values.start = 'flex-start';
 Weave.library.components.values.end = 'flex-end';
-Weave.library.components.values.stretch = 'stretch';
 Weave.library.components.values.fixed = 'fixed';
 Weave.library.components.values.absolute = 'absolute';
 Weave.library.components.values.relative = 'relative';
 Weave.library.components.values.sticky = 'sticky';
 Weave.library.components.values.clip = 'hidden';
 Weave.library.components.values.half = '50%';
-Weave.library.components.values.medium = '500';
 Weave.library.components.values.heavy = '700';
 Weave.library.components.values.ellipsis = 'ellipsis';
 Weave.library.components.values.nowrap = 'nowrap';
 Weave.library.components.values.cover = 'cover';
-Weave.library.components.values.preLine = 'pre-line';
 Weave.library.components.hairline = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.edge;
 Weave.library.components.accentLine = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.accent;
 
@@ -3201,7 +3195,6 @@ Weave.library.components.rules.media = { position: Weave.library.components.valu
 Weave.library.components.rules.image = { width: Weave.library.components.values.full, height: Weave.library.components.values.full, objectFit: Weave.library.components.values.cover, display: Weave.library.components.values.block };
 
 /* choices: one radio set, so a spec names a group of options and never a tag or an input type. */
-Weave.library.components.groupKey = 'group';
 Weave.library.components.radioAttributes = spec => ({ [Weave.library.browser.keywords.name]: spec.group, [Weave.library.browser.keywords.value]: spec.value });
 Weave.library.components.radioProperties = spec => ({ [Weave.library.attributes.booleanAttributes.checked]: Weave.library.control.defaultTo(false)(spec.checked) });
 Weave.library.components.radioMark = spec => Weave.library.components.build(Weave.library.components.parts.radio, 'radioMark', { attributes: Weave.library.components.radioAttributes(spec), properties: Weave.library.components.radioProperties(spec), onChoose: spec.onChoose });

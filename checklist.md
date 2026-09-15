@@ -32,7 +32,8 @@ checks · 35/35 demo checks · 48/48 flagship checks · 3,443 catalog paths.**
 - [x] R17 `catalog.json` emitted from the source (1980 paths)
 - [x] R18 Every lift row resolves to a real function and produces a generated one (tested, see D4)
 - [x] R19 Every layer namespace is preceded by its group comment
-- [x] R20 Application isolation — `sample.html`, `todo.html` and `tests.html` are audited by the same rules, and application lines may not name a browser global
+- [x] R20 Application isolation — every `.html` application is audited by the same rules, and application lines may not name a browser global
+- [x] R21 Every token is spent by a rule and every value by something — a styling row nothing references is a finding
 - [~] R21 Self-audit — `audit.js` passes R1–R11, R14, R15, R19 applied to itself (see D5)
 
 ## Milestones (spec 2, §18)

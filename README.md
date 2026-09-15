@@ -77,6 +77,7 @@ because the audit refused the alternative.
 11. `? :`, `&&`, `||`, `??` and `?.` live only in `Weave.library.control`.
 12. `throw` appears once (`control.fail`), `try` appears once (`control.attempt`).
 13. No `async` / `await` — Promise chains only. 14. No `this`. 15. `new` only in `browser` and `composition`.
+16. Nothing is written that nothing spends. A design token no rule references, or a CSS keyword nothing uses, is a build failure.
 
 ## The two flagship applications
 
