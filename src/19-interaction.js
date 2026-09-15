@@ -27,6 +27,7 @@ Weave.library.interaction.onKey = (name, handler) => el => Weave.library.events.
 Weave.library.interaction.onKeys = obj => el => Weave.library.events.combine(Weave.library.composition.pairs(obj).map(([name, handler]) => Weave.library.interaction.onKey(name, handler)(el)));
 Weave.library.interaction.keyHelper = (value, name) => handler => el => Weave.library.interaction.onKey(name, handler)(el);
 Weave.library.composition.defineEachPrefixed(Weave.library.interaction, 'on', Weave.library.interaction.keyHelper)(Weave.library.browser.keyNames);
+Weave.library.interaction.isTyping = () => Weave.library.predicates.matches(Weave.library.browser.selectors.editable)(Weave.library.browser.activeElement());
 Weave.library.interaction.shortcutSeparator = '+';
 Weave.library.interaction.parseShortcut = combo => combo.toLowerCase().split(Weave.library.interaction.shortcutSeparator).map(Weave.library.composition.trim);
 Weave.library.interaction.isMacPlatform = () => Weave.library.browser.platform().toLowerCase().startsWith(Weave.library.interaction.macPrefix);
@@ -118,8 +119,13 @@ Weave.library.interaction.currentOverflow = () => Weave.library.style.inlineCss(
 Weave.library.interaction.setOverflow = value => Weave.library.style.setCss(Weave.library.browser.properties.overflow, value)(Weave.library.browser.body());
 Weave.library.interaction.rememberOverflow = () => Weave.library.attributes.setData(Weave.library.interaction.lockKey, Weave.library.interaction.currentOverflow())(Weave.library.browser.body());
 Weave.library.interaction.savedOverflow = () => Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(Weave.library.attributes.data(Weave.library.interaction.lockKey)(Weave.library.browser.body()));
-Weave.library.interaction.lockScroll = () => (Weave.library.interaction.rememberOverflow(), Weave.library.interaction.setOverflow(Weave.library.browser.keywords.hidden));
-Weave.library.interaction.unlockScroll = () => Weave.library.interaction.setOverflow(Weave.library.interaction.savedOverflow());
+Weave.library.interaction.scrollLocks = {};
+Weave.library.interaction.scrollLocks.depth = 0;
+Weave.library.interaction.deepenLock = step => Object.assign(Weave.library.interaction.scrollLocks, { depth: Math.max(0, Weave.library.interaction.scrollLocks.depth + step) }).depth;
+Weave.library.interaction.holdScroll = () => (Weave.library.interaction.rememberOverflow(), Weave.library.interaction.setOverflow(Weave.library.browser.keywords.hidden));
+Weave.library.interaction.freeScroll = () => Weave.library.interaction.setOverflow(Weave.library.interaction.savedOverflow());
+Weave.library.interaction.lockScroll = () => Weave.library.control.when(depth => depth === 1, Weave.library.interaction.holdScroll)(Weave.library.interaction.deepenLock(1));
+Weave.library.interaction.unlockScroll = () => Weave.library.control.when(depth => depth === 0, Weave.library.interaction.freeScroll)(Weave.library.interaction.deepenLock(-1));
 Weave.library.interaction.disable = el => Weave.library.attributes.setBooleanAttribute(Weave.library.attributes.booleanAttributes.disabled, true)(el);
 Weave.library.interaction.enable = el => Weave.library.attributes.setBooleanAttribute(Weave.library.attributes.booleanAttributes.disabled, false)(el);
 Weave.library.interaction.inert = el => Weave.library.attributes.setBooleanAttribute(Weave.library.attributes.booleanAttributes.inert, true)(el);

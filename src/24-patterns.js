@@ -274,14 +274,16 @@ Weave.library.patterns.calendar = spec => Weave.library.patterns.view(Weave.libr
 Weave.library.patterns.notificationTimeout = spec => Weave.library.control.defaultTo(Weave.library.patterns.defaults.timeout)(spec.timeout);
 Weave.library.patterns.notificationRow = (message, tone) => Weave.library.patterns.withId({ message, tone });
 Weave.library.patterns.notificationDrop = (update, row) => () => update(state => ({ toasts: Weave.library.patterns.without(state.toasts, row) }));
-Weave.library.patterns.notificationToast = update => row => Weave.library.components.alert({ tone: row.tone, title: row.message, onClose: Weave.library.patterns.notificationDrop(update, row), data: { [Weave.library.elements.keyName]: row[Weave.library.patterns.idKey] } });
+Weave.library.patterns.notificationAlert = (update, row) => Weave.library.components.alert({ tone: row.tone, title: row.message, onClose: Weave.library.patterns.notificationDrop(update, row) });
+Weave.library.patterns.notificationToast = update => row => Weave.library.components.toastSlot({ children: [Weave.library.patterns.notificationAlert(update, row)], data: { [Weave.library.elements.keyName]: row[Weave.library.patterns.idKey] } });
 Weave.library.patterns.notificationList = (state, update) => Weave.library.components.stack({ children: state.toasts.map(Weave.library.patterns.notificationToast(update)) });
 Weave.library.patterns.notificationExpire = (handle, spec, row) => Weave.library.composition.then(Weave.library.patterns.notificationDrop(handle.update, row))(Weave.library.timing.delay(Weave.library.patterns.notificationTimeout(spec)));
 Weave.library.patterns.notificationAdd = (handle, spec, row) => (handle.update(state => ({ toasts: state.toasts.concat([row]) })), Weave.library.patterns.notificationExpire(handle, spec, row), handle);
 Weave.library.patterns.notificationPush = (handle, spec) => (message, tone) => Weave.library.patterns.notificationAdd(handle, spec, Weave.library.patterns.notificationRow(message, tone));
 Weave.library.patterns.notificationState = () => ({ toasts: [] });
 Weave.library.patterns.notificationHandle = (spec, handle) => Object.assign(handle, { push: Weave.library.patterns.notificationPush(handle, spec) });
-Weave.library.patterns.notifications = (spec = {}) => Weave.library.patterns.notificationHandle(spec, Weave.library.patterns.view(Weave.library.patterns.notificationList, Weave.library.patterns.notificationState()));
+Weave.library.patterns.notificationPin = handle => Weave.library.composition.tap(() => Weave.library.elements.appendTo(Weave.library.overlays.toastHost())(handle.element))(handle);
+Weave.library.patterns.notifications = (spec = {}) => Weave.library.patterns.notificationPin(Weave.library.patterns.notificationHandle(spec, Weave.library.patterns.view(Weave.library.patterns.notificationList, Weave.library.patterns.notificationState())));
 /* store: state that outlives a single pattern. Many handles watch one store, so two patterns can hold the same data without either owning it. */
 Weave.library.patterns.storeFrom = holder => Object.assign(holder, { update: Weave.library.patterns.storeUpdater(holder), watch: Weave.library.patterns.storeWatcher(holder) });
 Weave.library.patterns.store = value => Weave.library.patterns.storeFrom({ state: value, watchers: [] });
@@ -396,3 +398,50 @@ Weave.library.patterns.entryParts = (spec, state, update) => [Weave.library.patt
 Weave.library.patterns.entryPanel = spec => (state, update) => Weave.library.components.panel({ children: Weave.library.patterns.entryParts(spec, state, update) });
 Weave.library.patterns.entryState = spec => ({ values: Weave.library.control.defaultTo({})(spec.values), errors: {} });
 Weave.library.patterns.entryForm = spec => Weave.library.patterns.view(Weave.library.patterns.entryPanel(spec), Weave.library.patterns.entryState(spec));
+
+/* layers: a dialog, a drawer and a sheet as patterns. Body and actions may be values or functions of close. */
+Weave.library.patterns.labels.confirm = 'Confirm';
+Weave.library.patterns.labels.cancel = 'Cancel';
+Weave.library.patterns.actionsKey = 'actions';
+Weave.library.patterns.heldState = spec => ({ spec, handle: undefined });
+Weave.library.patterns.heldClose = state => Weave.library.control.maybe(handle => handle.close())(state.handle);
+Weave.library.patterns.layerCloser = state => () => Weave.library.patterns.heldClose(state);
+Weave.library.patterns.layerValue = (state, key) => Weave.library.control.either(Weave.library.predicates.isFunction, make => make(Weave.library.patterns.layerCloser(state)), Weave.library.composition.identity)(state.spec[key]);
+Weave.library.patterns.layerList = (state, key) => Weave.library.composition.compact(Weave.library.composition.listOf(Weave.library.control.defaultTo([])(Weave.library.patterns.layerValue(state, key))));
+Weave.library.patterns.layerHeader = state => Weave.library.components.spread({ children: [Weave.library.components.subtitle({ text: Weave.library.components.titleOf(state.spec) }), Weave.library.patterns.layerCloseButton(state)] });
+Weave.library.patterns.layerCloseButton = state => Weave.library.components.actionButton({ label: Weave.library.components.closeLabel, size: Weave.library.patterns.smallSize(), onAction: Weave.library.patterns.layerCloser(state) });
+Weave.library.patterns.smallSize = () => Weave.library.composition.first(Weave.library.composition.keys(Weave.library.components.sizes));
+Weave.library.patterns.layerActions = state => Weave.library.patterns.actionsFrom(Weave.library.patterns.layerList(state, Weave.library.patterns.actionsKey));
+Weave.library.patterns.actionsFrom = rows => Weave.library.control.either(list => list.length > 0, list => [Weave.library.components.actions({ children: list.map(Weave.library.components.actionButton) })], () => [])(rows);
+Weave.library.patterns.layerBody = state => [Weave.library.patterns.layerHeader(state)].concat(Weave.library.patterns.layerList(state, Weave.library.components.bodyKey), Weave.library.patterns.layerActions(state));
+Weave.library.patterns.layerSpec = state => ({ title: Weave.library.components.titleOf(state.spec), body: Weave.library.patterns.layerBody(state), onClose: state.spec.onClose });
+Weave.library.patterns.layerOpen = (open, state) => Object.assign(state, { handle: open(Weave.library.patterns.layerSpec(state)) }).handle;
+Weave.library.patterns.dialog = spec => Weave.library.patterns.layerOpen(Weave.library.overlays.dialog, Weave.library.patterns.heldState(spec));
+Weave.library.patterns.drawer = spec => Weave.library.patterns.layerOpen(Weave.library.overlays.drawer, Weave.library.patterns.heldState(spec));
+Weave.library.patterns.sheet = spec => Weave.library.patterns.layerOpen(Weave.library.overlays.sheet, Weave.library.patterns.heldState(spec));
+
+/* confirm: the dialog above with two actions and a promise, so a caller awaits an answer instead of wiring one. */
+Weave.library.patterns.confirmLabel = (spec, key) => Weave.library.control.defaultTo(Weave.library.patterns.labels[key])(spec[key]);
+Weave.library.patterns.confirmAnswer = (handle, close, answer) => () => (handle.resolve(answer), close());
+Weave.library.patterns.confirmCancel = (spec, handle, close) => ({ label: Weave.library.patterns.confirmLabel(spec, Weave.library.patterns.cancelKey), onAction: Weave.library.patterns.confirmAnswer(handle, close, false) });
+Weave.library.patterns.confirmAccept = (spec, handle, close) => ({ label: Weave.library.patterns.confirmLabel(spec, Weave.library.patterns.confirmKey), variant: Weave.library.components.defaultVariant(), onAction: Weave.library.patterns.confirmAnswer(handle, close, true) });
+Weave.library.patterns.confirmActions = (spec, handle) => close => [Weave.library.patterns.confirmCancel(spec, handle, close), Weave.library.patterns.confirmAccept(spec, handle, close)];
+Weave.library.patterns.cancelKey = 'cancel';
+Weave.library.patterns.confirmKey = 'confirm';
+Weave.library.patterns.confirmBody = spec => [Weave.library.components.note({ text: Weave.library.components.noteOf(spec) })];
+Weave.library.patterns.confirmChanges = (spec, handle) => ({ body: Weave.library.patterns.confirmBody(spec), actions: Weave.library.patterns.confirmActions(spec, handle), onClose: Weave.library.patterns.confirmAnswer(handle, Weave.library.composition.noop, false) });
+Weave.library.patterns.confirmSpec = (spec, handle) => Weave.library.composition.merge(spec, Weave.library.patterns.confirmChanges(spec, handle));
+Weave.library.patterns.confirmWith = (spec, handle) => Weave.library.composition.tap(() => Weave.library.patterns.dialog(Weave.library.patterns.confirmSpec(spec, handle)))(handle.promise);
+Weave.library.patterns.confirm = spec => Weave.library.patterns.confirmWith(spec, Weave.library.composition.deferred());
+
+/* menus: a popover of menu items hung off a button. Choosing one closes the popover before it runs. */
+Weave.library.patterns.menuChoose = (state, item) => () => (Weave.library.patterns.heldClose(state), Weave.library.control.maybe(run => run())(item.onAction));
+Weave.library.patterns.menuRow = state => item => Weave.library.composition.merge(item, { onAction: Weave.library.patterns.menuChoose(state, item) });
+Weave.library.patterns.menuBody = state => [Weave.library.components.menu({ items: state.spec.items.map(Weave.library.patterns.menuRow(state)) })];
+Weave.library.patterns.menuOpen = (anchor, state) => Object.assign(state, { handle: Weave.library.overlays.popover(anchor, { body: Weave.library.patterns.menuBody(state), onClose: state.spec.onClose }) }).handle;
+Weave.library.patterns.menu = (anchor, spec) => Weave.library.patterns.menuOpen(anchor, Weave.library.patterns.heldState(spec));
+
+/* shortcuts: one row per key, bound to the document and held back while the reader is typing. */
+Weave.library.patterns.shortcutStep = handler => event => Weave.library.control.unless(() => Weave.library.interaction.isTyping(), () => handler(event))(event);
+Weave.library.patterns.shortcutBind = ([combo, handler]) => Weave.library.interaction.shortcut(combo, Weave.library.patterns.shortcutStep(handler))(Weave.library.browser.document());
+Weave.library.patterns.shortcuts = map => Weave.library.events.combine(Weave.library.composition.pairs(map).map(Weave.library.patterns.shortcutBind));

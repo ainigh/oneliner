@@ -7,6 +7,7 @@ Weave.library.components.parts.box = Weave.library.elements.div;
 Weave.library.components.parts.inline = Weave.library.elements.span;
 Weave.library.components.parts.emphasis = Weave.library.elements.strong;
 Weave.library.components.parts.paragraph = Weave.library.elements.p;
+Weave.library.components.parts.display = Weave.library.elements.h1;
 Weave.library.components.parts.heading = Weave.library.elements.h2;
 Weave.library.components.parts.subheading = Weave.library.elements.h3;
 Weave.library.components.parts.section = Weave.library.elements.section;
@@ -71,6 +72,20 @@ Weave.library.components.childrenOf = (spec, key) => Weave.library.composition.c
 Weave.library.components.blueprints = {};
 Weave.library.components.blueprints.view = Weave.library.components.parts.box;
 Weave.library.components.blueprints.page = Weave.library.components.parts.main;
+Weave.library.components.blueprints.display = Weave.library.components.parts.display;
+Weave.library.components.blueprints.truncate = Weave.library.components.parts.inline;
+Weave.library.components.blueprints.fill = Weave.library.components.parts.box;
+Weave.library.components.blueprints.sticky = Weave.library.components.parts.box;
+Weave.library.components.blueprints.overlayHost = Weave.library.components.parts.box;
+Weave.library.components.blueprints.scrim = Weave.library.components.parts.box;
+Weave.library.components.blueprints.dialogBox = Weave.library.components.parts.section;
+Weave.library.components.blueprints.drawerBox = Weave.library.components.parts.section;
+Weave.library.components.blueprints.sheetBox = Weave.library.components.parts.section;
+Weave.library.components.blueprints.popoverBox = Weave.library.components.parts.section;
+Weave.library.components.blueprints.toastHost = Weave.library.components.parts.box;
+Weave.library.components.blueprints.toastSlot = Weave.library.components.parts.box;
+Weave.library.components.blueprints.actions = Weave.library.components.parts.box;
+Weave.library.components.blueprints.tipBubble = Weave.library.components.parts.inline;
 Weave.library.components.blueprints.panel = Weave.library.components.parts.section;
 Weave.library.components.blueprints.stack = Weave.library.components.parts.box;
 Weave.library.components.blueprints.row = Weave.library.components.parts.box;
@@ -237,6 +252,34 @@ Weave.library.components.tokens.shadowLifted = '0 10px 30px rgba(17, 24, 39, 0.1
 Weave.library.components.tokens.fontMono = 'ui-monospace, SFMono-Regular, Menlo, monospace';
 Weave.library.components.tokens.compactWidth = '640px';
 Weave.library.components.tokens.pageWidth = '1100px';
+Weave.library.components.tokens.fontSizeDisplay = '28px';
+Weave.library.components.tokens.fontSizeMicro = '11px';
+Weave.library.components.tokens.tracking = '-0.01em';
+Weave.library.components.tokens.radiusLarge = '18px';
+Weave.library.components.tokens.radiusRound = '999px';
+Weave.library.components.tokens.controlHeightSmall = '26px';
+Weave.library.components.tokens.controlHeightLarge = '40px';
+Weave.library.components.tokens.inkSoft = '#374151';
+Weave.library.components.tokens.accentSoft = '#eef4ff';
+Weave.library.components.tokens.accentEdge = '#bcd0ff';
+Weave.library.components.tokens.shadowOverlay = '0 24px 60px rgba(17, 24, 39, 0.28)';
+Weave.library.components.tokens.scrim = 'rgba(17, 24, 39, 0.45)';
+Weave.library.components.tokens.layerSticky = '5';
+Weave.library.components.tokens.layerOverlay = '900';
+Weave.library.components.tokens.layerScrim = '10';
+Weave.library.components.tokens.layerDrawer = '20';
+Weave.library.components.tokens.layerDialog = '30';
+Weave.library.components.tokens.layerPopover = '40';
+Weave.library.components.tokens.layerToast = '50';
+Weave.library.components.tokens.layerTip = '60';
+Weave.library.components.tokens.dialogWidth = 'min(560px, calc(100% - 32px))';
+Weave.library.components.tokens.dialogMaxHeight = 'min(80vh, 720px)';
+Weave.library.components.tokens.drawerWidth = 'min(400px, 100%)';
+Weave.library.components.tokens.sheetMaxHeight = '82vh';
+Weave.library.components.tokens.popoverWidth = '200px';
+Weave.library.components.tokens.toastWidth = 'min(360px, calc(100vw - 32px))';
+Weave.library.components.tokens.tipWidth = '240px';
+Weave.library.components.tokens.centreShift = 'translate(-50%, -50%)';
 Weave.library.components.variablePrefix = '--weave-';
 Weave.library.components.variableName = name => Weave.library.components.variablePrefix + Weave.library.composition.kebabCase(name);
 Weave.library.components.variableOpen = 'var(';
@@ -270,6 +313,20 @@ Weave.library.components.values.opaque = Weave.library.components.values.one;
 Weave.library.components.values.grow = Weave.library.components.values.one;
 Weave.library.components.values.notAllowed = 'not-allowed';
 Weave.library.components.values.start = 'flex-start';
+Weave.library.components.values.end = 'flex-end';
+Weave.library.components.values.stretch = 'stretch';
+Weave.library.components.values.fixed = 'fixed';
+Weave.library.components.values.absolute = 'absolute';
+Weave.library.components.values.relative = 'relative';
+Weave.library.components.values.sticky = 'sticky';
+Weave.library.components.values.clip = 'hidden';
+Weave.library.components.values.half = '50%';
+Weave.library.components.values.medium = '500';
+Weave.library.components.values.heavy = '700';
+Weave.library.components.values.ellipsis = 'ellipsis';
+Weave.library.components.values.nowrap = 'nowrap';
+Weave.library.components.values.cover = 'cover';
+Weave.library.components.values.preLine = 'pre-line';
 Weave.library.components.hairline = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.edge;
 Weave.library.components.accentLine = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.accent;
 
@@ -611,3 +668,36 @@ Weave.library.components.sheetExtras.variantHovers = Weave.library.components.va
 Weave.library.components.sheetExtras.keyframes = Weave.library.components.keyframesTexts;
 Weave.library.components.sheetExtras.media = Weave.library.components.mediaTexts;
 Weave.library.components.extraTexts = () => Weave.library.composition.values(Weave.library.components.sheetExtras).flatMap(make => make());
+
+/* overlay rules: the only place the system positions anything. One host, and a ladder inside it. */
+Weave.library.components.rules.overlayHost = { position: Weave.library.components.values.fixed, inset: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerOverlay, pointerEvents: Weave.library.components.values.none };
+Weave.library.components.rules.scrim = { position: Weave.library.components.values.fixed, inset: Weave.library.components.values.zero, background: Weave.library.components.vars.scrim, zIndex: Weave.library.components.vars.layerScrim, pointerEvents: Weave.library.components.values.auto };
+Weave.library.components.rules.dialogBox = { position: Weave.library.components.values.fixed, left: Weave.library.components.values.half, top: Weave.library.components.values.half, transform: Weave.library.components.vars.centreShift, width: Weave.library.components.vars.dialogWidth, maxHeight: Weave.library.components.vars.dialogMaxHeight, overflowY: Weave.library.components.values.auto, zIndex: Weave.library.components.vars.layerDialog, pointerEvents: Weave.library.components.values.auto, background: Weave.library.components.vars.surface, borderRadius: Weave.library.components.vars.radiusLarge, boxShadow: Weave.library.components.vars.shadowOverlay, padding: Weave.library.components.vars.spaceWide, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceLoose };
+Weave.library.components.rules.drawerBox = { position: Weave.library.components.values.fixed, top: Weave.library.components.values.zero, right: Weave.library.components.values.zero, bottom: Weave.library.components.values.zero, width: Weave.library.components.vars.drawerWidth, zIndex: Weave.library.components.vars.layerDrawer, pointerEvents: Weave.library.components.values.auto, background: Weave.library.components.vars.surface, boxShadow: Weave.library.components.vars.shadowOverlay, padding: Weave.library.components.vars.spaceLoose, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space, overflowY: Weave.library.components.values.auto };
+Weave.library.components.rules.sheetBox = { position: Weave.library.components.values.fixed, left: Weave.library.components.values.zero, right: Weave.library.components.values.zero, bottom: Weave.library.components.values.zero, maxHeight: Weave.library.components.vars.sheetMaxHeight, zIndex: Weave.library.components.vars.layerDrawer, pointerEvents: Weave.library.components.values.auto, background: Weave.library.components.vars.surface, borderTopLeftRadius: Weave.library.components.vars.radiusLarge, borderTopRightRadius: Weave.library.components.vars.radiusLarge, boxShadow: Weave.library.components.vars.shadowOverlay, padding: Weave.library.components.vars.spaceLoose, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space, overflowY: Weave.library.components.values.auto };
+Weave.library.components.rules.popoverBox = { position: Weave.library.components.values.absolute, minWidth: Weave.library.components.vars.popoverWidth, zIndex: Weave.library.components.vars.layerPopover, pointerEvents: Weave.library.components.values.auto, background: Weave.library.components.vars.surface, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radius, boxShadow: Weave.library.components.vars.shadowOverlay, padding: Weave.library.components.vars.spaceTight, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.toastHost = { position: Weave.library.components.values.fixed, right: Weave.library.components.vars.spaceLoose, bottom: Weave.library.components.vars.spaceLoose, width: Weave.library.components.vars.toastWidth, zIndex: Weave.library.components.vars.layerToast, pointerEvents: Weave.library.components.values.none, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space };
+Weave.library.components.rules.toastSlot = { pointerEvents: Weave.library.components.values.auto };
+Weave.library.components.rules.actions = { display: Weave.library.components.values.flex, gap: Weave.library.components.vars.space, justifyContent: Weave.library.components.values.end, flexWrap: Weave.library.components.values.wrap };
+Weave.library.components.rules.tipBubble = { position: Weave.library.components.values.absolute, maxWidth: Weave.library.components.vars.tipWidth, zIndex: Weave.library.components.vars.layerTip, pointerEvents: Weave.library.components.values.none, background: Weave.library.components.vars.ink, color: Weave.library.components.vars.surface, padding: Weave.library.components.vars.spaceTight, borderRadius: Weave.library.components.vars.radiusSmall, fontSize: Weave.library.components.vars.fontSizeSmall, boxShadow: Weave.library.components.vars.shadowLifted };
+Weave.library.components.rules.sticky = { position: Weave.library.components.values.sticky, top: Weave.library.components.values.zero, zIndex: Weave.library.components.vars.layerSticky, background: Weave.library.components.vars.surface };
+
+/* layout utilities: the three rules every dense list needs, so an application never writes them. */
+Weave.library.components.rules.display = { margin: Weave.library.components.values.zero, fontSize: Weave.library.components.vars.fontSizeDisplay, fontWeight: Weave.library.components.values.heavy, letterSpacing: Weave.library.components.vars.tracking };
+Weave.library.components.rules.truncate = { display: Weave.library.components.values.block, overflow: Weave.library.components.values.clip, textOverflow: Weave.library.components.values.ellipsis, whiteSpace: Weave.library.components.values.nowrap, minWidth: Weave.library.components.values.zero };
+Weave.library.components.rules.fill = { flexGrow: Weave.library.components.values.grow, minWidth: Weave.library.components.values.zero, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
+
+/* sizes: one row per control size, spent as a data attribute exactly as a variant is. */
+Weave.library.components.sizes = {};
+Weave.library.components.sizes.small = { minHeight: Weave.library.components.vars.controlHeightSmall, padding: Weave.library.components.vars.spaceTight, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.sizes.large = { minHeight: Weave.library.components.vars.controlHeightLarge, padding: Weave.library.components.vars.spaceLoose, fontSize: Weave.library.components.vars.fontSizeLarge };
+Weave.library.components.sizeKey = 'size';
+Weave.library.components.sizeSelector = size => Weave.library.query.dataSelector(Weave.library.components.sizeKey, size);
+Weave.library.components.sizeMark = size => ({ [Weave.library.components.sizeKey]: size });
+Weave.library.components.sizeData = spec => Weave.library.control.defaultTo({})(Weave.library.control.maybe(Weave.library.components.sizeMark)(spec.size));
+Weave.library.components.sizeText = ([size, style]) => Weave.library.components.blockFor(Weave.library.components.buttonSelector() + Weave.library.components.sizeSelector(size), style);
+Weave.library.components.sizeTexts = () => Weave.library.composition.pairs(Weave.library.components.sizes).map(Weave.library.components.sizeText);
+Weave.library.components.sheetExtras.sizes = Weave.library.components.sizeTexts;
+
+/* marks: the data attributes a button carries, merged in one place so a spec may name both. */
+Weave.library.components.buttonMarks = spec => Weave.library.composition.merge(Weave.library.components.variantData(spec), Weave.library.components.sizeData(spec));

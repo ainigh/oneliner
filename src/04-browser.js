@@ -89,6 +89,7 @@ Weave.library.browser.selectors.enabled = ':not([disabled]):not([tabindex="-1"])
 Weave.library.browser.selectors.submittable = 'input:not([type=submit]):not([type=button]):not([type=reset]):not([disabled]), select:not([disabled]), textarea:not([disabled])';
 Weave.library.browser.selectors.formControl = 'input, select, textarea, button';
 Weave.library.browser.selectors.anchor = 'a[href]';
+Weave.library.browser.selectors.editable = 'input, textarea, select, [contenteditable="true"]';
 
 Weave.library.browser.keyNames = {};
 Weave.library.browser.keyNames.enter = 'Enter';
