@@ -3,7 +3,7 @@ Weave.library.patterns = {};
 Weave.library.patterns.nameOfFocus = () => Weave.library.control.maybe(Weave.library.attributes.name)(Weave.library.query.focused());
 Weave.library.patterns.namedControl = (handle, name) => Weave.library.query.oneWithin(Weave.library.query.attributeSelector(Weave.library.browser.keywords.name, name))(handle.element);
 Weave.library.patterns.restoreFocus = (handle, name) => Weave.library.control.maybe(found => Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.patterns.namedControl(handle, found)))(name);
-Weave.library.patterns.paint = handle => Weave.library.elements.append([handle.render(handle.state, handle.update)])(Weave.library.elements.empty(handle.element));
+Weave.library.patterns.paint = handle => Weave.library.elements.morphInner([handle.render(handle.state, handle.update)])(handle.element);
 Weave.library.patterns.painted = (handle, name) => (Weave.library.patterns.paint(handle), Weave.library.patterns.restoreFocus(handle, name), handle);
 Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle, Weave.library.patterns.nameOfFocus());
 Weave.library.patterns.merged = (handle, changes) => Object.assign(handle, { state: Weave.library.composition.merge(handle.state, changes) });

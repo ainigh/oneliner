@@ -976,6 +976,55 @@ Weave.library.elements.insertionPositions.before = Weave.library.browser.positio
 Weave.library.elements.insertionPositions.after = Weave.library.browser.positions.afterEnd;
 Weave.library.elements.insertHtml = verb => html => el => Weave.library.browser.insertAdjacentHtml(el, Weave.library.elements.insertionPositions[verb], html);
 
+/* morph: patch a live tree into the shape of a fresh one, keeping every node that still matches. A key on both sides wins over position. */
+Weave.library.elements.keyName = 'key';
+Weave.library.elements.keyOf = node => Weave.library.control.either(Weave.library.predicates.isElement, found => Weave.library.control.nullable(Weave.library.browser.datasetOf(found)[Weave.library.elements.keyName]), Weave.library.composition.constant(null))(node);
+Weave.library.elements.hasKey = node => Weave.library.predicates.isDefined(Weave.library.elements.keyOf(node));
+Weave.library.elements.kindOf = node => Weave.library.control.either(Weave.library.predicates.isElement, Weave.library.browser.tagNameOf, Weave.library.browser.nodeTypeOf)(node);
+Weave.library.elements.isSameKind = (a, b) => Weave.library.elements.kindOf(a) === Weave.library.elements.kindOf(b);
+Weave.library.elements.isMatch = (a, b) => Weave.library.control.and(Weave.library.elements.isSameKind(a, b), Weave.library.elements.keyOf(a) === Weave.library.elements.keyOf(b));
+Weave.library.elements.childAt = (target, index) => Weave.library.browser.childNodesOf(target)[index];
+Weave.library.elements.matchingCandidate = child => candidate => Weave.library.control.guard(found => Weave.library.elements.isMatch(found, child))(candidate);
+Weave.library.elements.keyedCandidate = (target, child) => Weave.library.control.maybe(Weave.library.elements.matchingCandidate(child))(Weave.library.browser.childNodesOf(target).find(old => Weave.library.elements.keyOf(old) === Weave.library.elements.keyOf(child)));
+Weave.library.elements.positionalCandidate = (target, child, index) => Weave.library.control.maybe(Weave.library.elements.matchingCandidate(child))(Weave.library.elements.childAt(target, index));
+Weave.library.elements.candidateFor = (target, child, index) => Weave.library.control.either(Weave.library.elements.hasKey, () => Weave.library.elements.keyedCandidate(target, child), () => Weave.library.elements.positionalCandidate(target, child, index))(child);
+Weave.library.elements.insertNodeAt = (target, node, index) => Weave.library.control.either(Weave.library.predicates.isDefined, reference => Weave.library.browser.insertBefore(reference, node), () => Weave.library.browser.appendChild(target, node))(Weave.library.elements.childAt(target, index));
+Weave.library.elements.moveTo = (target, node, index) => Weave.library.control.when(() => Weave.library.elements.childAt(target, index) !== node, () => Weave.library.elements.insertNodeAt(target, node, index))(node);
+Weave.library.elements.morphInto = (target, old, child, index) => (Weave.library.elements.moveTo(target, old, index), Weave.library.elements.morphNode(old, child));
+Weave.library.elements.placeFresh = (target, child, index) => () => Weave.library.elements.insertNodeAt(target, child, index);
+Weave.library.elements.morphKeeping = (target, child, index) => old => Weave.library.elements.morphInto(target, old, child, index);
+Weave.library.elements.placeWith = (target, child, index) => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.library.elements.morphKeeping(target, child, index), Weave.library.elements.placeFresh(target, child, index));
+Weave.library.elements.placeChild = (target, child, index) => Weave.library.elements.placeWith(target, child, index)(Weave.library.elements.candidateFor(target, child, index));
+Weave.library.elements.trimChildren = (target, count) => Weave.library.browser.childNodesOf(target).slice(count).forEach(Weave.library.browser.removeChild);
+Weave.library.elements.placeEach = (target, children) => children.forEach((child, index) => Weave.library.elements.placeChild(target, child, index));
+Weave.library.elements.morphList = (target, children) => (Weave.library.elements.placeEach(target, children), Weave.library.elements.trimChildren(target, children.length), target);
+Weave.library.elements.morphChildren = (target, replacement) => Weave.library.elements.morphList(target, Weave.library.browser.childNodesOf(replacement));
+Weave.library.elements.hasSameText = (target, replacement) => Weave.library.browser.textContentOf(target) === Weave.library.browser.textContentOf(replacement);
+Weave.library.elements.morphText = (target, replacement) => Weave.library.control.unless(() => Weave.library.elements.hasSameText(target, replacement), found => Weave.library.browser.setTextContent(found, Weave.library.browser.textContentOf(replacement)))(target);
+Weave.library.elements.staleAttributes = (target, replacement) => Weave.library.composition.difference(Weave.library.browser.attributeNamesOf(target), Weave.library.browser.attributeNamesOf(replacement));
+Weave.library.elements.removeStaleAttributes = (target, replacement) => Weave.library.elements.staleAttributes(target, replacement).forEach(name => Weave.library.browser.removeAttribute(target, name));
+Weave.library.elements.hasSameAttribute = (target, replacement, name) => Weave.library.browser.getAttribute(target, name) === Weave.library.browser.getAttribute(replacement, name);
+Weave.library.elements.writeAttribute = (target, replacement, name) => Weave.library.browser.setAttribute(target, [name, Weave.library.browser.getAttribute(replacement, name)]);
+Weave.library.elements.copyAttribute = (target, replacement) => name => Weave.library.control.unless(() => Weave.library.elements.hasSameAttribute(target, replacement, name), () => Weave.library.elements.writeAttribute(target, replacement, name))(name);
+Weave.library.elements.morphAttributes = (target, replacement) => (Weave.library.elements.removeStaleAttributes(target, replacement), Weave.library.browser.attributeNamesOf(replacement).forEach(Weave.library.elements.copyAttribute(target, replacement)));
+
+/* liveProperties: the properties a morph copies because the platform stops mirroring them from attributes once a user has touched the control. */
+Weave.library.elements.liveProperties = {};
+Weave.library.elements.liveProperties.value = 'value';
+Weave.library.elements.liveProperties.checked = 'checked';
+Weave.library.elements.liveProperties.selected = 'selected';
+Weave.library.elements.liveProperties.disabled = 'disabled';
+Weave.library.elements.hasSameProperty = (target, replacement, name) => Weave.library.browser.getProperty(target, name) === Weave.library.browser.getProperty(replacement, name);
+Weave.library.elements.writeProperty = (target, replacement, name) => Weave.library.browser.setProperty(target, [name, Weave.library.browser.getProperty(replacement, name)]);
+Weave.library.elements.copyProperty = (target, replacement) => name => Weave.library.control.unless(() => Weave.library.elements.hasSameProperty(target, replacement, name), () => Weave.library.elements.writeProperty(target, replacement, name))(name);
+Weave.library.elements.morphProperties = (target, replacement) => Weave.library.composition.values(Weave.library.elements.liveProperties).forEach(Weave.library.elements.copyProperty(target, replacement));
+Weave.library.elements.morphListeners = (target, replacement) => Weave.library.events.copyListeners(replacement)(Weave.library.events.offAll(target));
+Weave.library.elements.morphSurface = (target, replacement) => (Weave.library.elements.morphAttributes(target, replacement), Weave.library.elements.morphProperties(target, replacement));
+Weave.library.elements.morphElement = (target, replacement) => (Weave.library.elements.morphSurface(target, replacement), Weave.library.elements.morphListeners(target, replacement), Weave.library.elements.morphChildren(target, replacement));
+Weave.library.elements.morphNode = (target, replacement) => Weave.library.control.either(Weave.library.predicates.isElement, found => Weave.library.elements.morphElement(found, replacement), found => Weave.library.elements.morphText(found, replacement))(target);
+Weave.library.elements.morph = replacement => el => Weave.library.elements.morphNode(el, Weave.library.elements.toNode(replacement));
+Weave.library.elements.morphInner = values => el => Weave.library.elements.morphChildren(el, Weave.library.elements.toFragment(values));
+
 /* query: selection and traversal. Plural names return arrays, singular names return an element or null. */
 Weave.library.query = {};
 Weave.library.query.all = selector => Weave.library.browser.querySelectorAll(Weave.library.browser.document(), selector);
@@ -2126,7 +2175,7 @@ Weave.library.collections.kinds.curriedQueryOne = Weave.library.collections.lift
 
 /* lifts: one row per layer, naming which functions are lifted and how. This table is the whole layer. */
 Weave.library.collections.lifts = {};
-Weave.library.collections.lifts.elements = { action: ['remove', 'empty', 'clone', 'cloneWithListeners', 'unwrap'], setter: ['append', 'prepend', 'before', 'after', 'appendTo', 'prependTo', 'insertBefore', 'insertAfter', 'replaceWith', 'replaceAll', 'wrap', 'wrapInner', 'setText', 'setHtml'], getter: ['textOf', 'outerHtmlOf'], first: ['htmlOf'] };
+Weave.library.collections.lifts.elements = { action: ['remove', 'empty', 'clone', 'cloneWithListeners', 'unwrap'], setter: ['append', 'prepend', 'before', 'after', 'appendTo', 'prependTo', 'insertBefore', 'insertAfter', 'replaceWith', 'replaceAll', 'wrap', 'wrapInner', 'setText', 'setHtml', 'morph', 'morphInner'], getter: ['textOf', 'outerHtmlOf'], first: ['htmlOf'] };
 Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'parents', 'contents', 'walk', 'nextAll', 'previousAll'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], curriedQuery: ['find', 'allWithin', 'childrenMatching', 'parentsMatching', 'parentsUntil', 'nextUntil', 'previousUntil', 'descendantsMatching'], curriedQueryOne: ['findOne', 'oneWithin', 'closest', 'nextMatching', 'previousMatching'], getter: ['indexOf'] };
 Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'], curriedFirst: ['attribute', 'property', 'data', 'aria'], curriedPredicate: ['hasClass', 'booleanAttribute'] };
 Weave.library.collections.lifts.style = { action: ['show', 'hide'], setter: ['setCss', 'setCssAll', 'removeCss', 'setCssVariable', 'setWidth', 'setHeight', 'setOffset', 'setScrollTop', 'setScrollLeft', 'scrollIntoView', 'toggle'], getter: ['width', 'height', 'outerWidth', 'outerHeight', 'offset', 'position', 'rect', 'dimensions'], curriedFirst: ['css', 'inlineCss', 'cssVariable', 'cssAll'], predicate: ['isShown'] };
@@ -2504,7 +2553,7 @@ Weave.library.patterns = {};
 Weave.library.patterns.nameOfFocus = () => Weave.library.control.maybe(Weave.library.attributes.name)(Weave.library.query.focused());
 Weave.library.patterns.namedControl = (handle, name) => Weave.library.query.oneWithin(Weave.library.query.attributeSelector(Weave.library.browser.keywords.name, name))(handle.element);
 Weave.library.patterns.restoreFocus = (handle, name) => Weave.library.control.maybe(found => Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.patterns.namedControl(handle, found)))(name);
-Weave.library.patterns.paint = handle => Weave.library.elements.append([handle.render(handle.state, handle.update)])(Weave.library.elements.empty(handle.element));
+Weave.library.patterns.paint = handle => Weave.library.elements.morphInner([handle.render(handle.state, handle.update)])(handle.element);
 Weave.library.patterns.painted = (handle, name) => (Weave.library.patterns.paint(handle), Weave.library.patterns.restoreFocus(handle, name), handle);
 Weave.library.patterns.repaint = handle => Weave.library.patterns.painted(handle, Weave.library.patterns.nameOfFocus());
 Weave.library.patterns.merged = (handle, changes) => Object.assign(handle, { state: Weave.library.composition.merge(handle.state, changes) });
