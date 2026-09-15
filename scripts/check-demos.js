@@ -16,6 +16,20 @@ function expect(name, ok, detail) {
   if (!ok) failures.push(name);
 }
 
+function transfer(identifier) {
+  const store = { data: {}, dropEffect: '' };
+  store.setData = (type, value) => { store.data[type] = value; };
+  store.getData = type => store.data[type];
+  store.setData('application/x-weave-identifier', identifier);
+  return store;
+}
+
+function drop(dom, element, identifier) {
+  const event = new dom.window.Event('drop', { bubbles: true, cancelable: true });
+  event.dataTransfer = transfer(identifier);
+  element.dispatchEvent(event);
+}
+
 function count(dom, selector) {
   return dom.window.document.querySelectorAll(selector).length;
 }
@@ -54,6 +68,10 @@ open('index.html').then(dom => {
   expect('board filters its palette', count(dom, '.weave-menu li') === 1, `saw ${count(dom, '.weave-menu li')}`);
   document.querySelector('.weave-menu .weave-button').click();
   expect('board sweeps every card', document.querySelectorAll('.weave-tiles > .weave-panel')[3].querySelectorAll('.weave-card').length === 5, 'sweep did not land');
+  const lanes = () => [...document.querySelectorAll('.weave-tiles > .weave-panel')].map(panel => panel.querySelectorAll('.weave-card').length);
+  expect('board cards are drag sources', document.querySelector('.weave-card').getAttribute('draggable') === 'true', 'card carries no draggable attribute');
+  drop(dom, document.querySelectorAll('.weave-tiles > .weave-panel')[0], document.querySelectorAll('.weave-tiles > .weave-panel')[3].querySelector('.weave-card').dataset.key);
+  expect('board takes a dropped card', lanes()[0] === 1 && lanes()[3] === 4, `lanes are ${lanes()}`);
   return open('helpdesk.html');
 }).then(dom => {
   const document = dom.window.document;

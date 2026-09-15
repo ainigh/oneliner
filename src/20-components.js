@@ -302,10 +302,12 @@ Weave.library.components.states = {};
 Weave.library.components.states.hover = ':hover';
 Weave.library.components.states.chosen = '[aria-selected="true"]';
 Weave.library.components.states.here = '[aria-current="true"]';
+Weave.library.components.states.over = '[data-over="true"]';
 Weave.library.components.stateRules = {};
 Weave.library.components.stateRules.buttonHover = { name: 'button', state: 'hover', style: { borderColor: Weave.library.components.vars.accent } };
 Weave.library.components.stateRules.tabChosen = { name: 'tab', state: 'chosen', style: { borderBottom: Weave.library.components.accentLine, color: Weave.library.components.vars.accent } };
 Weave.library.components.stateRules.pageHere = { name: 'pageButton', state: 'here', style: { background: Weave.library.components.vars.accent, color: Weave.library.components.vars.accentInk } };
+Weave.library.components.stateRules.panelOver = { name: 'panel', state: 'over', style: { borderColor: Weave.library.components.vars.accent, background: Weave.library.components.vars.sunken } };
 
 /* stylesheet: one generator turns the three tables above into the one sheet the page installs. */
 Weave.library.components.declaration = ([property, value]) => Weave.library.composition.kebabCase(property) + ': ' + value + ';';
