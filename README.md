@@ -180,21 +180,48 @@ under a search box. `dataGrid` is unchanged and still the right answer when the 
 
 ## Styling
 
-There is no stylesheet file. `components.tokens` holds every dimension, colour and duration;
-`components.rules` holds one row per class, whose values may only be token references;
-`components.states` holds the only pseudo-classes in the system. `components.styleText()` renders
-the sheet and `components.installStyles()` injects it once, however many patterns are mounted.
+There is no stylesheet file. The sheet is generated from tables, and `components.sheetExtras` is the
+one place that says which blocks it carries and in what order. `components.styleText()` renders it;
+`components.installStyles()` injects it once, however many patterns are mounted.
+
+`styleguide.html` is the live reference: every section on it is generated from the table it
+documents, so the page cannot drift from the system.
+
+| Table | What it is the only place for | How you use it |
+|---|---|---|
+| `components.tokens` | every dimension, colour, duration and face | change one row, the whole system moves |
+| `components.values` | every bare CSS keyword | referenced by rules, never written twice |
+| `components.rules` | one row per class, values may only be token references | change one row, one widget moves |
+| `components.hostRules` | the rules on the document itself, keyed by `components.hostSelectors` | the page ground, its type and its margin |
+| `components.themes` | one row of token overrides per theme | `setTheme`, `toggleTheme`, `followScheme` |
+| `components.tones` / `toneRules` | a tone's colour, and how a class spends it | one palette for `alert`, `statusDot`, anything toned |
+| `components.variants` | one row per button intent | `actionButton({ label, variant })` |
+| `components.interactive` / `pressable` | the classes that behave like controls | hover, focus, press and rest are generated onto them |
+| `components.states` / `stateRules` | the only pseudo-classes and state attributes | `:hover`, `:focus-visible`, `:active`, `:disabled`, `aria-selected`, … |
+| `components.breakpoints` | the only viewport width queries | named once, spent by `mediaRules` |
+| `components.mediaRules` | one row per query, rules keyed by class | the compact layout, reduced motion, print |
+| `components.keyframes` | the only place an animation timeline is written | referenced by a token, spent by a rule |
 
 A theme is a row of token overrides. `components.themes.dark` is one, and the sheet carries a block
 per theme plus a `prefers-color-scheme` block scoped so the operating system wins unless the page
 has chosen. `components.setTheme(name)`, `components.toggleTheme()` and `components.followScheme()`
-are the runtime side; the last returns its unsubscribe. `components.tones` maps a tone name to a
-colour token and `components.toneRules` says how a class spends it, so `alert`, `statusDot` and
-anything else toned share one palette. `components.keyframes` is the only place an animation is
-written.
+are the runtime side; the last returns its unsubscribe.
+
+Focus, hover, press and rest are not written per widget. `components.interactive` names the classes
+that behave like controls and `components.pressable` the subset that answers a pointer; the four
+state styles are generated onto every one of them, so a new control gets the whole set by adding one
+row. The same table drives the transition, emitted inside a `prefers-reduced-motion: no-preference`
+block, so motion is asked for rather than opted out of.
+
+`components.applyTokens(overrides)(element)` sets the same custom properties on one element, so a
+section can be branded without a theme and without a rule:
+
+```js
+Weave.application.brand = panel => Weave.library.components.applyTokens({ accent: '#7c3aed', radius: '14px' })(panel);
+```
 
 To restyle the whole system, change tokens. To restyle one widget, change its row. To restyle every
-widget at night, change one theme row.
+widget at night, change one theme row. To restyle one subtree, set tokens on it.
 
 ## Three examples
 
@@ -223,6 +250,7 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `tests/tests.js` | One table row per test case, in the same style. `cases` are synchronous, `asyncCases` resolve to a boolean. |
 | `tests.html` | The browser half of the test contract. |
 | `sample.html`, `todo.html`, `studio.html` | The reference applications, written against the library directly. |
+| `styleguide.html` | The live reference for the styling system, generated from its own tables. |
 | `demos/*.html` | Seven domain applications, written only against patterns. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
 
@@ -233,7 +261,7 @@ npm run build       # src/ → dist/weave.js and dist/weave.module.js
 npm run audit       # the style rules, plus catalog.json
 npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
-npm run check:apps  # drive sample.html, todo.html, studio.html and tests.html in jsdom
+npm run check:apps  # drive sample.html, todo.html, studio.html, styleguide.html and tests.html in jsdom
 npm run check:demos # drive all seven demo applications in jsdom
 npm run check       # all of the above
 ```

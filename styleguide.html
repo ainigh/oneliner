@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weave style guide</title>
+</head>
+<body>
+<script src="dist/weave.js"></script>
+<script>
+/* application: the style guide. Every section is generated from the library table it documents. */
+Weave.application = {};
+
+/* tokens: the whole table, read straight out of the library, as the custom property each one becomes. */
+Weave.application.tokenRow = ([name, value]) => ({ property: Weave.library.components.variableName(name), value });
+Weave.application.tokenRows = () => Weave.library.composition.pairs(Weave.library.components.tokens).map(Weave.application.tokenRow);
+Weave.application.tokenColumns = [{ key: 'property', label: 'Custom property' }, { key: 'value', label: 'Written value' }];
+Weave.application.tokenTable = () => Weave.library.components.table({ columns: Weave.application.tokenColumns, rows: Weave.application.tokenRows() });
+
+/* themes: one button per theme name, plus the one that hands the choice back to the operating system. */
+Weave.application.themeButton = name => Weave.library.components.actionButton({ label: name, onAction: () => Weave.library.components.setTheme(name) });
+Weave.application.themeButtons = () => Weave.library.composition.values(Weave.library.components.themeNames).map(Weave.application.themeButton);
+Weave.application.systemButton = () => Weave.library.components.actionButton({ label: 'Follow the system', onAction: Weave.library.components.followScheme });
+Weave.application.themeBar = () => Weave.library.components.toolbar({ items: Weave.application.themeButtons().concat([Weave.application.systemButton()]) });
+
+/* variants: one button per row of the variant table, beside the neutral button no variant touches. */
+Weave.application.variantButton = variant => Weave.library.components.actionButton({ label: variant, variant });
+Weave.application.plainButton = () => Weave.library.components.actionButton({ label: 'no variant' });
+Weave.application.variantButtons = () => Weave.library.composition.keys(Weave.library.components.variants).map(Weave.application.variantButton);
+Weave.application.variantBar = () => Weave.library.components.toolbar({ items: [Weave.application.plainButton()].concat(Weave.application.variantButtons()) });
+
+/* tones: one alert per row of the tone table, each spending the single colour that row names. */
+Weave.application.toneNote = 'The tone table holds the colour; the tone rules say how each class spends it.';
+Weave.application.toneAlert = tone => Weave.library.components.alert({ tone, title: tone, text: Weave.application.toneNote });
+Weave.application.toneStack = () => Weave.library.components.stack({ children: Weave.library.composition.keys(Weave.library.components.tones).map(Weave.application.toneAlert) });
+
+/* states: live controls, so a pointer and a keyboard can be pointed at the generated state rules. */
+Weave.application.disabledProperties = { [Weave.library.attributes.booleanAttributes.disabled]: true };
+Weave.application.restingButton = () => Weave.library.components.button({ text: 'Cannot be pressed', properties: Weave.application.disabledProperties });
+Weave.application.entryField = () => Weave.library.components.field({ label: 'Tab into me', name: 'sample', placeholder: 'focus ring' });
+Weave.application.picker = () => Weave.library.components.selectBox({ name: 'pick', label: 'A select box', options: ['First', 'Second'] });
+Weave.application.toggle = () => Weave.library.components.switchField({ label: 'A switch', checked: true });
+Weave.application.stateRow = () => Weave.library.components.row({ children: [Weave.application.plainButton(), Weave.application.restingButton(), Weave.application.entryField(), Weave.application.picker(), Weave.application.toggle()] });
+
+/* breakpoints: the queries the sheet carries, written out so the reader can narrow the window and watch. */
+Weave.application.breakpointItem = ([name, query]) => Weave.library.components.item({ children: [Weave.library.components.tag({ text: name }), Weave.library.components.note({ text: query })] });
+Weave.application.breakpointList = () => Weave.library.components.itemList({ children: Weave.library.composition.pairs(Weave.library.components.breakpoints).map(Weave.application.breakpointItem) });
+
+/* scoped tokens: the same components under an override set on one element rather than on the document. */
+Weave.application.brandTokens = { accent: '#7c3aed', radius: '14px' };
+Weave.application.brandCard = () => Weave.library.components.card({ children: [Weave.library.components.subtitle({ text: 'One branded subtree' }), Weave.application.variantBar()] });
+Weave.application.brandedPanel = () => Weave.library.components.applyTokens(Weave.application.brandTokens)(Weave.application.brandCard());
+
+/* widgets: one sample per component, so the gallery is a list of rows and never a list of screenshots. */
+Weave.application.widgets = {};
+Weave.application.widgets.statTile = () => Weave.library.components.statTile({ label: 'Open tickets', value: 128 });
+Weave.application.widgets.badge = () => Weave.library.components.badge({ count: 9 });
+Weave.application.widgets.pill = () => Weave.library.components.pill({ text: 'Shipping' });
+Weave.application.widgets.tag = () => Weave.library.components.tag({ text: 'draft' });
+Weave.application.widgets.statusDot = () => Weave.library.components.statusDot({ tone: Weave.library.components.defaultTone() });
+Weave.application.widgets.avatarGroup = () => Weave.library.components.avatarGroup({ names: ['Ada Lovelace', 'Grace Hopper'] });
+Weave.application.widgets.kbd = () => Weave.library.components.kbd({ keys: ['Ctrl', 'K'] });
+Weave.application.widgets.progressBar = () => Weave.library.components.progressBar({ value: 3, total: 5 });
+Weave.application.widgets.skeleton = () => Weave.library.components.skeleton({ lines: 3 });
+Weave.application.widgets.tabs = () => Weave.library.components.tabs({ active: 'now', items: [{ key: 'now', label: 'Today' }, { key: 'soon', label: 'This week' }] });
+Weave.application.widgets.breadcrumb = () => Weave.library.components.breadcrumb({ label: 'Where you are', items: [{ label: 'Home' }, { label: 'Reports' }] });
+Weave.application.widgets.pagination = () => Weave.library.components.pagination({ label: 'Pages', page: 2, pages: 4, onGo: Weave.library.composition.noop });
+Weave.application.widgets.searchBox = () => Weave.library.components.searchBox({ name: 'find', label: 'Search everything', placeholder: 'Type to filter' });
+Weave.application.widgets.sliderField = () => Weave.library.components.sliderField({ label: 'Volume', name: 'volume', min: 0, max: 10, value: 7 });
+Weave.application.widgets.stepperField = () => Weave.library.components.stepperField({ label: 'Seats', min: 1, max: 9, value: 2, onChange: Weave.library.composition.noop });
+Weave.application.widgets.checkField = () => Weave.library.components.checkField({ label: 'Send a receipt', checked: true });
+Weave.application.widgets.dropdown = () => Weave.library.components.dropdown({ label: 'More actions', items: [{ label: 'Rename' }, { label: 'Archive' }] });
+Weave.application.widgets.tooltip = () => Weave.library.components.tooltip({ text: 'Hover the underline', hint: 'And this is the hint it carries' });
+Weave.application.widgets.disclosure = () => Weave.library.components.disclosure({ title: 'What is inside', body: [Weave.library.components.note({ text: 'A details element, styled once.' })] });
+Weave.application.widgets.emptyState = () => Weave.library.components.emptyState({ title: 'Nothing here yet', note: 'Add the first record to see it listed.' });
+Weave.application.widgets.toast = () => Weave.library.components.toast({ message: 'Saved a moment ago' });
+Weave.application.twoDaysBack = () => Weave.library.dates.add(Weave.library.dates.names.day, -2)(Weave.library.dates.today());
+Weave.application.widgets.timestamp = () => Weave.library.components.timestamp({ text: Weave.library.formatting.relative(Weave.application.twoDaysBack()) });
+Weave.application.widgetCard = ([name, make]) => Weave.library.components.card({ children: [Weave.library.components.note({ text: name }), make()] });
+Weave.application.widgetTiles = () => Weave.library.components.tiles({ children: Weave.library.composition.pairs(Weave.application.widgets).map(Weave.application.widgetCard) });
+
+/* sections: one row per part of the styling system, each naming the maker that draws it. */
+Weave.application.sections = {};
+Weave.application.sections.tokens = { title: 'Tokens', note: 'Every dimension, colour and duration in the system, emitted as a custom property on :root. Change a token and the whole system moves.', body: Weave.application.tokenTable };
+Weave.application.sections.themes = { title: 'Themes', note: 'A theme is one row of token overrides on the document element. The sheet also carries a prefers-color-scheme block the page can override.', body: Weave.application.themeBar };
+Weave.application.sections.variants = { title: 'Variants', note: 'A variant is a data attribute on a button, one row per intent, each an override of the neutral look.', body: Weave.application.variantBar };
+Weave.application.sections.tones = { title: 'Tones', note: 'A tone names a colour; a tone rule says how a class spends it. One palette, shared by every toned widget.', body: Weave.application.toneStack };
+Weave.application.sections.states = { title: 'States', note: 'Hover, focus, press and rest are generated onto every class the interactive table names, so nothing is styled twice.', body: Weave.application.stateRow };
+Weave.application.sections.breakpoints = { title: 'Breakpoints', note: 'Narrow the window past this query and the rail, the tiles and the page shell change shape.', body: Weave.application.breakpointList };
+Weave.application.sections.scoped = { title: 'Scoped tokens', note: 'applyTokens sets the same custom properties on one element, so a subtree can be branded without a theme and without a rule.', body: Weave.application.brandedPanel };
+Weave.application.sections.widgets = { title: 'Widgets', note: 'Every component below is a class from its own name and a rules row of token references. None of them names a tag or a colour.', body: Weave.application.widgetTiles };
+Weave.application.sectionPanel = section => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: section.title }), Weave.library.components.note({ text: section.note }), section.body()] });
+Weave.application.sectionPanels = () => Weave.library.composition.values(Weave.application.sections).map(Weave.application.sectionPanel);
+
+/* page: the shell, the header that carries the theme switch, and the footer that closes it. */
+Weave.application.header = () => Weave.library.components.pageHeader({ children: [Weave.library.components.title({ text: 'Weave style guide' }), Weave.application.themeBar()] });
+Weave.application.footer = () => Weave.library.components.pageFooter({ children: [Weave.library.components.note({ text: 'Generated from the same tables the sheet is generated from.' })] });
+Weave.application.page = () => Weave.library.components.page({ children: [Weave.application.header()].concat(Weave.application.sectionPanels(), [Weave.application.footer()]) });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

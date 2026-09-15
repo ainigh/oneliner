@@ -15,7 +15,7 @@ Weave.application.tile = demo => Weave.library.components.card({ children: [Weav
 Weave.application.gallery = () => Weave.library.components.tiles({ children: Weave.application.demos.map(Weave.application.tile) });
 Weave.application.themeToggle = () => Weave.library.components.button({ text: 'Theme', onAction: Weave.library.components.toggleTheme });
 Weave.application.heading = () => Weave.library.components.spread({ children: [Weave.library.components.title({ text: 'Weave demos' }), Weave.application.themeToggle()] });
-Weave.application.page = () => Weave.library.components.view({ children: [Weave.application.heading(), Weave.library.components.note({ text: 'Every page below is built only from patterns and components.' }), Weave.application.gallery()] });
+Weave.application.page = () => Weave.library.components.page({ children: [Weave.application.heading(), Weave.library.components.note({ text: 'Every page below is built only from patterns and components.' }), Weave.application.gallery()] });
 Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
 Weave.library.events.ready(Weave.application.start);
 </script>

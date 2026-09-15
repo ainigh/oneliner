@@ -15,7 +15,11 @@ function reach(root, dotted) {
   return dotted.split('.').reduce((carried, key) => carried[key], root);
 }
 
-/* Each case names a table, the object its generator fills, and how a row key becomes a generated name. */
+function capitalize(key) {
+  return key.slice(0, 1).toUpperCase() + key.slice(1);
+}
+
+/* Each case names a table, the object its generator fills, and how a row key becomes the name or names it generates. */
 const cases = [
   { table: 'Weave.library.elements.tags', target: 'library.elements', nameOf: key => key },
   { table: 'Weave.library.elements.svgTags', target: 'library.elements.svg', nameOf: key => key },
@@ -29,6 +33,8 @@ const cases = [
   { table: 'Weave.library.browser.dateParts', target: 'library.browser.dateReaders', nameOf: key => key },
   { table: 'Weave.library.components.blueprints', target: 'library.components', nameOf: key => key },
   { table: 'Weave.library.components.tokens', target: 'library.components.vars', nameOf: key => key },
+  { table: 'Weave.library.components.interactive', target: 'library.components.stateRules', nameOf: key => ['focus' + capitalize(key), 'off' + capitalize(key)] },
+  { table: 'Weave.library.components.pressable', target: 'library.components.stateRules', nameOf: key => ['pressed' + capitalize(key), 'hover' + capitalize(key)] },
 ];
 
 const baseline = evaluate(source);
@@ -46,7 +52,7 @@ cases.forEach(row => {
     const after = new Set(Object.keys(reach(evaluate(trimmed), row.target)));
     const gone = [...before].filter(name => !after.has(name)).sort();
     const added = [...after].filter(name => !before.has(name));
-    const expected = [row.nameOf(key)].sort();
+    const expected = [row.nameOf(key)].flat().sort();
     checked += 1;
     if (gone.join(',') !== expected.join(',') || added.length > 0) {
       failures.push(`${row.table}.${key}: removed ${JSON.stringify(gone)} expected ${JSON.stringify(expected)}${added.length ? ` and added ${JSON.stringify(added)}` : ''}`);

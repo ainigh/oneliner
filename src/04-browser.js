@@ -141,6 +141,9 @@ Weave.library.browser.mediaQueries.lightScheme = '(prefers-color-scheme: light)'
 Weave.library.browser.mediaQueries.hover = '(hover: hover)';
 Weave.library.browser.mediaQueries.coarsePointer = '(pointer: coarse)';
 Weave.library.browser.mediaQueries.print = 'print';
+Weave.library.browser.mediaQueries.steadyMotion = '(prefers-reduced-motion: no-preference)';
+Weave.library.browser.maxWidthOpen = '(max-width: ';
+Weave.library.browser.upToWidth = width => Weave.library.browser.maxWidthOpen + width + Weave.library.composition.closeParen;
 
 Weave.library.browser.mimeTypes = {};
 Weave.library.browser.mimeTypes.json = 'application/json';

@@ -289,6 +289,52 @@ and each fix landed where the one-place rule said it had to.
       arrow on one line, so `catalog.json` now carries a `takes` field for every function among its
       3007 paths, read with the same masking the style rules use.
 
+## Gaps the styling system had — all closed
+
+Everything below went in as a table, so each one is a row to add rather than a rule to remember.
+
+- [x] **No focus ring, no rest state, no press.** `components.states` held four selectors and every
+      one of them was spent by a hand-written row, so a keyboard user saw whatever the browser gave
+      them. `components.interactive` now names the classes that behave like controls and
+      `components.pressable` the subset that answers a pointer; `focus`, `off`, `pressed` and `hover`
+      are generated onto them from one style each, and `audit-rows` asserts that deleting one row of
+      either table removes exactly the two state rules it named.
+- [x] **Nothing was responsive.** `components.breakpoints` is the only place a width query is
+      written, built from a token through `browser.upToWidth`, and `components.mediaRules` is one row
+      per query with its rules keyed by class. Three rows: the compact viewport (the rail, the tiles,
+      the page shell, the table and the modal all change shape), reduced motion, and print.
+- [x] **Motion was not opt-in.** The transition over every interactive class is emitted inside a
+      `prefers-reduced-motion: no-preference` block, so it is asked for rather than opted out of, and
+      the `calm` media row stops the skeleton pulse for the same reader.
+- [x] **A button had one look.** `components.variants` is one row per intent, spent as a data
+      attribute exactly as a tone is, with a generated hover per variant so a filled button still
+      answers the pointer. `actionButton` passes a variant through and `submitButton` is primary.
+- [x] **No page shell and no ground.** `blueprints.page` plus `rules.page` is the centred, bounded
+      column every demo was missing, and `components.hostRules` — keyed by `components.hostSelectors`
+      — is the only place a rule on the document itself is written, so an application no longer needs
+      a `<style>` block of its own to have a margin, a ground and a typeface.
+- [x] **Tokens could only be changed globally.** `components.applyTokens(overrides)(element)` sets
+      the same custom properties on one element, so a subtree can be branded without a theme.
+- [x] **The sheet's shape was written in one long line.** `components.sheetExtras` is now the table
+      that says which blocks the sheet carries and in what order.
+- [x] **Five declarations in the sheet were invalid CSS**, so browsers had been dropping them all
+      along, and no test could see it because jsdom does not lay out. `font: <family>` with no size
+      is not a legal shorthand, so the library's typeface had never applied anywhere — it is
+      `font-family` now, in all ten rules. `margin: none` and `padding: none` are not zero, so
+      `itemList`, `menu` and `tree` kept the browser's list indent; `values.zero` is the zero.
+      `flex-grow: 100%` is not a number, so `rules.body` never grew; `values.one` is written once and
+      `values.opaque` and `values.grow` are its two names. `overflow: auto hidden` clipped the chat
+      log vertically, which is the one direction a log scrolls. `rules.panel` grows too, which is
+      what a detail pane beside a rail always wanted.
+- [x] **A select, a search box and a text area could not be given a name.** All three now take
+      `label` as an accessible name through `components.labelAria`, and so does `control`, which is
+      what left the stepper's number input unlabelled. `styleguide.html` passes the library's own
+      accessibility audit.
+- [x] **`pageFooter` was a blueprint with no rule.** It has one.
+- [x] **A live reference.** `styleguide.html` draws tokens, themes, variants, tones, states,
+      breakpoints, scoped tokens and every widget — each section generated from the table it
+      documents, so the page cannot drift. `check:apps` drives it with seven assertions.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

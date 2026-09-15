@@ -523,6 +523,39 @@ Weave.tests.asyncCases.patternsVirtualListKeepsItsScrollTop = () => Weave.tests.
 Weave.tests.asyncCases.effectsCancelledRejectionIsNamed = () => Weave.tests.rejectsWith(Weave.library.control.errors.cancelled, Weave.tests.cancelledEffect());
 Weave.tests.asyncCases.patternsNotificationsExpire = () => Weave.tests.expiresAToast(Weave.tests.spawn(Weave.library.patterns.notifications({ timeout: 5 })));
 
+/* styling, second wave: focus, press, breakpoints, variants and scoped tokens all reach the sheet. */
+Weave.tests.hasRule = name => Weave.library.composition.keys(Weave.library.components.rules).includes(name);
+Weave.tests.interactiveNames = () => Weave.library.composition.values(Weave.library.components.interactive);
+Weave.tests.cases.componentsInteractiveNamesRealClasses = () => Weave.tests.interactiveNames().every(Weave.tests.hasRule);
+Weave.tests.cases.componentsPressableIsInteractive = () => Weave.library.composition.values(Weave.library.components.pressable).every(name => Weave.tests.interactiveNames().includes(name));
+Weave.tests.mediaRuleRows = () => Weave.library.composition.values(Weave.library.components.mediaRules);
+Weave.tests.cases.componentsMediaRulesNameRealClasses = () => Weave.tests.mediaRuleRows().flatMap(row => Weave.library.composition.keys(row.rules)).every(Weave.tests.hasRule);
+Weave.tests.cases.componentsStateRulesOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.stateRules).map(row => row.style).every(Weave.tests.usesTokens);
+Weave.tests.cases.componentsVariantsOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.variants).every(Weave.tests.usesTokens);
+Weave.tests.cases.componentsMediaRulesOnlyUseTokens = () => Weave.tests.mediaRuleRows().flatMap(row => Weave.library.composition.values(row.rules)).every(Weave.tests.usesTokens);
+Weave.tests.cases.componentsStyleTextCarriesEveryState = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.values(Weave.library.components.states));
+Weave.tests.cases.componentsStyleTextCarriesEveryVariant = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.variants).map(Weave.library.components.variantSelector));
+Weave.tests.cases.componentsStyleTextCarriesEveryBreakpoint = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.values(Weave.library.components.breakpoints));
+Weave.tests.cases.componentsStyleTextCarriesEveryMediaQuery = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.tests.mediaRuleRows().map(row => row.query));
+Weave.tests.cases.componentsEaseWaitsForWelcomeMotion = () => Weave.library.components.styleText().includes(Weave.library.browser.mediaQueries.steadyMotion);
+Weave.tests.cases.componentsEveryStateRuleNamesAKnownState = () => Weave.library.composition.values(Weave.library.components.stateRules).every(row => Weave.library.predicates.isDefined(Weave.library.components.states[row.state]));
+Weave.tests.variantOf = element => Weave.library.attributes.data(Weave.library.components.variantKey)(element);
+Weave.tests.cases.componentsActionButtonCarriesItsVariant = () => Weave.tests.variantOf(Weave.library.components.actionButton({ label: 'Go', variant: Weave.tests.lastVariant() })) === Weave.tests.lastVariant();
+Weave.tests.lastVariant = () => Weave.library.composition.last(Weave.library.composition.keys(Weave.library.components.variants));
+Weave.tests.cases.componentsActionButtonTakesNoVariantUnasked = () => Weave.library.predicates.isDefined(Weave.tests.variantOf(Weave.library.components.actionButton({ label: 'Go' }))) === false;
+Weave.tests.cases.componentsSubmitButtonIsThePrimaryOne = () => Weave.tests.variantOf(Weave.library.components.submitButton({})) === Weave.library.components.defaultVariant();
+Weave.tests.brandedView = () => Weave.library.components.applyTokens({ accent: Weave.tests.brandColour })(Weave.library.components.view({}));
+Weave.tests.brandColour = 'rebeccapurple';
+Weave.tests.cases.componentsApplyTokensScopesAToken = () => Weave.library.style.cssVariable(Weave.library.components.variableName('accent'))(Weave.tests.brandedView()) === Weave.tests.brandColour;
+Weave.tests.cases.componentsSheetExtrasEachMakeBlocks = () => Weave.library.composition.values(Weave.library.components.sheetExtras).every(make => make().length > 0);
+Weave.tests.cases.componentsStyleTextCarriesEveryHost = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.values(Weave.library.components.hostSelectors));
+Weave.tests.cases.componentsHostRulesOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.hostRules).every(Weave.tests.usesTokens);
+Weave.tests.cases.componentsHostRulesNameKnownSelectors = () => Weave.library.composition.keys(Weave.library.components.hostRules).every(name => Weave.library.predicates.isDefined(Weave.library.components.hostSelectors[name]));
+Weave.tests.namedSelect = () => Weave.library.components.selectBox({ name: 'pick', label: 'Pick one', options: ['a'] });
+Weave.tests.cases.componentsSelectBoxTakesAnAccessibleName = () => Weave.library.attributes.aria(Weave.library.components.labelKey)(Weave.tests.namedSelect()) === 'Pick one';
+Weave.tests.cases.componentsSelectBoxInventsNoName = () => Weave.library.attributes.aria(Weave.library.components.labelKey)(Weave.library.components.selectBox({ name: 'pick', options: ['a'] })) === null;
+Weave.tests.cases.componentsPageShellIsOneMain = () => Weave.library.browser.tagNameOf(Weave.library.components.page({})) === 'main';
+
 /* async helpers: the fixtures the async rows share, kept out of the rows themselves. */
 Weave.tests.failedResponse = { ok: false, status: 404, url: '/missing', headers: { get: Weave.library.composition.noop } };
 Weave.tests.rejectsWith = (row, promise) => Weave.library.control.recover(Weave.library.composition.then(Weave.library.composition.never)(promise))(reason => Weave.library.control.isError(row, reason));

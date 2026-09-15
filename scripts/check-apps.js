@@ -74,6 +74,21 @@ open('sample.html').then(settle).then(dom => {
   expect('studio steps forward again', tally() !== '1,2,1', tally());
   const stored = Weave.library.storage.local.get('weave.studio.queue');
   expect('studio persists the store when the host allows it', stored === undefined || stored.rows.length === 4, JSON.stringify(stored));
+  return open('styleguide.html').then(settle);
+}).then(dom => {
+  const document = dom.window.document;
+  const Weave = dom.window.eval('Weave');
+  const count = selector => document.querySelectorAll(selector).length;
+  const tokens = Object.keys(Weave.library.components.tokens).length;
+  expect('styleguide lists every token', count('.weave-table tbody tr') === tokens, `saw ${count('.weave-table tbody tr')} of ${tokens}`);
+  expect('styleguide draws a panel per section', count('.weave-panel') === Object.keys(Weave.application.sections).length, `saw ${count('.weave-panel')}`);
+  expect('styleguide shows a button per variant', count('.weave-button[data-variant]') > Object.keys(Weave.library.components.variants).length, `saw ${count('.weave-button[data-variant]')}`);
+  expect('styleguide shows an alert per tone', count('.weave-alert') === Object.keys(Weave.library.components.tones).length, `saw ${count('.weave-alert')}`);
+  expect('styleguide brands one subtree only', document.querySelectorAll('[style*="--weave-accent"]').length === 1, `saw ${document.querySelectorAll('[style*="--weave-accent"]').length}`);
+  const dark = Weave.library.components.themeNames.dark;
+  document.querySelectorAll('.weave-page-header .weave-button')[0].dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+  expect('styleguide switches theme from its header', Weave.library.components.theme() === dark, String(Weave.library.components.theme()));
+  expect('styleguide passes its own accessibility audit', Weave.library.accessibility.audit(document.body).length === 0, JSON.stringify(Weave.library.accessibility.audit(document.body).map(row => row.message)));
   return open('tests.html').then(finished);
 }).then(dom => {
   const text = dom.window.document.querySelector('#output').textContent;
