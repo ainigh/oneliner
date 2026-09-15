@@ -26,6 +26,7 @@ const cases = [
   { table: 'Weave.library.predicates.typeNames', target: 'library.predicates', nameOf: key => key },
   { table: 'Weave.library.predicates.instanceTests', target: 'library.predicates', nameOf: key => key },
   { table: 'Weave.library.browser.keyNames', target: 'library.interaction', nameOf: key => 'on' + key.slice(0, 1).toUpperCase() + key.slice(1) },
+  { table: 'Weave.library.browser.dateParts', target: 'library.browser.dateReaders', nameOf: key => key },
   { table: 'Weave.library.components.blueprints', target: 'library.components', nameOf: key => key },
   { table: 'Weave.library.components.tokens', target: 'library.components.vars', nameOf: key => key },
 ];

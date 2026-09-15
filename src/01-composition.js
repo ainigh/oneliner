@@ -104,7 +104,6 @@ Weave.library.composition.pattern = expression => new RegExp(expression);
 Weave.library.composition.dictionary = () => new Map();
 Weave.library.composition.collection = () => new Set();
 Weave.library.composition.weakDictionary = () => new WeakMap();
-Weave.library.composition.now = () => Date.now();
 Weave.library.composition.noop = () => undefined;
 Weave.library.composition.always = () => true;
 Weave.library.composition.never = () => false;

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — conference programme</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: a conference programme. The calendar, the money and the countdown all come from Weave. */
+Weave.application = {};
+Weave.application.day = count => Weave.library.dates.iso(Weave.library.dates.add(Weave.library.dates.names.day, count)(Weave.library.dates.today()));
+Weave.application.when = count => Weave.library.dates.parse(Weave.application.day(count));
+Weave.application.opensIn = 3;
+Weave.application.ticket = 349;
+Weave.application.currency = 'EUR';
+Weave.application.price = () => Weave.library.formatting.money(Weave.application.currency)(Weave.application.ticket);
+Weave.application.startOfToday = 0;
+Weave.application.countdown = () => Weave.library.formatting.relative(Weave.application.when(Weave.application.opensIn), Weave.application.when(Weave.application.startOfToday));
+/* lineups: one row per talk. The day is an offset from today, so the programme is always ahead. */
+Weave.application.lineups = {};
+Weave.application.lineups.keynote = { day: 3, label: 'Opening keynote', note: 'Main hall' };
+Weave.application.lineups.composing = { day: 3, label: 'Composing the DOM', note: 'Room A' };
+Weave.application.lineups.oneStatement = { day: 4, label: 'One statement per line', note: 'Room B' };
+Weave.application.lineups.auditing = { day: 4, label: 'Auditing a style', note: 'Room C' };
+Weave.application.lineups.closing = { day: 5, label: 'Closing panel', note: 'Atrium' };
+Weave.application.dated = row => Weave.library.composition.merge(row, { date: Weave.application.day(row.day) });
+Weave.application.sessions = () => Weave.library.composition.values(Weave.application.lineups).map(Weave.application.dated);
+Weave.application.tracks = () => Weave.library.composition.unique(Weave.application.sessions().map(session => session.note));
+Weave.application.chosen = { key: Weave.application.day(3) };
+Weave.application.remember = key => Object.assign(Weave.application.chosen, { key }).key;
+Weave.application.programme = () => Weave.library.patterns.calendar({ title: 'Programme', date: Weave.application.when(Weave.application.opensIn), events: Weave.application.sessions(), onPick: Weave.application.remember }).element;
+Weave.application.listed = () => Weave.application.sessions().filter(session => session.date === Weave.application.chosen.key).map(session => session.label);
+Weave.application.lineup = () => Weave.library.components.note({ text: Weave.library.formatting.list(Weave.application.listed()) });
+Weave.application.dayCard = () => Weave.library.components.stack({ children: [Weave.library.components.subtitle({ text: Weave.library.formatting.date('full')(Weave.application.when(Weave.application.opensIn)) }), Weave.application.lineup()] });
+Weave.application.stats = () => [{ label: 'Sessions', value: Weave.application.sessions().length }, { label: 'Tracks', value: Weave.application.tracks().length }, { label: 'Ticket', value: Weave.application.price() }, { label: 'Doors open', value: Weave.application.countdown() }];
+Weave.application.panels = () => [{ title: 'Pick a day', body: Weave.application.programme() }, { title: 'Opening day', body: Weave.application.dayCard() }];
+Weave.application.conference = () => Weave.library.patterns.dashboard({ title: 'Weave Conf', stats: Weave.application.stats(), panels: Weave.application.panels() });
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.conference());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

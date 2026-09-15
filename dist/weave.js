@@ -109,7 +109,6 @@ Weave.library.composition.pattern = expression => new RegExp(expression);
 Weave.library.composition.dictionary = () => new Map();
 Weave.library.composition.collection = () => new Set();
 Weave.library.composition.weakDictionary = () => new WeakMap();
-Weave.library.composition.now = () => Date.now();
 Weave.library.composition.noop = () => undefined;
 Weave.library.composition.always = () => true;
 Weave.library.composition.never = () => false;
@@ -695,6 +694,35 @@ Weave.library.browser.setTitle = text => (document.title = text, text);
 Weave.library.browser.visibilityState = () => document.visibilityState;
 Weave.library.browser.isPageVisible = () => document.visibilityState === Weave.library.browser.keywords.visible;
 Weave.library.browser.deepClone = value => structuredClone(value);
+
+/* dates: the only place the Date constructor is named. Every calendar value starts here. */
+Weave.library.browser.timestamp = () => Date.now();
+Weave.library.browser.currentDate = () => new Date();
+Weave.library.browser.createDate = value => new Date(value);
+Weave.library.browser.dateFromParts = (year, month, day, hours = 0, minutes = 0) => new Date(year, month, day, hours, minutes);
+Weave.library.browser.dateTimeValue = date => date.getTime();
+Weave.library.browser.isoOf = date => date.toISOString();
+Weave.library.browser.isValidDate = date => Number.isFinite(date.getTime());
+
+/* dateParts: one row per readable field of a Date. The generator below turns each row into a reader. */
+Weave.library.browser.dateParts = {};
+Weave.library.browser.dateParts.year = 'getFullYear';
+Weave.library.browser.dateParts.month = 'getMonth';
+Weave.library.browser.dateParts.day = 'getDate';
+Weave.library.browser.dateParts.hours = 'getHours';
+Weave.library.browser.dateParts.minutes = 'getMinutes';
+Weave.library.browser.dateParts.seconds = 'getSeconds';
+Weave.library.browser.dateParts.milliseconds = 'getMilliseconds';
+Weave.library.browser.dateParts.weekday = 'getDay';
+Weave.library.browser.datePart = method => date => date[method]();
+Weave.library.browser.dateReaders = {};
+Weave.library.composition.defineEach(Weave.library.browser.dateReaders, Weave.library.browser.datePart)(Weave.library.browser.dateParts);
+
+/* intl: the only place a locale formatter is constructed. One function per formatter the library needs. */
+Weave.library.browser.formatNumber = (value, locale, options) => new Intl.NumberFormat(locale, options).format(value);
+Weave.library.browser.formatDate = (date, locale, options) => new Intl.DateTimeFormat(locale, options).format(date);
+Weave.library.browser.formatRelative = (value, unit, locale) => new Intl.RelativeTimeFormat(locale).format(value, unit);
+Weave.library.browser.formatList = (items, locale) => new Intl.ListFormat(locale).format(items);
 
 /* elements: builders, spec appliers, insertion, removal, cloning and wrapping. All table driven. */
 Weave.library.elements = {};
@@ -1435,6 +1463,171 @@ Weave.library.timing.elapsedSince = start => () => Weave.library.browser.now() -
 Weave.library.timing.measure = (label, f) => (...args) => Weave.library.timing.measured(label, f, args);
 Weave.library.timing.measured = (label, f, args) => (Weave.library.browser.mark(label), Weave.library.timing.reportMeasure(label, f(...args)));
 Weave.library.timing.reportMeasure = (label, value) => (Weave.library.browser.measure(label, label), value);
+
+/* dates: calendar arithmetic over the Date values the browser layer hands out. No locale lives here. */
+Weave.library.dates = {};
+Weave.library.dates.today = () => Weave.library.browser.currentDate();
+Weave.library.dates.milliseconds = date => Weave.library.browser.dateTimeValue(date);
+Weave.library.dates.isValid = date => Weave.library.browser.isValidDate(date);
+Weave.library.dates.none = () => null;
+Weave.library.dates.parts = date => Weave.library.composition.mapValues(read => read(date))(Weave.library.browser.dateReaders);
+Weave.library.dates.from = parts => Weave.library.browser.dateFromParts(parts.year, parts.month, parts.day, parts.hours, parts.minutes);
+
+/* units: how many milliseconds each unit of time is worth. Month and year are not here on purpose. */
+Weave.library.dates.units = {};
+Weave.library.dates.units.second = 1000;
+Weave.library.dates.units.minute = 60000;
+Weave.library.dates.units.hour = 3600000;
+Weave.library.dates.units.day = 86400000;
+Weave.library.dates.units.week = 604800000;
+
+/* spans: every unit a relative phrase may name, smallest first, month and year approximated. */
+Weave.library.dates.spans = {};
+Weave.library.dates.spans.second = Weave.library.dates.units.second;
+Weave.library.dates.spans.minute = Weave.library.dates.units.minute;
+Weave.library.dates.spans.hour = Weave.library.dates.units.hour;
+Weave.library.dates.spans.day = Weave.library.dates.units.day;
+Weave.library.dates.spans.week = Weave.library.dates.units.week;
+Weave.library.dates.spans.month = 2629800000;
+Weave.library.dates.spans.year = 31557600000;
+
+/* names: the unit keys spelled once, so no other line in the library writes a unit name. */
+Weave.library.dates.names = {};
+Weave.library.dates.names.day = 'day';
+Weave.library.dates.names.week = 'week';
+Weave.library.dates.names.month = 'month';
+Weave.library.dates.names.year = 'year';
+
+/* marks: the punctuation an ISO date is written with. */
+Weave.library.dates.marks = {};
+Weave.library.dates.marks.separator = '-';
+
+/* adders: the two units a millisecond count cannot express. Every other unit shifts by its span. */
+Weave.library.dates.monthsInYear = 12;
+Weave.library.dates.shiftMonths = (count, date) => Weave.library.browser.dateFromParts(Weave.library.browser.dateReaders.year(date), Weave.library.browser.dateReaders.month(date) + count, Weave.library.browser.dateReaders.day(date));
+Weave.library.dates.adders = {};
+Weave.library.dates.adders.month = (count, date) => Weave.library.dates.shiftMonths(count, date);
+Weave.library.dates.adders.year = (count, date) => Weave.library.dates.shiftMonths(count * Weave.library.dates.monthsInYear, date);
+Weave.library.dates.addSpan = unit => (count, date) => Weave.library.browser.createDate(Weave.library.dates.milliseconds(date) + count * Weave.library.dates.units[unit]);
+Weave.library.dates.adderFor = unit => Weave.library.control.selectByKey(Weave.library.dates.adders, Weave.library.dates.addSpan(unit))(unit);
+Weave.library.dates.add = (unit, count) => date => Weave.library.dates.adderFor(unit)(count, date);
+
+/* starts: one row per unit, each mapping a date to the first moment of the unit it falls in. */
+Weave.library.dates.firstDay = 1;
+Weave.library.dates.firstMonth = 0;
+Weave.library.dates.weekLength = 7;
+Weave.library.dates.mondayShift = 6;
+Weave.library.dates.weekdayIndex = date => (Weave.library.browser.dateReaders.weekday(date) + Weave.library.dates.mondayShift) % Weave.library.dates.weekLength;
+Weave.library.dates.starts = {};
+Weave.library.dates.starts.day = date => Weave.library.browser.dateFromParts(Weave.library.browser.dateReaders.year(date), Weave.library.browser.dateReaders.month(date), Weave.library.browser.dateReaders.day(date));
+Weave.library.dates.starts.week = date => Weave.library.dates.starts.day(Weave.library.dates.add(Weave.library.dates.names.day, -Weave.library.dates.weekdayIndex(date))(date));
+Weave.library.dates.starts.month = date => Weave.library.browser.dateFromParts(Weave.library.browser.dateReaders.year(date), Weave.library.browser.dateReaders.month(date), Weave.library.dates.firstDay);
+Weave.library.dates.starts.year = date => Weave.library.browser.dateFromParts(Weave.library.browser.dateReaders.year(date), Weave.library.dates.firstMonth, Weave.library.dates.firstDay);
+Weave.library.dates.startOf = unit => date => Weave.library.dates.starts[unit](date);
+Weave.library.dates.lastMoment = 1;
+Weave.library.dates.nextStart = (unit, date) => Weave.library.dates.startOf(unit)(Weave.library.dates.add(unit, 1)(date));
+Weave.library.dates.endOf = unit => date => Weave.library.browser.createDate(Weave.library.dates.milliseconds(Weave.library.dates.nextStart(unit, date)) - Weave.library.dates.lastMoment);
+Weave.library.dates.daysInMonth = date => Weave.library.browser.dateReaders.day(Weave.library.dates.endOf(Weave.library.dates.names.month)(date));
+
+/* text: an ISO day is the one written form this layer knows, and the one form it parses back. */
+Weave.library.dates.zero = '0';
+Weave.library.dates.yearSize = 4;
+Weave.library.dates.partSize = 2;
+Weave.library.dates.monthSize = 7;
+Weave.library.dates.pad = (value, size) => String(value).padStart(size, Weave.library.dates.zero);
+Weave.library.dates.twoDigits = value => Weave.library.dates.pad(value, Weave.library.dates.partSize);
+Weave.library.dates.isoParts = date => [Weave.library.dates.pad(Weave.library.browser.dateReaders.year(date), Weave.library.dates.yearSize), Weave.library.dates.twoDigits(Weave.library.browser.dateReaders.month(date) + 1), Weave.library.dates.twoDigits(Weave.library.browser.dateReaders.day(date))];
+Weave.library.dates.iso = date => Weave.library.dates.isoParts(date).join(Weave.library.dates.marks.separator);
+Weave.library.dates.monthKey = date => Weave.library.dates.iso(date).slice(0, Weave.library.dates.monthSize);
+Weave.library.dates.isoPattern = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$/;
+Weave.library.dates.isIsoText = text => Weave.library.control.and(Weave.library.predicates.isString(text), Weave.library.dates.isoPattern.test(String(text)));
+Weave.library.dates.numbersIn = text => Weave.library.control.defaultTo([])(text.match(/\d+/g)).map(Number);
+Weave.library.dates.fromNumbers = ([year, month, day, hours, minutes]) => Weave.library.browser.dateFromParts(year, month - 1, day, hours, minutes);
+Weave.library.dates.validOrNull = date => Weave.library.control.either(Weave.library.dates.isValid, Weave.library.composition.identity, Weave.library.dates.none)(date);
+Weave.library.dates.parsed = text => Weave.library.dates.validOrNull(Weave.library.dates.fromNumbers(Weave.library.dates.numbersIn(text)));
+Weave.library.dates.parse = text => Weave.library.control.either(Weave.library.dates.isIsoText, Weave.library.dates.parsed, Weave.library.dates.none)(text);
+
+/* comparisons: every question one date can be asked about another, answered through the written form. */
+Weave.library.dates.isSameDay = (a, b) => Weave.library.dates.iso(a) === Weave.library.dates.iso(b);
+Weave.library.dates.isSameMonth = (a, b) => Weave.library.dates.monthKey(a) === Weave.library.dates.monthKey(b);
+Weave.library.dates.isToday = date => Weave.library.dates.isSameDay(date, Weave.library.dates.today());
+Weave.library.dates.isBefore = (a, b) => Weave.library.dates.milliseconds(a) < Weave.library.dates.milliseconds(b);
+Weave.library.dates.isAfter = (a, b) => Weave.library.dates.milliseconds(a) > Weave.library.dates.milliseconds(b);
+Weave.library.dates.diff = unit => (a, b) => Math.round((Weave.library.dates.milliseconds(b) - Weave.library.dates.milliseconds(a)) / Weave.library.dates.spans[unit]);
+
+/* grids: a week and a month laid out as plain arrays of days, built by range and chunk, never a loop. */
+Weave.library.dates.gridLength = 42;
+Weave.library.dates.dayAfter = (start, count) => Weave.library.dates.startOf(Weave.library.dates.names.day)(Weave.library.dates.add(Weave.library.dates.names.day, count)(start));
+Weave.library.dates.daysFrom = (start, count) => Weave.library.composition.range(count).map(index => Weave.library.dates.dayAfter(start, index));
+Weave.library.dates.weekdays = date => Weave.library.dates.daysFrom(Weave.library.dates.startOf(Weave.library.dates.names.week)(date), Weave.library.dates.weekLength);
+Weave.library.dates.gridStart = date => Weave.library.dates.startOf(Weave.library.dates.names.week)(Weave.library.dates.startOf(Weave.library.dates.names.month)(date));
+Weave.library.dates.gridDays = date => Weave.library.dates.daysFrom(Weave.library.dates.gridStart(date), Weave.library.dates.gridLength);
+Weave.library.dates.monthGrid = date => Weave.library.composition.chunk(Weave.library.dates.weekLength)(Weave.library.dates.gridDays(date));
+
+/* formatting: locale aware text for numbers, money, dates and lists. Nothing here spells a word. */
+Weave.library.formatting = {};
+
+/* locale: the one place a language tag is chosen. Set formatting.locale.name to override the browser. */
+Weave.library.formatting.locale = {};
+Weave.library.formatting.locale.name = null;
+Weave.library.formatting.localeName = () => Weave.library.control.defaultTo(Weave.library.browser.language())(Weave.library.formatting.locale.name);
+
+/* numberStyles, notations, unitNames: the Intl option words, each written exactly once. */
+Weave.library.formatting.numberStyles = {};
+Weave.library.formatting.numberStyles.currency = 'currency';
+Weave.library.formatting.numberStyles.percent = 'percent';
+Weave.library.formatting.numberStyles.unit = 'unit';
+Weave.library.formatting.notations = {};
+Weave.library.formatting.notations.compact = 'compact';
+Weave.library.formatting.unitNames = {};
+Weave.library.formatting.unitNames.kilometer = 'kilometer';
+Weave.library.formatting.unitNames.liter = 'liter';
+Weave.library.formatting.unitNames.megabyte = 'megabyte';
+Weave.library.formatting.unitNames.hour = 'hour';
+
+/* numbers: one formatter, and one named shape of options per way of reading a number. */
+Weave.library.formatting.noFraction = 0;
+Weave.library.formatting.number = options => value => Weave.library.browser.formatNumber(value, Weave.library.formatting.localeName(), options);
+Weave.library.formatting.integer = value => Weave.library.formatting.number({ maximumFractionDigits: Weave.library.formatting.noFraction })(value);
+Weave.library.formatting.decimal = places => value => Weave.library.formatting.number({ minimumFractionDigits: places, maximumFractionDigits: places })(value);
+Weave.library.formatting.money = currency => value => Weave.library.formatting.number({ style: Weave.library.formatting.numberStyles.currency, currency })(value);
+Weave.library.formatting.percent = value => Weave.library.formatting.number({ style: Weave.library.formatting.numberStyles.percent })(value);
+Weave.library.formatting.compact = value => Weave.library.formatting.number({ notation: Weave.library.formatting.notations.compact })(value);
+Weave.library.formatting.unit = name => value => Weave.library.formatting.number({ style: Weave.library.formatting.numberStyles.unit, unit: name })(value);
+
+/* dateStyles and fieldStyles: the Intl date option words, again each written exactly once. */
+Weave.library.formatting.dateStyles = {};
+Weave.library.formatting.dateStyles.short = 'short';
+Weave.library.formatting.dateStyles.medium = 'medium';
+Weave.library.formatting.dateStyles.long = 'long';
+Weave.library.formatting.dateStyles.full = 'full';
+Weave.library.formatting.fieldStyles = {};
+Weave.library.formatting.fieldStyles.numeric = 'numeric';
+Weave.library.formatting.fieldStyles.twoDigit = '2-digit';
+Weave.library.formatting.fieldStyles.abbreviated = 'short';
+Weave.library.formatting.fieldStyles.spelled = 'long';
+
+/* dates: one formatter, driven by the style tables, so no calendar word is ever written by hand. */
+Weave.library.formatting.dateWith = options => date => Weave.library.browser.formatDate(date, Weave.library.formatting.localeName(), options);
+Weave.library.formatting.date = style => date => Weave.library.formatting.dateWith({ dateStyle: Weave.library.formatting.dateStyles[style] })(date);
+Weave.library.formatting.time = style => date => Weave.library.formatting.dateWith({ timeStyle: Weave.library.formatting.dateStyles[style] })(date);
+Weave.library.formatting.dateTimeOptions = style => ({ dateStyle: Weave.library.formatting.dateStyles[style], timeStyle: Weave.library.formatting.dateStyles[style] });
+Weave.library.formatting.dateTime = style => date => Weave.library.formatting.dateWith(Weave.library.formatting.dateTimeOptions(style))(date);
+Weave.library.formatting.monthName = date => Weave.library.formatting.dateWith({ month: Weave.library.formatting.fieldStyles.spelled, year: Weave.library.formatting.fieldStyles.numeric })(date);
+Weave.library.formatting.weekdayName = date => Weave.library.formatting.dateWith({ weekday: Weave.library.formatting.fieldStyles.abbreviated })(date);
+
+/* relative: the largest span that fits the distance names the unit, so no English word is hard coded. */
+Weave.library.formatting.spanNames = () => Weave.library.composition.keys(Weave.library.dates.spans);
+Weave.library.formatting.fittingNames = distance => Weave.library.formatting.spanNames().filter(name => Weave.library.dates.spans[name] <= distance);
+Weave.library.formatting.smallestName = () => Weave.library.composition.first(Weave.library.formatting.spanNames());
+Weave.library.formatting.unitFor = distance => Weave.library.control.defaultTo(Weave.library.formatting.smallestName())(Weave.library.composition.last(Weave.library.formatting.fittingNames(distance)));
+Weave.library.formatting.countIn = (difference, name) => Math.trunc(difference / Weave.library.dates.spans[name]);
+Weave.library.formatting.relativeWith = (difference, name) => Weave.library.browser.formatRelative(Weave.library.formatting.countIn(difference, name), name, Weave.library.formatting.localeName());
+Weave.library.formatting.relativeIn = difference => Weave.library.formatting.relativeWith(difference, Weave.library.formatting.unitFor(Math.abs(difference)));
+Weave.library.formatting.relative = (date, base = Weave.library.dates.today()) => Weave.library.formatting.relativeIn(Weave.library.dates.milliseconds(date) - Weave.library.dates.milliseconds(base));
+
+/* list: the platform joins the items, so no comma or conjunction is written anywhere. */
+Weave.library.formatting.list = items => Weave.library.browser.formatList(items, Weave.library.formatting.localeName());
 
 /* effects: promise-returning animation built on the Web Animations API. Reduced motion shortens every one. */
 Weave.library.effects = {};
@@ -2499,6 +2692,18 @@ Weave.library.components.styleText = () => [Weave.library.components.rootText()]
 Weave.library.components.addStyleSheet = () => Weave.library.elements.append([Weave.library.elements.style({ text: Weave.library.components.styleText() })])(Weave.library.browser.head());
 Weave.library.components.installStyles = Weave.library.control.once(Weave.library.components.addStyleSheet);
 
+/* calendar day: the one piece a month grid needs, plus the state names its two rules are keyed by. */
+Weave.library.components.stateNames = {};
+Weave.library.components.stateNames.chosen = 'chosen';
+Weave.library.components.stateNames.here = 'here';
+Weave.library.components.dayName = 'dayButton';
+Weave.library.components.dayMarks = spec => ({ current: String(spec.here === true), selected: String(spec.chosen === true) });
+Weave.library.components.daySpec = spec => ({ text: spec.label, onAction: spec.onAction, aria: Weave.library.components.dayMarks(spec), data: { key: spec.key } });
+Weave.library.components.dayButton = spec => Weave.library.components.build(Weave.library.components.parts.button, Weave.library.components.dayName, Weave.library.components.daySpec(spec));
+Weave.library.components.rules.dayButton = { width: Weave.library.components.values.full, minHeight: Weave.library.components.vars.controlHeight, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.surface, color: Weave.library.components.vars.ink, cursor: Weave.library.components.values.pointer, font: Weave.library.components.vars.font, fontSize: Weave.library.components.vars.fontSize };
+Weave.library.components.stateRules.dayChosen = { name: Weave.library.components.dayName, state: Weave.library.components.stateNames.chosen, style: { background: Weave.library.components.vars.accent, color: Weave.library.components.vars.accentInk } };
+Weave.library.components.stateRules.dayHere = { name: Weave.library.components.dayName, state: Weave.library.components.stateNames.here, style: { borderColor: Weave.library.components.vars.accent, fontWeight: Weave.library.components.values.bold } };
+
 /* patterns: a pattern is a component with state. One view repaints every one of them, the same way. */
 Weave.library.patterns = {};
 Weave.library.patterns.nameOfFocus = () => Weave.library.control.maybe(Weave.library.attributes.name)(Weave.library.query.focused());
@@ -2666,3 +2871,42 @@ Weave.library.patterns.dashboardPanels = spec => Weave.library.components.tiles(
 Weave.library.patterns.dashboardParts = spec => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.dashboardTiles(spec), Weave.library.patterns.dashboardPanels(spec)];
 Weave.library.patterns.dashboardBody = spec => () => Weave.library.components.stack({ children: Weave.library.patterns.dashboardParts(spec) });
 Weave.library.patterns.dashboard = spec => Weave.library.patterns.view(Weave.library.patterns.dashboardBody(spec), Weave.library.patterns.wizardState());
+
+/* calendar: a month you can step through and pick a day from, with that day's events under the grid. */
+Weave.library.patterns.labels.previousMonth = 'Previous month';
+Weave.library.patterns.labels.nextMonth = 'Next month';
+Weave.library.patterns.labels.today = 'Today';
+Weave.library.patterns.calendarKey = date => Weave.library.dates.iso(date);
+Weave.library.patterns.calendarMonth = spec => Weave.library.control.defaultTo(Weave.library.dates.today())(spec.date);
+Weave.library.patterns.calendarState = spec => ({ month: Weave.library.patterns.calendarMonth(spec), chosen: Weave.library.patterns.calendarKey(Weave.library.patterns.calendarMonth(spec)) });
+Weave.library.patterns.calendarEvents = spec => Weave.library.control.defaultTo([])(spec.events);
+Weave.library.patterns.calendarOn = (spec, key) => Weave.library.patterns.calendarEvents(spec).filter(event => event.date === key);
+Weave.library.patterns.calendarNotify = (spec, key) => Weave.library.control.maybe(announce => announce(key, Weave.library.patterns.calendarOn(spec, key)))(spec.onPick);
+Weave.library.patterns.calendarPick = (spec, update, key) => () => (Weave.library.patterns.calendarNotify(spec, key), update(() => ({ chosen: key })));
+Weave.library.patterns.calendarDayLabel = date => String(Weave.library.dates.parts(date).day);
+Weave.library.patterns.calendarMarks = (state, date) => ({ here: Weave.library.dates.isToday(date), chosen: Weave.library.patterns.calendarKey(date) === state.chosen });
+Weave.library.patterns.calendarFace = date => ({ label: Weave.library.patterns.calendarDayLabel(date), key: Weave.library.patterns.calendarKey(date) });
+Weave.library.patterns.calendarAction = (spec, update, date) => ({ onAction: Weave.library.patterns.calendarPick(spec, update, Weave.library.patterns.calendarKey(date)) });
+Weave.library.patterns.calendarDaySpec = (spec, state, update, date) => Weave.library.composition.mergeAll([Weave.library.patterns.calendarMarks(state, date), Weave.library.patterns.calendarFace(date), Weave.library.patterns.calendarAction(spec, update, date)]);
+Weave.library.patterns.calendarDay = (spec, state, update, date) => Weave.library.components.dayButton(Weave.library.patterns.calendarDaySpec(spec, state, update, date));
+Weave.library.patterns.calendarCount = (spec, key) => Weave.library.control.guard(total => total > 0)(Weave.library.patterns.calendarOn(spec, key).length);
+Weave.library.patterns.calendarTally = (spec, key) => Weave.library.control.maybe(total => Weave.library.components.tag({ text: String(total) }))(Weave.library.patterns.calendarCount(spec, key));
+Weave.library.patterns.calendarCellParts = (spec, state, update, date) => [Weave.library.patterns.calendarDay(spec, state, update, date), Weave.library.patterns.calendarTally(spec, Weave.library.patterns.calendarKey(date))];
+Weave.library.patterns.calendarCell = (spec, state, update) => date => Weave.library.components.stack({ children: Weave.library.composition.compact(Weave.library.patterns.calendarCellParts(spec, state, update, date)), data: { key: Weave.library.patterns.calendarKey(date) } });
+Weave.library.patterns.calendarWeek = state => Weave.library.composition.first(Weave.library.dates.monthGrid(state.month));
+Weave.library.patterns.calendarColumn = (spec, state, update) => (date, index) => ({ key: index, label: Weave.library.formatting.weekdayName(date), format: Weave.library.patterns.calendarCell(spec, state, update) });
+Weave.library.patterns.calendarColumns = (spec, state, update) => Weave.library.patterns.calendarWeek(state).map(Weave.library.patterns.calendarColumn(spec, state, update));
+Weave.library.patterns.calendarGrid = (spec, state, update) => Weave.library.components.table({ columns: Weave.library.patterns.calendarColumns(spec, state, update), rows: Weave.library.dates.monthGrid(state.month) });
+Weave.library.patterns.calendarShift = (state, update, count) => () => update(() => ({ month: Weave.library.dates.add(Weave.library.dates.names.month, count)(state.month) }));
+Weave.library.patterns.calendarSteps = [[Weave.library.patterns.labels.previousMonth, Weave.library.patterns.stepBack], [Weave.library.patterns.labels.nextMonth, Weave.library.patterns.stepForward]];
+Weave.library.patterns.calendarStep = (state, update) => ([label, count]) => Weave.library.components.actionButton({ label, onAction: Weave.library.patterns.calendarShift(state, update, count) });
+Weave.library.patterns.calendarNow = () => ({ month: Weave.library.dates.today(), chosen: Weave.library.patterns.calendarKey(Weave.library.dates.today()) });
+Weave.library.patterns.calendarToday = update => Weave.library.components.actionButton({ label: Weave.library.patterns.labels.today, onAction: () => update(Weave.library.patterns.calendarNow) });
+Weave.library.patterns.calendarBar = (state, update) => Weave.library.components.toolbar({ items: Weave.library.patterns.calendarSteps.map(Weave.library.patterns.calendarStep(state, update)).concat([Weave.library.patterns.calendarToday(update)]) });
+Weave.library.patterns.calendarHeading = state => Weave.library.components.subtitle({ text: Weave.library.formatting.monthName(state.month) });
+Weave.library.patterns.calendarEntry = event => Weave.library.components.item({ children: [Weave.library.components.subtitle({ text: event.label }), Weave.library.components.note({ text: event.note })] });
+Weave.library.patterns.calendarList = (spec, state) => Weave.library.patterns.listOrEmpty(Weave.library.patterns.calendarOn(spec, state.chosen).map(Weave.library.patterns.calendarEntry));
+Weave.library.patterns.calendarHead = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.calendarBar(state, update), Weave.library.patterns.calendarHeading(state)];
+Weave.library.patterns.calendarParts = (spec, state, update) => Weave.library.patterns.calendarHead(spec, state, update).concat([Weave.library.patterns.calendarGrid(spec, state, update), Weave.library.patterns.calendarList(spec, state)]);
+Weave.library.patterns.calendarBody = spec => (state, update) => Weave.library.components.panel({ children: Weave.library.patterns.calendarParts(spec, state, update) });
+Weave.library.patterns.calendar = spec => Weave.library.patterns.view(Weave.library.patterns.calendarBody(spec), Weave.library.patterns.calendarState(spec));

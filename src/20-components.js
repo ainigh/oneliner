@@ -323,3 +323,15 @@ Weave.library.components.stateTexts = () => Weave.library.composition.values(Wea
 Weave.library.components.styleText = () => [Weave.library.components.rootText()].concat(Weave.library.components.ruleTexts(), Weave.library.components.stateTexts()).join('\n');
 Weave.library.components.addStyleSheet = () => Weave.library.elements.append([Weave.library.elements.style({ text: Weave.library.components.styleText() })])(Weave.library.browser.head());
 Weave.library.components.installStyles = Weave.library.control.once(Weave.library.components.addStyleSheet);
+
+/* calendar day: the one piece a month grid needs, plus the state names its two rules are keyed by. */
+Weave.library.components.stateNames = {};
+Weave.library.components.stateNames.chosen = 'chosen';
+Weave.library.components.stateNames.here = 'here';
+Weave.library.components.dayName = 'dayButton';
+Weave.library.components.dayMarks = spec => ({ current: String(spec.here === true), selected: String(spec.chosen === true) });
+Weave.library.components.daySpec = spec => ({ text: spec.label, onAction: spec.onAction, aria: Weave.library.components.dayMarks(spec), data: { key: spec.key } });
+Weave.library.components.dayButton = spec => Weave.library.components.build(Weave.library.components.parts.button, Weave.library.components.dayName, Weave.library.components.daySpec(spec));
+Weave.library.components.rules.dayButton = { width: Weave.library.components.values.full, minHeight: Weave.library.components.vars.controlHeight, border: Weave.library.components.hairline, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.surface, color: Weave.library.components.vars.ink, cursor: Weave.library.components.values.pointer, font: Weave.library.components.vars.font, fontSize: Weave.library.components.vars.fontSize };
+Weave.library.components.stateRules.dayChosen = { name: Weave.library.components.dayName, state: Weave.library.components.stateNames.chosen, style: { background: Weave.library.components.vars.accent, color: Weave.library.components.vars.accentInk } };
+Weave.library.components.stateRules.dayHere = { name: Weave.library.components.dayName, state: Weave.library.components.stateNames.here, style: { borderColor: Weave.library.components.vars.accent, fontWeight: Weave.library.components.values.bold } };
