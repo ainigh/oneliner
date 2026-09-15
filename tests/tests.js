@@ -339,6 +339,24 @@ Weave.tests.cases.patternsEveryPhaseHasAPane = () => Weave.library.composition.k
 Weave.tests.cases.patternsEveryPaneNamesAPhase = () => Weave.library.composition.keys(Weave.library.patterns.panes).every(name => Weave.library.predicates.isDefined(Weave.library.patterns.phases[name]));
 Weave.tests.cases.patternsEveryStackIsALogKey = () => Weave.library.composition.values(Weave.library.patterns.stacks).every(name => Weave.library.predicates.isArray(Weave.library.patterns.emptyLog()[name]));
 
+/* address: a state key kept in the page address, so a view can be linked to. */
+Weave.tests.tabRender = state => Weave.library.components.note({ text: String(state.filter) });
+Weave.tests.linkedHandle = () => Weave.library.patterns.linkTo(Weave.tests.addressField)(Weave.library.patterns.view(Weave.tests.tabRender, { filter: Weave.tests.firstFilter }));
+Weave.tests.addressField = 'filter';
+Weave.tests.firstFilter = 'open';
+Weave.tests.secondFilter = 'done';
+Weave.tests.clearedAddress = () => (Weave.library.navigation.setHash(Weave.library.browser.keywords.empty), Weave.tests.linkedHandle());
+Weave.tests.choose = (handle, value) => handle.update(() => ({ filter: value }));
+Weave.tests.cases.patternsLinkToWritesTheAddress = () => Weave.tests.writesTheAddress(Weave.tests.clearedAddress());
+Weave.tests.writesTheAddress = handle => (Weave.tests.choose(handle, Weave.tests.secondFilter), Weave.library.patterns.addressValue(Weave.tests.addressField) === Weave.tests.secondFilter);
+Weave.tests.cases.patternsLinkToReadsTheAddressOnTheWayIn = () => Weave.tests.readsTheAddress(Weave.tests.clearedAddress());
+Weave.tests.readsTheAddress = handle => (Weave.tests.choose(handle, Weave.tests.secondFilter), Weave.tests.linkedHandle().state.filter === Weave.tests.secondFilter);
+Weave.tests.cases.patternsLinkToRepaintsWhatItRead = () => Weave.tests.repaintsTheAddress(Weave.tests.clearedAddress());
+Weave.tests.repaintsTheAddress = handle => (Weave.tests.choose(handle, Weave.tests.secondFilter), Weave.tests.textIn(Weave.tests.linkedHandle()) === Weave.tests.secondFilter);
+Weave.tests.cases.patternsLinkToKeepsTheRestOfTheState = () => Weave.tests.keepsTheRest(Weave.tests.clearedAddress());
+Weave.tests.keepsTheRest = handle => (handle.update(() => ({ page: 4 })), Weave.tests.linkedHandle().state.filter === Weave.tests.firstFilter);
+Weave.tests.cases.patternsLinkToStops = () => Weave.library.predicates.isFunction(Weave.tests.clearedAddress().stop) === true;
+
 Weave.tests.report = (name, ok) => Weave.library.control.unless(() => ok, () => Weave.tests.failures.push(name))(name);
 Weave.tests.failures = [];
 Weave.tests.check = ([name, test]) => Weave.tests.report(name, Weave.library.control.attemptOr(test, false)(name) === true);

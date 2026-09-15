@@ -27,6 +27,7 @@ Weave.library.patterns.emptyLog = () => Weave.library.composition.mapValues(Weav
 Weave.library.patterns.popped = list => list.slice(0, -1);
 Weave.library.patterns.isStore = holder => Weave.library.predicates.isDefined(holder.watchers);
 Weave.library.patterns.storeShow = (holder, state) => Weave.library.patterns.storeNotify(Object.assign(holder, { state }));
+Weave.library.patterns.mergeState = (holder, changes) => Weave.library.patterns.showState(holder, Weave.library.composition.merge(holder.state, changes));
 Weave.library.patterns.showState = (holder, state) => Weave.library.control.either(Weave.library.patterns.isStore, () => Weave.library.patterns.storeShow(holder, state), () => Weave.library.patterns.repaint(Object.assign(holder, { state })))(holder);
 Weave.library.patterns.rotated = (handle, log, row) => Object.assign(log, { [row.from]: Weave.library.patterns.popped(log[row.from]), [row.to]: log[row.to].concat([handle.state]) });
 Weave.library.patterns.travelWith = (handle, log, row, target) => (Weave.library.patterns.rotated(handle, log, row), Weave.library.patterns.showState(handle, target));
@@ -80,3 +81,15 @@ Weave.library.patterns.resourceBody = spec => (state, update) => Weave.library.c
 Weave.library.patterns.resourceState = () => ({ phase: Weave.library.patterns.phases.loading });
 Weave.library.patterns.started = (spec, handle) => (Weave.library.patterns.request(spec, Weave.library.patterns.updaterOf(handle)), handle);
 Weave.library.patterns.resource = spec => Weave.library.patterns.started(spec, Weave.library.patterns.view(Weave.library.patterns.resourceBody(spec), Weave.library.patterns.resourceState()));
+
+/* address: one piece of state kept in the page's address, so a view can be linked to and the back button means something. */
+Weave.library.patterns.addressQuery = () => Weave.library.composition.parseQueryString(Weave.library.navigation.hashValue());
+Weave.library.patterns.addressValue = name => Weave.library.patterns.addressQuery()[name];
+Weave.library.patterns.writeAddress = (name, value) => Weave.library.navigation.setHash(Weave.library.composition.queryString(Weave.library.composition.merge(Weave.library.patterns.addressQuery(), { [name]: value })));
+Weave.library.patterns.addressed = (name, holder) => (Weave.library.patterns.writeAddress(name, holder.state[name]), holder);
+Weave.library.patterns.showFromAddress = (name, holder) => Weave.library.control.maybe(value => Weave.library.patterns.mergeState(holder, { [name]: value }))(Weave.library.patterns.addressValue(name));
+Weave.library.patterns.addressChanges = (name, holder) => Weave.library.navigation.onHashChange(() => Weave.library.patterns.showFromAddress(name, holder));
+Weave.library.patterns.addressSaving = (name, update) => change => Weave.library.patterns.addressed(name, update(change));
+Weave.library.patterns.addressWired = (name, holder, update) => Object.assign(holder, { update: Weave.library.patterns.addressSaving(name, update) });
+Weave.library.patterns.readAddress = (name, holder) => (Weave.library.patterns.showFromAddress(name, holder), holder);
+Weave.library.patterns.linkTo = name => holder => Weave.library.patterns.holding(Weave.library.patterns.addressWired(name, Weave.library.patterns.readAddress(name, holder), holder.update), Weave.library.patterns.addressChanges(name, holder));
