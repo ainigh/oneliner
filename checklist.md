@@ -513,6 +513,79 @@ person cell, a confirm-then-do, a popover picker, a toast host, a currency in mi
       spends it captures `undefined` — the part must be declared with the other parts, not beside
       the component that uses it.
 
+
+## The component library round: the elements, the tailoring and the way in
+
+Everything in this round came from one question — *could somebody arriving from Bootstrap pick this
+up and build a screen with it?* — and every gap the answer found is a row, never a rule.
+
+### The elements that were missing
+
+- [x] **Fourteen widgets**: `navbar`, `listGroup`, `inputGroup`, `buttonGroup`, `segmented`,
+      `spinner`, `descriptions`, `quote`, `banner`, `rating`, `chip`, `timeline`, `passwordField`
+      and `codeField`. Each is one spec in and one element out, built only from parts that already
+      existed, and each carries a row in the catalogue that draws it.
+- [x] **A field carries a hint** when it is given one, so a form no longer has to append its own
+      help text beside the label.
+- [x] **`elements.dl`, `dt`, `dd`, `blockquote` and `figcaption` earned parts rows**, which is what
+      `descriptions` and `quote` are made of. No tag is spelled twice.
+- [x] **`browser.fromWidth`** joined `upToWidth`, so a rule can apply above a width as well as
+      below one.
+- [x] **`composition.startCase`** — the catalogues needed a widget key turned into a heading, and
+      two pages wanted it, which is the rule for adding it.
+
+### The tailoring that was missing
+
+- [x] **A modifier may name several classes at once** and **may reach one class inside the class it
+      marks**. That second one is what made a table look a single row instead of three.
+- [x] **Eight new modifiers**: `gap`, `align`, `pad`, `shape`, `width`, `ratio`, `span` and `grid`,
+      beside the `variant`, `size`, `pane`, `cell` and `side` that existed. A page asks for spacing
+      and shape by name on a spec it was already writing.
+- [x] **`tone` is read off every spec**, not only the specs that asked for it, so any toned class
+      takes `{ tone: 'warning' }` — and **`toneSpends`** is now the one place a way of spending a
+      tone is written. Five ways, shared by ten classes.
+- [x] **`densities`** is a theme for measurements rather than colours, switched by its own attribute
+      exactly as a theme is.
+- [x] **`presets`** is a named palette spent on the page or on one subtree, and **`configure`** is
+      the one way a page moves a token before the sheet is written.
+- [x] **Two more themes**, `contrast` and `dusk`, and **five more button variants**, each still
+      nothing but a row of overrides.
+- [x] **`borders`** is the one place a border shorthand is written. The test that asks whether every
+      rule only spends tokens can now name the table instead of listing two of them by hand.
+- [x] **A twelve column grid**, with the spans named rather than numbered, and a compact rule that
+      drops every column to full width.
+
+### The way in
+
+- [x] **`auth` is a new layer**, the first since `overlays`, added the way the README says a layer is
+      added: one file, one row in the audit's layer list, its tables in the audit's required list.
+- [x] **The whole flow is five rows.** `auth.screens` says what each screen asks for, what its button
+      says, where a good submit goes and what it links to. Sign up → verify → reset → sign in, and
+      forgot joins at verify.
+- [x] **`auth.gates` is generated from `auth.screens`**, so a new screen brings its own opener, and
+      `audit:rows` deletes each row to prove exactly that opener disappears.
+- [x] **`forms.validators.sameAs`** compares one field against another — the confirm-password row
+      needed it, and every validator now sees the whole form rather than one value.
+- [x] **The gate moves before it tells its caller.** Found by building `account.html`: a caller that
+      takes the gate off the page had its work undone by the gate's own repaint, because morph had
+      reused the very node the gate still held. Ordering the two fixed it for every caller.
+
+### The pages
+
+- [x] **`demos/elements.html`** and **`demos/patterns.html`** are the catalogues, and they are held
+      to a contract like the kit gallery's: an element with no call, a section naming an element
+      that does not exist, and an element filed in no section each fail the build.
+- [x] **Four more applications** — `account.html`, `bank.html`, `shop.html` and `tailor.html` —
+      each written only against the library and the kit, each driven by `check:demos`.
+- [x] **The style guide gained three sections**, densities, palettes and modifiers, each generated
+      from the table it documents, so it still cannot drift.
+
+### What the audit gained
+
+- [x] **R22: a path assigned twice in one file is a finding.** It caught two state rules this round
+      had already duplicated, silently overriding the originals. The rules that existed — a literal
+      repeated in a bucket, two structurally identical one-liners — could not see that.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

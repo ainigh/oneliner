@@ -117,6 +117,17 @@ Weave.application.tipTarget = () => Weave.library.composition.tap(Weave.library.
 Weave.application.sizeButton = size => Weave.library.components.actionButton({ label: size, size });
 Weave.application.sizeBar = () => Weave.library.components.toolbar({ items: Weave.library.composition.keys(Weave.library.components.sizes).map(Weave.application.sizeButton).concat([Weave.application.plainButton()]) });
 
+
+/* densities, presets and modifiers: the three tables a page spends to make the system its own. */
+Weave.application.densityButton = name => Weave.library.components.actionButton({ label: name, onAction: () => Weave.library.components.setDensity(name) });
+Weave.application.densityBar = () => Weave.library.components.toolbar({ items: Weave.library.composition.keys(Weave.library.components.densities).map(Weave.application.densityButton) });
+Weave.application.presetButton = name => Weave.library.components.actionButton({ label: name, onAction: () => Weave.library.components.usePreset(name) });
+Weave.application.presetBar = () => Weave.library.components.toolbar({ items: Weave.library.composition.keys(Weave.library.components.presets).map(Weave.application.presetButton) });
+Weave.application.modifierValues = row => Weave.library.composition.keys(row.styles).join(Weave.application.listJoin);
+Weave.application.listJoin = ', ';
+Weave.application.modifierItem = ([name, row]) => Weave.library.components.item({ children: [Weave.library.components.tag({ text: name }), Weave.library.components.note({ text: Weave.application.modifierValues(row) })] });
+Weave.application.modifierList = () => Weave.library.components.itemList({ children: Weave.library.composition.pairs(Weave.library.components.modifiers).map(Weave.application.modifierItem) });
+
 /* sections: one row per part of the styling system, each naming the maker that draws it. */
 Weave.application.sections = {};
 Weave.application.sections.tokens = { title: 'Tokens', note: 'Every dimension, colour and duration in the system, emitted as a custom property on :root. Change a token and the whole system moves.', body: Weave.application.tokenTable };
@@ -128,6 +139,9 @@ Weave.application.sections.breakpoints = { title: 'Breakpoints', note: 'Narrow t
 Weave.application.sections.scoped = { title: 'Scoped tokens', note: 'applyTokens sets the same custom properties on one element, so a subtree can be branded without a theme and without a rule.', body: Weave.application.brandedPanel };
 Weave.application.sections.layers = { title: 'Layers', note: 'Everything that sits above the page comes from one host and one z-index ladder: dialogs, drawers, sheets, a confirm that answers a promise, anchored menus, pinned toasts and tips.', body: Weave.application.layerBar };
 Weave.application.sections.sizes = { title: 'Sizes', note: 'A size is a data attribute on a button, exactly as a variant is, and both come from the one modifier table.', body: Weave.application.sizeBar };
+Weave.application.sections.densities = { title: 'Densities', note: 'A density is a theme for measurements rather than colours, switched by its own attribute on the document. Press one and every control on this page resizes.', body: Weave.application.densityBar };
+Weave.application.sections.presets = { title: 'Palettes', note: 'A preset is a named set of token overrides spent on the page itself, with no theme and no rule behind it.', body: Weave.application.presetBar };
+Weave.application.sections.modifiers = { title: 'Modifiers', note: 'Every data attribute a spec can carry, and the values each one takes. A modifier may name several classes at once, and may reach one class inside them.', body: Weave.application.modifierList };
 Weave.application.sections.widgets = { title: 'Widgets', note: 'Every component below is a class from its own name and a rules row of token references. None of them names a tag or a colour.', body: Weave.application.widgetTiles };
 Weave.application.sectionPanel = section => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: section.title }), Weave.library.components.note({ text: section.note }), section.body()] });
 Weave.application.sectionPanels = () => Weave.library.composition.values(Weave.application.sections).map(Weave.application.sectionPanel);

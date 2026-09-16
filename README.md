@@ -57,6 +57,9 @@ because the audit refused the alternative.
 | what a tone colour is | `components.tokens.tone*` | — |
 | how a class spends a tone | `components.toneRules` | — |
 | what a pattern falls back on | `patterns.defaults` | — |
+| what a modifier value does | the table `components.modifiers` names | — |
+| how tight the whole system sits | `components.densities` | — |
+| what a screen asks for on the way in | `auth.screens` | — |
 | how a request's phase is drawn | `patterns.panes` | — |
 | the word "Add" everywhere | `patterns.labels.add` | — |
 | how an attribute selector is built | `query.attributeSelector` | — |
@@ -104,13 +107,14 @@ down in `checklist.md` beside the row that closed it.
 `composition` → `predicates` → `control` → `browser` → `elements` → `query` → `attributes` → `style` →
 `events` → `timing` → `dates` → `formatting` → `effects` → `forms` → `network` → `observers` →
 `storage` → `navigation` → `interaction` → `accessibility` → `collections` → `components` →
-`overlays` → `patterns`, then `application`.
+`overlays` → `patterns` → `auth`, then `application`.
 
 `browser` is the only layer that names a global — `Date` and `Intl` included, which is why `dates`
 does calendar arithmetic with no locale in it and `formatting` does locale with no arithmetic in it.
 `collections` lifts every layer below it. `components` turns one spec into one element. `overlays`
 is the only layer that positions anything, and the only one that puts a node above the page.
-`patterns` gives a component state. An application composes patterns and holds data — nothing else.
+`patterns` gives a component state. `auth` is the one layer above them: the screens an application
+shows before it shows anything else. An application composes patterns and holds data — nothing else.
 
 ## Components and patterns
 
@@ -126,7 +130,11 @@ Containers come from one table, so adding `blueprints.pill = parts.inline` adds
 `components.pill(spec)` with its own class and its own row in the stylesheet. Composite widgets —
 `table`, `menu`, `tabs`, `tree`, `form`, `modal`, `pagination`, `accordion`, `alert`, `dropdown`,
 `tooltip`, `switchField`, `sliderField`, `stepperField`, `kbd`, `badge`, `skeleton`, `avatarGroup`,
-`statusDot` — are built from those same containers and never reach past them.
+`statusDot`, `navbar`, `listGroup`, `inputGroup`, `buttonGroup`, `segmented`, `spinner`,
+`descriptions`, `quote`, `banner`, `rating`, `chip`, `timeline`, `passwordField`, `codeField` — are
+built from those same containers and never reach past them.
+
+`demos/elements.html` draws every one of them, live, with the call that draws it underneath.
 
 A pattern is a component with state. Every one returns the same handle, `{ element, state, update }`,
 and every one repaints through `patterns.view`:
@@ -139,8 +147,9 @@ Weave.library.patterns.masterDetail({ items, detail: person => Weave.library.com
 ```
 
 The set is `todoList`, `board`, `dataGrid`, `masterDetail`, `wizard`, `commandPalette`, `chat`,
-`explorer`, `dashboard`, `calendar`, `virtualList`, `virtualGrid`, `resource`, `entryForm` and
-`notifications`. A pattern only ever composes components and other patterns, so a fix to
+`explorer`, `dashboard`, `calendar`, `virtualList`, `virtualGrid`, `resource`, `entryForm`,
+`notifications`, `tabsView`, `carousel`, `combobox`, `inlineEdit`, `chipFilter` and
+`passwordField` — `demos/patterns.html` runs all of them on one page. A pattern only ever composes components and other patterns, so a fix to
 `components.table` lands in `dataGrid`, in `virtualGrid`, in `calendar`, in every demo that uses
 one, and nowhere twice.
 
@@ -200,6 +209,36 @@ broken.
 `timing.throttleFrame` so a scroll storm repaints once per frame. `patterns.virtualGrid` is that
 under a search box. `dataGrid` is unchanged and still the right answer when the caller wants pages.
 
+## Signing in
+
+`auth` is the layer above `patterns`: what every application needs before it can show anything
+else. It is tables the whole way down.
+
+```js
+Weave.application.session = Weave.library.auth.session();
+Weave.application.gate = () => Weave.library.auth.gate({ onDone: Weave.application.finished }).element;
+Weave.application.finished = (screen, values) => Weave.library.auth.signIn(Weave.application.session)(values.email);
+Weave.application.guard = () => Weave.library.auth.guard({ session: Weave.application.session, signedOut: Weave.application.gate, signedIn: Weave.application.desk });
+```
+
+| Table | What it is the only place for |
+|---|---|
+| `auth.labels` / `auth.notes` | every word an authentication screen shows |
+| `auth.fields` | one row per field any screen asks for, with its rules beside it |
+| `auth.screens` | what a screen asks for, what its button says, where a good submit goes next, what it links to |
+| `auth.checks` | one row per thing a password can carry — the strength meter counts rows |
+| `auth.names` / `auth.linkLabels` | the name of a screen, and the words it is linked to by |
+
+Five rows make the whole path: sign up leads to verify, verify to reset, reset back to sign in, and
+forgot joins it at verify. `auth.gates` is generated from `auth.screens`, so `auth.gates.signUp()`
+opens the flow on that screen and a new screen is a row that brings its own opener with it —
+`npm run audit:rows` deletes each row and checks exactly that opener disappears.
+
+The rest of the layer is small because the patterns underneath it are not: `auth.session` is one
+persisted store, `auth.guard` the one place an application asks whether to show itself or the gate,
+`auth.strengthMeter` a progress bar toned by `auth.score`, and `auth.accountMenu` the button that
+ends in sign out. `demos/account.html` is all of it on one page.
+
 ## Styling
 
 There is no stylesheet file. The sheet is generated from tables, and `components.sheetExtras` is the
@@ -224,6 +263,9 @@ documents, so the page cannot drift from the system.
 | `components.breakpoints` | the only viewport width queries | named once, spent by `mediaRules` |
 | `components.mediaRules` | one row per query, rules keyed by class | the compact layout, reduced motion, print |
 | `components.keyframes` | the only place an animation timeline is written | referenced by a token, spent by a rule |
+| `components.modifiers` | every data attribute a spec may carry, and what each value does | `card({ pad: 'wide', shape: 'round' })` |
+| `components.densities` | a theme for measurements rather than colours | `setDensity('snug')` |
+| `components.presets` | a named palette spent on the page or on one subtree | `usePreset('ocean')` |
 | `components.sheetExtras` | the blocks the sheet carries, in cascade order | a later row wins; the compact block is last |
 
 A theme is a row of token overrides. `components.themes.dark` is one, and the sheet carries a block
@@ -243,6 +285,39 @@ section can be branded without a theme and without a rule:
 ```js
 Weave.application.brand = panel => Weave.library.components.applyTokens({ accent: '#7c3aed', radius: '14px' })(panel);
 ```
+
+### Asking for a look by name
+
+No page writes a class and no page writes a rule. What a page does instead is ask, on the spec it
+was already writing:
+
+```js
+Weave.library.components.card({ pad: 'wide', gap: 'tight', shape: 'round', children });
+Weave.library.components.table({ grid: 'bordered', columns, rows });
+Weave.library.components.column({ span: 'twoThirds', children });
+Weave.library.components.actionButton({ label: 'Send', variant: 'primary', size: 'small', width: 'full' });
+Weave.library.components.tag({ text: 'late', tone: 'warning' });
+```
+
+Every one of those keys is a row of `components.modifiers`, and every value a row of the table that
+row names. A modifier may name several classes at once and may reach one class inside the class it
+marks — which is how a table look is one row rather than three. `components.markNames` carries every
+value as a name, so an application asks for one by name and never by string.
+
+`tone` is read off every spec, not only the specs that ask for it, and `components.toneSpends` is
+the one place a way of spending a tone is written — five of them, shared by every toned class.
+
+### Four ways to change how it all looks
+
+| Reach for | When | What it is |
+|---|---|---|
+| `components.configure(overrides)` | before the sheet is written | moves a token for the whole system |
+| `components.setTheme(name)` | at runtime | one row of colour overrides on the document |
+| `components.setDensity(name)` | at runtime | the same idea for measurements: `snug`, `roomy` |
+| `components.usePreset(name)` / `applyTokens(overrides)(element)` | per page or per subtree | a palette, with no theme and no rule behind it |
+
+`demos/tailor.html` wires all four to the page you are reading, so the effect of a row is one click
+away.
 
 To restyle the whole system, change tokens. To restyle one widget, change its row. To restyle every
 widget at night, change one theme row. To restyle one subtree, set tokens on it.
@@ -286,7 +361,7 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 
 | Path | What it is |
 |---|---|
-| `src/*.js` | One file per layer, in load order. This is the source you edit. |
+| `src/*.js` | One file per layer, in load order, `25-auth.js` last. This is the source you edit. |
 | `dist/weave.js` | The single-file bundle, built by `scripts/build.js`. Never edited by hand. |
 | `dist/weave.module.js` | The generated ESM wrapper. |
 | `audit.js` | The style checker, written in the style it enforces and audited by itself. |
@@ -297,7 +372,7 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `apps.md` | What each flagship had to be able to do. |
 | `sample.html`, `todo.html`, `studio.html` | The reference applications, written against the library directly. |
 | `styleguide.html` | The live reference for the styling system, generated from its own tables. |
-| `demos/*.html` | Nine domain applications, written only against patterns. |
+| `demos/*.html` | The demo set: two catalogues of the library, and a domain application each. |
 | `demos/kit.js` | The kit the demos share: application code, built only on the library. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
 
@@ -316,8 +391,9 @@ npm run check       # all of the above
 
 ## The demos
 
-`demos/index.html` links nine applications. Each one exists to put the patterns
-under load in a different shape, and each is short because the patterns do the work:
+`demos/index.html` links sixteen pages: two of them catalogues of the library itself, and the rest
+applications that put the patterns under load in a different shape. Each is short because the
+patterns do the work:
 
 | Demo | Domain | What it exercises |
 |---|---|---|
@@ -330,8 +406,14 @@ under load in a different shape, and each is short because the patterns do the w
 | `agenda.html` | conferences | a calendar of sessions, with prices and a countdown |
 | `tenants.html` | multi-tenant SaaS | four customers in one console: a workspace switcher in a popover, per-plan limits, roles changed in place, and a confirm before a seat is taken back |
 | `kit.html` | the kit itself | every shared piece, drawn live from the table that documents it |
+| `elements.html` | the library itself | one card per widget, drawn live, with the call that draws it |
+| `patterns.html` | the library itself | every stateful piece, running, beside the line that starts it |
+| `tailor.html` | the styling system | theme, density, palette and modifiers wired to the page you are reading |
+| `account.html` | signing in | the gate, the session behind it, the desk it lets you at, and sign out |
+| `bank.html` | retail banking | accounts, a transfer that asks first, and a statement drawn twice from one set of rows |
+| `shop.html` | retail | a storefront on one store: a navbar counting the basket, an offer carousel, chips that filter, a basket in a sheet |
 
-None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all nine.
+None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all of them, and holds the two catalogues to their own contract: an element with no call, a section naming an element that does not exist, or an element filed in no section all fail the build.
 
 ## The kit
 
@@ -354,8 +436,8 @@ others, and grows every time another demo finds something worth sharing.
 
 There is no plugin API. Extending Weave means adding lines: a row to a table
 (`Weave.library.elements.tags.myWidget = {...}` adds a builder) or a new layer that honours the
-dependency direction — `overlays` went in between `components` and `patterns` that way, and
-`dates` and `formatting` between `timing` and `effects`,
+dependency direction — `overlays` went in between `components` and `patterns` that way, `auth` went on top of `patterns`,
+and `dates` and `formatting` between `timing` and `effects`,
 each as one file, one row in the audit's layer list, and its tables in the audit's required list. `Weave.library.collections.lifts` takes rows for new layers,
 so lifting extends too, and `Weave.library.collections.kinds` says how: a `curried*` kind lifts a
 function that takes its arguments before the element, so `Weave.library.collections.query.find('.row')`
