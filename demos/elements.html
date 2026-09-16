@@ -31,15 +31,30 @@ Weave.application.words.score = 3;
 Weave.application.words.half = 50;
 Weave.application.words.whole = 100;
 Weave.application.words.currency = 'GBP';
+Weave.application.words.traffic = 'Requests a day';
+Weave.application.words.lately = 'One line per service, on one axis.';
+Weave.application.words.quiet = 'Quiet';
+Weave.application.words.busy = 'Busy';
+Weave.application.words.moved = '+6.4%';
+Weave.application.words.total = 'This week';
 
 /* sample data: the rows the cards below draw, each written once and spent by whichever cards need it. */
 Weave.application.data = {};
 Weave.application.data.links = [{ label: 'Home', active: true }, { label: 'Pricing' }, { label: 'Docs' }];
 Weave.application.data.acts = [{ label: 'Sign in', variant: 'primary' }];
 Weave.application.data.rows = [{ label: 'Lisbon', value: 'Open' }, { label: 'Lima', value: 'Closed' }];
+Weave.application.data.week = [8200, 8600, 9100, 8800, 9400, 6100, 5400];
+Weave.application.data.other = [5100, 5400, 5200, 5600, 6200, 4400, 3900];
+Weave.application.data.small = [42, 38, 96, 61, 55, 24, 19];
+Weave.application.data.ticks = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+Weave.application.data.services = [{ key: 'api', label: 'Public API' }, { key: 'web', label: 'Web front end' }];
+Weave.application.data.places = [{ label: 'Europe', value: 38400 }, { label: 'North America', value: 29700 }, { label: 'Asia Pacific', value: 17300 }];
+Weave.application.data.hours = [[120, 260, 320, 180], [110, 300, 420, 150]];
 Weave.application.data.columns = [{ key: 'label', label: 'Place' }, { key: 'value', label: 'State' }];
 Weave.application.data.facts = [{ label: 'Plan', value: 'Scale' }, { label: 'Renews', value: 'March' }];
-Weave.application.data.moments = [{ when: 'Mon', label: 'Opened', note: 'by the on call engineer' }, { when: 'Tue', label: 'Signed off' }];
+Weave.application.data.moments = [{ label: 'Opened', note: 'by the on call engineer' }, { label: 'Signed off' }];
+Weave.application.momentAt = (moment, index) => Weave.library.composition.merge(moment, { when: Weave.application.data.ticks[index] });
+Weave.application.moments = () => Weave.application.data.moments.map(Weave.application.momentAt);
 Weave.application.data.steps = ['Basket', 'Address', 'Paid'];
 Weave.application.data.crumbs = [{ label: 'Library' }, { label: 'Components' }, { label: 'Buttons' }];
 Weave.application.data.menu = [{ label: 'Rename' }, { label: 'Duplicate' }, { label: 'Archive' }];
@@ -117,7 +132,7 @@ Weave.application.draws.listGroup = () => Weave.library.components.listGroup({ i
 Weave.application.draws.steps = () => Weave.library.components.steps({ label: 'Checkout', active: 1, items: Weave.application.data.steps });
 Weave.application.draws.table = () => Weave.library.components.table({ grid: Weave.library.components.markNames.grid.bordered, columns: Weave.application.data.columns, rows: Weave.application.data.rows });
 Weave.application.draws.descriptions = () => Weave.library.components.descriptions({ rows: Weave.application.data.facts });
-Weave.application.draws.timeline = () => Weave.library.components.timeline({ items: Weave.application.data.moments });
+Weave.application.draws.timeline = () => Weave.library.components.timeline({ items: Weave.application.moments() });
 Weave.application.draws.media = () => Weave.library.components.media({ glyph: '🍋', label: 'A lemon', ratio: Weave.library.components.markNames.ratio.wide });
 Weave.application.draws.progressBar = () => Weave.library.components.progressBar({ value: Weave.application.words.score, total: Weave.application.words.tally, tone: Weave.library.components.toneNames.info });
 Weave.application.draws.skeleton = () => Weave.library.components.skeleton({ lines: Weave.application.words.score });
@@ -195,9 +210,47 @@ Weave.application.calls.spinner = 'components.spinner({})';
 Weave.application.calls.emptyState = 'components.emptyState({ glyph, title, note })';
 Weave.application.calls.alert = 'components.alert({ title, note, tone, onClose })';
 Weave.application.calls.toast = 'components.toast({ message })';
+Weave.application.calls.chart = 'components.chart({ title, note, legend, children })';
+Weave.application.calls.legend = 'components.legend({ items })';
+Weave.application.calls.sparkline = 'components.sparkline({ values, series, label })';
+Weave.application.calls.lineChart = 'components.lineChart({ lines, label })';
+Weave.application.calls.axis = 'components.axis({ labels })';
+Weave.application.calls.barChart = 'components.barChart({ items, label })';
+Weave.application.calls.rankBars = 'components.rankBars({ items, label })';
+Weave.application.calls.donut = 'components.donut({ items, reading, label })';
+Weave.application.calls.heatmap = 'components.heatmap({ items, label })';
+Weave.application.calls.heatScale = 'components.heatScale({ least, most })';
+Weave.application.calls.trend = 'components.trend({ direction, tone, text })';
 Weave.application.calls.tooltip = 'components.tooltip({ label, note })';
 
-/* sections: the order the catalogue reads in. One row per section, naming the elements it carries. */
+/* sections: the order the catalogue reads in. One row per section, naming the elements it carries. */Weave.application.slotAt = index => Weave.library.components.seriesAt(index);
+Weave.application.marked = (row, index) => Weave.library.composition.merge(row, { series: Weave.application.slotAt(index), reading: Weave.kit.whole(row.value), key: row.label });
+Weave.application.places = () => Weave.application.data.places.map(Weave.application.marked);
+Weave.application.legendRows = () => Weave.application.data.services.map((row, index) => Weave.library.composition.merge(row, { series: Weave.application.slotAt(index) }));
+Weave.application.lineValues = () => [Weave.application.data.week, Weave.application.data.other];
+Weave.application.lineSpec = () => Weave.application.legendRows().map((row, index) => Weave.library.composition.merge(row, { values: Weave.application.lineValues()[index] }));
+Weave.application.readingAt = index => ({ label: Weave.application.data.ticks[index], value: Weave.application.data.small[index], reading: Weave.kit.whole(Weave.application.data.small[index]), series: Weave.application.firstSlot() });
+Weave.application.firstSlot = () => Weave.library.components.seriesNames.one;
+Weave.application.barSpec = () => Weave.application.data.small.map((value, index) => Weave.application.readingAt(index));
+Weave.application.rankSpec = () => Weave.application.data.places.map(row => Weave.library.composition.merge(row, { series: Weave.application.firstSlot(), reading: Weave.kit.whole(row.value) }));
+Weave.application.cellOf = value => ({ value, reading: Weave.kit.whole(value) });
+Weave.application.gridRow = (cells, index) => ({ label: Weave.application.data.ticks[index], cells: cells.map(Weave.application.cellOf) });
+Weave.application.gridSpec = () => Weave.application.data.hours.map(Weave.application.gridRow);
+Weave.application.ringTotal = () => Weave.kit.whole(Weave.library.components.chartSum(Weave.application.data.places.map(row => row.value)));
+Weave.application.spark = () => Weave.library.components.sparkline({ values: Weave.application.data.week, series: Weave.application.firstSlot(), label: Weave.application.words.traffic });
+Weave.application.draws.chart = () => Weave.library.components.chart({ title: Weave.application.words.traffic, note: Weave.application.words.lately, legend: Weave.application.legendRows(), children: [Weave.application.spark()] });
+Weave.application.draws.legend = () => Weave.library.components.legend({ items: Weave.application.legendRows() });
+Weave.application.draws.sparkline = () => Weave.application.spark();
+Weave.application.draws.lineChart = () => Weave.library.components.lineChart({ lines: Weave.application.lineSpec(), label: Weave.application.words.traffic });
+Weave.application.draws.axis = () => Weave.library.components.axis({ labels: Weave.application.data.ticks });
+Weave.application.draws.barChart = () => Weave.library.components.barChart({ items: Weave.application.barSpec(), label: Weave.application.words.traffic });
+Weave.application.draws.rankBars = () => Weave.library.components.rankBars({ items: Weave.application.rankSpec(), label: Weave.application.words.traffic });
+Weave.application.draws.donut = () => Weave.library.components.donut({ items: Weave.application.places(), reading: Weave.application.ringTotal(), label: Weave.application.words.total });
+Weave.application.draws.heatmap = () => Weave.library.components.heatmap({ items: Weave.application.gridSpec(), label: Weave.application.words.traffic });
+Weave.application.draws.heatScale = () => Weave.library.components.heatScale({ least: Weave.application.words.quiet, most: Weave.application.words.busy });
+Weave.application.draws.trend = () => Weave.library.components.trend({ direction: Weave.library.components.trendNames.up, tone: Weave.library.components.toneNames.success, text: Weave.application.words.moved });
+
+/* sections: the table the page is filed under, one row per heading, naming the cards it gathers. */
 Weave.application.sections = {};
 Weave.application.sections.layout = { title: 'Layout', names: ['panel', 'card', 'columns', 'tiles', 'split', 'divider', 'navbar', 'pageHeader', 'banner'] };
 Weave.application.sections.writing = { title: 'Writing', names: ['display', 'title', 'subtitle', 'sectionLabel', 'note', 'text', 'strong', 'hint', 'code', 'quote'] };
@@ -205,6 +258,7 @@ Weave.application.sections.marks = { title: 'Marks and figures', names: ['value'
 Weave.application.sections.controls = { title: 'Controls', names: ['button', 'buttonGroup', 'segmented', 'field', 'inputGroup', 'passwordField', 'codeField', 'textArea', 'selectBox', 'searchBox', 'checkField', 'switchField', 'sliderField', 'stepperField', 'choices', 'form', 'toolbar'] };
 Weave.application.sections.moving = { title: 'Getting around', names: ['tabs', 'breadcrumb', 'pagination', 'menu', 'dropdown', 'tree', 'listGroup', 'steps'] };
 Weave.application.sections.showing = { title: 'Showing data', names: ['table', 'descriptions', 'timeline', 'media', 'progressBar', 'skeleton', 'spinner', 'emptyState'] };
+Weave.application.sections.charts = { title: 'Charts', names: ['chart', 'legend', 'sparkline', 'lineChart', 'axis', 'barChart', 'rankBars', 'donut', 'heatmap', 'heatScale', 'trend'] };
 Weave.application.sections.saying = { title: 'Saying something', names: ['alert', 'toast', 'tooltip'] };
 
 /* the page: a card per element, a section per row of the table above, and a count of the whole thing. */

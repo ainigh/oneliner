@@ -2635,6 +2635,44 @@ Weave.library.components.blueprints.trackRow = Weave.library.components.parts.bo
 Weave.library.components.blueprints.timelineList = Weave.library.components.parts.list;
 Weave.library.components.blueprints.timelineRow = Weave.library.components.parts.listItem;
 Weave.library.components.blueprints.chipBox = Weave.library.components.parts.inline;
+/* parts, the plotted ones: the three svg builders a chart draws with, each named once here. */
+Weave.library.components.parts.plot = Weave.library.elements.svg.svg;
+Weave.library.components.parts.trace = Weave.library.elements.svg.polyline;
+Weave.library.components.parts.arc = Weave.library.elements.svg.circle;
+
+/* blueprints, the charted ones: one row per plain box a reading is drawn in. */
+Weave.library.components.blueprints.chartBox = Weave.library.components.parts.media;
+Weave.library.components.blueprints.chartHead = Weave.library.components.parts.header;
+Weave.library.components.blueprints.chartCaption = Weave.library.components.parts.credit;
+Weave.library.components.blueprints.legendList = Weave.library.components.parts.list;
+Weave.library.components.blueprints.legendItem = Weave.library.components.parts.listItem;
+Weave.library.components.blueprints.legendFace = Weave.library.components.parts.inline;
+Weave.library.components.blueprints.legendButton = Weave.library.components.parts.button;
+Weave.library.components.blueprints.legendSwatch = Weave.library.components.parts.inline;
+Weave.library.components.blueprints.chartPlot = Weave.library.components.parts.plot;
+Weave.library.components.blueprints.sparkPlot = Weave.library.components.parts.plot;
+Weave.library.components.blueprints.chartLine = Weave.library.components.parts.trace;
+Weave.library.components.blueprints.axisRow = Weave.library.components.parts.box;
+Weave.library.components.blueprints.axisLabel = Weave.library.components.parts.inline;
+Weave.library.components.blueprints.barsRow = Weave.library.components.parts.box;
+Weave.library.components.blueprints.barColumn = Weave.library.components.parts.box;
+Weave.library.components.blueprints.barTrack = Weave.library.components.parts.box;
+Weave.library.components.blueprints.chartBar = Weave.library.components.parts.box;
+Weave.library.components.blueprints.barValue = Weave.library.components.parts.inline;
+Weave.library.components.blueprints.rankList = Weave.library.components.parts.list;
+Weave.library.components.blueprints.rankRow = Weave.library.components.parts.listItem;
+Weave.library.components.blueprints.rankTrack = Weave.library.components.parts.box;
+Weave.library.components.blueprints.rankFill = Weave.library.components.parts.box;
+Weave.library.components.blueprints.ringBox = Weave.library.components.parts.box;
+Weave.library.components.blueprints.ringPlot = Weave.library.components.parts.plot;
+Weave.library.components.blueprints.ringSegment = Weave.library.components.parts.arc;
+Weave.library.components.blueprints.ringCentre = Weave.library.components.parts.box;
+Weave.library.components.blueprints.heatGrid = Weave.library.components.parts.box;
+Weave.library.components.blueprints.heatRow = Weave.library.components.parts.box;
+Weave.library.components.blueprints.heatCell = Weave.library.components.parts.box;
+Weave.library.components.blueprints.heatKey = Weave.library.components.parts.box;
+Weave.library.components.blueprints.trendMark = Weave.library.components.parts.inline;
+
 Weave.library.composition.defineEach(Weave.library.components, Weave.library.components.fromBlueprint)(Weave.library.components.blueprints);
 Weave.library.components.nameTable = table => Weave.library.composition.fromPairs(Weave.library.composition.keys(table).map(name => [name, name]));
 Weave.library.components.classNames = Weave.library.components.nameTable(Weave.library.components.blueprints);
@@ -2820,7 +2858,8 @@ Weave.library.components.tokens.tagWidth = '58px';
 Weave.library.components.tokens.switchWidth = '34px';
 Weave.library.components.tokens.switchHeight = '19px';
 Weave.library.components.tokens.knobSize = '13px';
-Weave.library.components.tokens.knobInset = '2px';
+Weave.library.components.tokens.markWidth = '2px';
+Weave.library.components.tokens.knobInset = Weave.library.components.tokens.markWidth;
 Weave.library.components.tokens.compactTrack = 'repeat(auto-fit, minmax(148px, 1fr))';
 Weave.library.components.tokens.stampWidth = '84px';
 Weave.library.components.tokens.bubbleWidth = 'min(560px, 84%)';
@@ -2851,6 +2890,21 @@ Weave.library.components.tokens.ratioSquare = '1 / 1';
 Weave.library.components.tokens.ratioTall = '3 / 4';
 Weave.library.components.tokens.wideWidth = '1100px';
 Weave.library.components.tokens.gateWidth = '380px';
+Weave.library.components.tokens.seriesOne = '#2a78d6';
+Weave.library.components.tokens.seriesTwo = '#eb6834';
+Weave.library.components.tokens.seriesThree = '#1baf7a';
+Weave.library.components.tokens.seriesFour = '#eda100';
+Weave.library.components.tokens.seriesFive = '#e87ba4';
+Weave.library.components.tokens.heatOne = '#eaf1fb';
+Weave.library.components.tokens.heatTwo = '#c3dcf6';
+Weave.library.components.tokens.heatThree = '#93bdea';
+Weave.library.components.tokens.heatFour = '#5b95dc';
+Weave.library.components.tokens.heatFive = '#1f6ac4';
+Weave.library.components.tokens.plotHeight = '160px';
+Weave.library.components.tokens.sparkHeight = Weave.library.components.tokens.controlHeightLarge;
+Weave.library.components.tokens.ringSize = '168px';
+Weave.library.components.tokens.ringWidth = Weave.library.components.tokens.spaceLoose;
+Weave.library.components.tokens.swatchSize = Weave.library.components.tokens.dotSize;
 Weave.library.composition.defineEach(Weave.library.components.vars, Weave.library.components.variableUse)(Weave.library.components.tokens);
 
 /* values: the only place a bare css keyword is written. One row, one keyword. */
@@ -2902,6 +2956,12 @@ Weave.library.components.values.blank = '""';
 Weave.library.components.values.underline = 'underline';
 Weave.library.components.values.inlineBlock = 'inline-block';
 Weave.library.components.values.snapX = 'x mandatory';
+Weave.library.components.values.percent = '%';
+Weave.library.components.values.round = 'round';
+Weave.library.components.values.crisp = 'non-scaling-stroke';
+Weave.library.components.values.visible = 'visible';
+Weave.library.components.values.struck = 'line-through';
+Weave.library.components.values.quarterTurn = 'rotate(-90deg)';
 Weave.library.components.borders = {};
 Weave.library.components.borders.hairline = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.edge;
 Weave.library.components.borders.accentLine = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.accent;
@@ -2989,6 +3049,7 @@ Weave.library.components.states.filled = '::-webkit-progress-value';
 Weave.library.components.states.on = '[aria-checked="true"]';
 Weave.library.components.states.knob = '::after';
 Weave.library.components.states.knobOn = '[aria-checked="true"]::after';
+Weave.library.components.states.unchosen = '[aria-selected="false"]';
 
 /* stateNames: the same states as names, in the order the sheet emits them. A later row wins the cascade. */
 Weave.library.components.stateNames = {};
@@ -3027,7 +3088,7 @@ Weave.library.components.stateRules.dayChosen = { name: Weave.library.components
 Weave.library.components.stateRules.dayHere = { name: Weave.library.components.dayName, state: Weave.library.components.stateNames.here, style: { borderColor: Weave.library.components.vars.accent, fontWeight: Weave.library.components.values.bold } };
 /* themes: one row per theme, each a table of token overrides. A theme row may only name token keys. */
 Weave.library.components.themes = {};
-Weave.library.components.themes.dark = { mediaWash: 'linear-gradient(145deg, #1d2836, #24202c 52%, #182234)', accentSoft: '#16233c', accentSoftInk: '#bcd0ff', ink: '#e8ecf3', muted: '#9aa4b2', edge: '#2b3442', surface: '#0f1722', sunken: '#172130', accent: '#7aa2ff', accentInk: '#0b1220', shadow: '0 1px 2px rgba(0, 0, 0, 0.5)', shadowLifted: '0 10px 30px rgba(0, 0, 0, 0.6)', focusRing: '0 0 0 3px rgba(122, 162, 255, 0.45)' };
+Weave.library.components.themes.dark = { mediaWash: 'linear-gradient(145deg, #1d2836, #24202c 52%, #182234)', accentSoft: '#16233c', accentSoftInk: '#bcd0ff', ink: '#e8ecf3', muted: '#9aa4b2', edge: '#2b3442', surface: '#0f1722', sunken: '#172130', accent: '#7aa2ff', accentInk: '#0b1220', shadow: '0 1px 2px rgba(0, 0, 0, 0.5)', shadowLifted: '0 10px 30px rgba(0, 0, 0, 0.6)', focusRing: '0 0 0 3px rgba(122, 162, 255, 0.45)' , seriesOne: '#3987e5', seriesTwo: '#d95926', seriesThree: '#199e70', seriesFour: '#c98500', seriesFive: '#d55181', heatOne: '#152238', heatTwo: '#1c3a63', heatThree: '#24558f', heatFour: '#2f74bd', heatFive: '#4a95e0' };
 
 /* themeNames: the only place a theme name is written. Every theme call takes a row from here. */
 Weave.library.components.themeNames = {};
@@ -3103,12 +3164,12 @@ Weave.library.components.parts.slider = Weave.library.elements.inputs.range;
 /* feedback: the widgets that say what just happened. Every one carries its tone as a data attribute. */
 Weave.library.components.textKey = 'text';
 Weave.library.components.alertClose = spec => Weave.library.control.maybe(() => Weave.library.components.closeButton(spec))(spec.onClose);
-Weave.library.components.alertTitle = spec => Weave.library.components.subtitle({ text: Weave.library.components.titleOf(spec) });
+Weave.library.components.titleLine = spec => Weave.library.components.subtitle({ text: Weave.library.components.titleOf(spec) });
 Weave.library.components.alertNote = spec => Weave.library.components.note({ text: Weave.library.components.noteOf(spec) });
 Weave.library.components.alertAction = spec => Weave.library.control.maybe(Weave.library.components.actionButton)(spec.action);
 Weave.library.components.alertFooterRows = spec => Weave.library.composition.compact([Weave.library.components.alertAction(spec), Weave.library.components.alertClose(spec)]);
 Weave.library.components.alertFooter = spec => Weave.library.control.either(rows => rows.length > 0, rows => Weave.library.components.actions({ children: rows }), Weave.library.composition.noop)(Weave.library.components.alertFooterRows(spec));
-Weave.library.components.alertBody = spec => Weave.library.composition.compact([Weave.library.components.alertTitle(spec), Weave.library.components.alertNote(spec), Weave.library.components.alertFooter(spec)]);
+Weave.library.components.alertBody = spec => Weave.library.composition.compact([Weave.library.components.titleLine(spec), Weave.library.components.alertNote(spec), Weave.library.components.alertFooter(spec)]);
 Weave.library.components.alertSpec = spec => Weave.library.composition.mergeDeep(spec, { children: Weave.library.components.alertBody(spec), data: Weave.library.components.toneData(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.alert) });
 Weave.library.components.alert = spec => Weave.library.components.build(Weave.library.components.parts.box, 'alert', Weave.library.components.alertSpec(spec));
 Weave.library.components.statusDot = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'statusDot', { data: Weave.library.components.toneData(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
@@ -3391,6 +3452,34 @@ Weave.library.components.variants.outline = { background: Weave.library.componen
 Weave.library.components.variants.link = { background: Weave.library.components.values.transparent, borderColor: Weave.library.components.values.transparent, color: Weave.library.components.vars.accent, textDecoration: Weave.library.components.values.underline };
 Weave.library.components.variants.good = { background: Weave.library.components.vars.toneSuccess, borderColor: Weave.library.components.vars.toneSuccess, color: Weave.library.components.vars.accentInk };
 Weave.library.components.variants.warn = { background: Weave.library.components.vars.toneWarning, borderColor: Weave.library.components.vars.toneWarning, color: Weave.library.components.vars.accentInk };
+/* charts, the ink: five slots in a fixed order, so a series keeps its colour when its neighbours leave. */
+Weave.library.components.seriesInks = {};
+Weave.library.components.seriesInks.one = { color: Weave.library.components.vars.seriesOne };
+Weave.library.components.seriesInks.two = { color: Weave.library.components.vars.seriesTwo };
+Weave.library.components.seriesInks.three = { color: Weave.library.components.vars.seriesThree };
+Weave.library.components.seriesInks.four = { color: Weave.library.components.vars.seriesFour };
+Weave.library.components.seriesInks.five = { color: Weave.library.components.vars.seriesFive };
+Weave.library.components.seriesNames = Weave.library.components.nameTable(Weave.library.components.seriesInks);
+Weave.library.components.seriesOrder = Weave.library.composition.keys(Weave.library.components.seriesInks);
+Weave.library.components.seriesLast = () => Weave.library.components.seriesOrder.length - 1;
+Weave.library.components.seriesAt = index => Weave.library.components.seriesOrder[Math.min(index, Weave.library.components.seriesLast())];
+Weave.library.components.chartClasses = [Weave.library.components.classNames.chartLine, Weave.library.components.classNames.chartBar, Weave.library.components.classNames.rankFill, Weave.library.components.classNames.legendSwatch, Weave.library.components.classNames.ringSegment];
+Weave.library.components.modifiers.series = { on: Weave.library.components.chartClasses, styles: Weave.library.components.seriesInks };
+
+/* charts, the ramp: one hue from light to dark, for the grid whose only question is how much. */
+Weave.library.components.heatSteps = {};
+Weave.library.components.heatSteps.one = { background: Weave.library.components.vars.heatOne };
+Weave.library.components.heatSteps.two = { background: Weave.library.components.vars.heatTwo };
+Weave.library.components.heatSteps.three = { background: Weave.library.components.vars.heatThree };
+Weave.library.components.heatSteps.four = { background: Weave.library.components.vars.heatFour };
+Weave.library.components.heatSteps.five = { background: Weave.library.components.vars.heatFive };
+Weave.library.components.heatNames = Weave.library.components.nameTable(Weave.library.components.heatSteps);
+Weave.library.components.heatOrder = Weave.library.composition.keys(Weave.library.components.heatSteps);
+Weave.library.components.heatLast = () => Weave.library.components.heatOrder.length - 1;
+Weave.library.components.heatStepOf = share => Math.floor(share * Weave.library.components.heatOrder.length);
+Weave.library.components.heatAt = share => Weave.library.components.heatOrder[Math.min(Weave.library.components.heatStepOf(share), Weave.library.components.heatLast())];
+Weave.library.components.modifiers.heat = { on: Weave.library.components.classNames.heatCell, styles: Weave.library.components.heatSteps };
+
 Weave.library.composition.defineEach(Weave.library.components.markNames, row => Weave.library.components.nameTable(row.styles))(Weave.library.components.modifiers);
 
 /* media: a picture box that looks right before, during and after the picture arrives. */
@@ -3650,6 +3739,146 @@ Weave.library.components.mediaRules.compact.rules.column = { gridColumn: Weave.l
 Weave.library.components.mediaRules.compact.rules.navbarBox = { flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.start };
 Weave.library.components.mediaRules.compact.rules.termsBox = { gridTemplateColumns: Weave.library.components.values.full };
 Weave.library.components.mediaRules.calm.rules.spinnerMark = { animation: Weave.library.components.values.none };
+
+/* charts, the arithmetic: a reading becomes a length exactly here, as a share of the box it is drawn in. */
+Weave.library.components.chartShare = (value, top) => Weave.library.composition.clamp(0, 1)(value / top);
+Weave.library.components.chartTop = values => Math.max(...values);
+Weave.library.components.chartSum = values => values.reduce((carried, value) => carried + value, 0);
+Weave.library.components.chartRound = share => Math.round(share * 1000) / 10;
+Weave.library.components.chartLength = share => String(Weave.library.components.chartRound(share)) + Weave.library.components.values.percent;
+Weave.library.components.valuesIn = spec => Weave.library.control.defaultTo([])(spec.values);
+Weave.library.components.linesIn = spec => Weave.library.control.defaultTo([])(spec.lines);
+Weave.library.components.labelsIn = spec => Weave.library.control.defaultTo([])(spec.labels);
+Weave.library.components.kidsIn = spec => Weave.library.control.defaultTo([])(spec.children);
+Weave.library.components.valueOfRow = row => row.value;
+Weave.library.components.topOfItems = spec => Weave.library.components.chartTop(Weave.library.components.itemsOf(spec).map(Weave.library.components.valueOfRow));
+
+/* charts, the plot: one polyline per series over a square view box, stretched to whatever box it is given. */
+Weave.library.components.plotSpan = 100;
+Weave.library.components.plotStep = count => Weave.library.components.plotSpan / Math.max(count - 1, 1);
+Weave.library.components.plotAcross = (index, count) => index * Weave.library.components.plotStep(count);
+Weave.library.components.plotUp = (value, top) => Weave.library.components.plotSpan - Weave.library.components.chartShare(value, top) * Weave.library.components.plotSpan;
+Weave.library.components.pointJoin = ',';
+Weave.library.components.pointAt = (count, top) => (value, index) => String(Weave.library.components.plotAcross(index, count)) + Weave.library.components.pointJoin + String(Weave.library.components.plotUp(value, top));
+Weave.library.components.pointsText = (values, top) => values.map(Weave.library.components.pointAt(values.length, top)).join(Weave.library.browser.keywords.space);
+Weave.library.components.plotFrame = () => [0, 0, Weave.library.components.plotSpan, Weave.library.components.plotSpan].join(Weave.library.browser.keywords.space);
+Weave.library.components.plotAttributes = () => ({ viewBox: Weave.library.components.plotFrame(), preserveAspectRatio: Weave.library.components.values.none });
+Weave.library.components.ringAttributes = () => ({ viewBox: Weave.library.components.plotFrame() });
+Weave.library.components.chartCeiling = spec => Weave.library.components.chartTop(Weave.library.components.linesIn(spec).flatMap(Weave.library.components.valuesIn));
+Weave.library.components.traceFor = spec => line => Weave.library.components.chartLine({ series: line.series, attributes: { points: Weave.library.components.pointsText(line.values, Weave.library.components.chartCeiling(spec)) } });
+Weave.library.components.lineChart = spec => Weave.library.components.chartPlot({ children: Weave.library.components.linesIn(spec).map(Weave.library.components.traceFor(spec)), attributes: Weave.library.components.plotAttributes(), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.sparkTrace = spec => Weave.library.components.chartLine({ series: spec.series, attributes: { points: Weave.library.components.pointsText(Weave.library.components.valuesIn(spec), Weave.library.components.chartTop(Weave.library.components.valuesIn(spec))) } });
+Weave.library.components.sparkline = spec => Weave.library.components.sparkPlot({ children: [Weave.library.components.sparkTrace(spec)], attributes: Weave.library.components.plotAttributes(), aria: Weave.library.components.labelAria(spec) });
+
+/* charts, the axis: the words under a plot, in the order the readings above them were given. */
+Weave.library.components.axisTick = text => Weave.library.components.axisLabel({ text });
+Weave.library.components.axis = spec => Weave.library.components.axisRow({ children: Weave.library.components.labelsIn(spec).map(Weave.library.components.axisTick) });
+
+/* charts, the legend: one entry per series, and pressing an entry takes that series off the chart. */
+Weave.library.components.legendLabel = item => Weave.library.components.hint({ text: item.label });
+Weave.library.components.legendParts = item => [Weave.library.components.legendSwatch({ series: item.series }), Weave.library.components.legendLabel(item)];
+Weave.library.components.legendPress = item => Weave.library.components.legendButton({ children: Weave.library.components.legendParts(item), onAction: item.onAction, aria: { selected: String(item.shown) } });
+Weave.library.components.legendStill = item => Weave.library.components.legendFace({ children: Weave.library.components.legendParts(item) });
+Weave.library.components.legendBody = item => Weave.library.control.either(Weave.library.predicates.isFunction, () => Weave.library.components.legendPress(item), () => Weave.library.components.legendStill(item))(item.onAction);
+Weave.library.components.legendRow = item => Weave.library.components.legendItem({ children: [Weave.library.components.legendBody(item)], data: { key: item.key } });
+Weave.library.components.legend = spec => Weave.library.components.legendList({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.legendRow) });
+
+/* charts, the frame: a figure that carries its own heading, legend and caption, so no chart is a bare box. */
+Weave.library.components.legendIn = spec => Weave.library.control.maybe(items => Weave.library.components.legend({ items }))(spec.legend);
+Weave.library.components.chartTitle = spec => Weave.library.control.maybe(() => Weave.library.components.titleLine(spec))(spec.title);
+Weave.library.components.chartHeadParts = spec => Weave.library.composition.compact([Weave.library.components.chartTitle(spec), Weave.library.components.legendIn(spec)]);
+Weave.library.components.chartCrown = spec => Weave.library.control.either(() => Weave.library.components.chartHeadParts(spec).length, () => Weave.library.components.chartHead({ children: Weave.library.components.chartHeadParts(spec) }), Weave.library.composition.noop)(spec);
+Weave.library.components.chartTail = spec => Weave.library.control.maybe(words => Weave.library.components.chartCaption({ text: words }))(spec.note);
+Weave.library.components.chartParts = spec => Weave.library.composition.compact([Weave.library.components.chartCrown(spec)].concat(Weave.library.components.kidsIn(spec), [Weave.library.components.chartTail(spec)]));
+Weave.library.components.chart = spec => Weave.library.components.chartBox({ children: Weave.library.components.chartParts(spec) });
+
+/* charts, the bars: a column per reading, its top rounded, its number written above and its name below. */
+Weave.library.components.barOf = top => item => Weave.library.components.chartBar({ series: item.series, styles: { height: Weave.library.components.chartLength(Weave.library.components.chartShare(item.value, top)) }, attributes: { title: item.reading } });
+Weave.library.components.barNumber = item => Weave.library.control.maybe(words => Weave.library.components.barValue({ text: words }))(item.reading);
+Weave.library.components.barParts = (top, item) => Weave.library.composition.compact([Weave.library.components.barNumber(item), Weave.library.components.barTrack({ children: [Weave.library.components.barOf(top)(item)] }), Weave.library.components.axisLabel({ text: item.label })]);
+Weave.library.components.barOne = top => item => Weave.library.components.barColumn({ children: Weave.library.components.barParts(top, item) });
+Weave.library.components.barChart = spec => Weave.library.components.barsRow({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.barOne(Weave.library.components.topOfItems(spec))), aria: Weave.library.components.labelAria(spec) });
+
+/* charts, the ranks: the same reading lying down, for the list of names too long to stand up. */
+Weave.library.components.rankBarOf = top => item => Weave.library.components.rankFill({ series: item.series, styles: { width: Weave.library.components.chartLength(Weave.library.components.chartShare(item.value, top)) } });
+Weave.library.components.rankParts = (top, item) => [Weave.library.components.truncate({ text: item.label }), Weave.library.components.rankTrack({ children: [Weave.library.components.rankBarOf(top)(item)] }), Weave.library.components.hint({ text: item.reading })];
+Weave.library.components.rankOne = top => item => Weave.library.components.rankRow({ children: Weave.library.components.rankParts(top, item) });
+Weave.library.components.rankBars = spec => Weave.library.components.rankList({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.rankOne(Weave.library.components.topOfItems(spec))), aria: Weave.library.components.labelAria(spec) });
+
+/* charts, the ring: a part against its whole at a glance, with the whole itself written in the middle. */
+Weave.library.components.ringRadius = 40;
+Weave.library.components.ringGap = 2;
+Weave.library.components.ringMiddle = () => Weave.library.components.plotSpan / 2;
+Weave.library.components.ringRound = () => 2 * Math.PI * Weave.library.components.ringRadius;
+Weave.library.components.ringLength = share => Math.max(share * Weave.library.components.ringRound() - Weave.library.components.ringGap, 0);
+Weave.library.components.ringDash = share => String(Weave.library.components.ringLength(share)) + Weave.library.components.pointJoin + String(Weave.library.components.ringRound());
+Weave.library.components.ringShift = before => String(0 - before * Weave.library.components.ringRound());
+Weave.library.components.ringShares = spec => Weave.library.components.itemsOf(spec).map(item => Weave.library.components.chartShare(item.value, Weave.library.components.chartSum(Weave.library.components.itemsOf(spec).map(Weave.library.components.valueOfRow))));
+Weave.library.components.ringBefore = (shares, index) => Weave.library.components.chartSum(shares.slice(0, index));
+Weave.library.components.ringPlace = () => ({ cx: Weave.library.components.ringMiddle(), cy: Weave.library.components.ringMiddle(), r: Weave.library.components.ringRadius });
+Weave.library.components.ringStroke = (shares, index) => ({ strokeDasharray: Weave.library.components.ringDash(shares[index]), strokeDashoffset: Weave.library.components.ringShift(Weave.library.components.ringBefore(shares, index)) });
+Weave.library.components.ringArc = shares => (item, index) => Weave.library.components.ringSegment({ series: item.series, attributes: Weave.library.components.ringPlace(), styles: Weave.library.components.ringStroke(shares, index), aria: { label: item.reading } });
+Weave.library.components.ringFace = spec => Weave.library.components.ringPlot({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.ringArc(Weave.library.components.ringShares(spec))), attributes: Weave.library.components.ringAttributes() });
+Weave.library.components.ringHeart = spec => Weave.library.components.ringCentre({ children: [Weave.library.components.value({ text: spec.reading }), Weave.library.components.hint({ text: spec.label })] });
+Weave.library.components.donut = spec => Weave.library.components.ringBox({ children: [Weave.library.components.ringFace(spec), Weave.library.components.ringHeart(spec)], aria: Weave.library.components.labelAria(spec) });
+
+/* charts, the heatmap: a cell per reading, its step taken from the ramp, with that ramp drawn beside it. */
+Weave.library.components.cellsOf = row => Weave.library.control.defaultTo([])(row.cells);
+Weave.library.components.heatTop = spec => Weave.library.components.chartTop(Weave.library.components.itemsOf(spec).flatMap(Weave.library.components.cellsOf).map(Weave.library.components.valueOfRow));
+Weave.library.components.heatCellOf = top => cell => Weave.library.components.heatCell({ heat: Weave.library.components.heatAt(Weave.library.components.chartShare(cell.value, top)), attributes: { title: cell.reading }, aria: { label: cell.reading } });
+Weave.library.components.heatLine = top => row => Weave.library.components.heatRow({ children: [Weave.library.components.axisLabel({ text: row.label })].concat(Weave.library.components.cellsOf(row).map(Weave.library.components.heatCellOf(top))) });
+Weave.library.components.heatmap = spec => Weave.library.components.heatGrid({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.heatLine(Weave.library.components.heatTop(spec))), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.heatChip = name => Weave.library.components.heatCell({ heat: name });
+Weave.library.components.heatChips = () => Weave.library.components.heatOrder.map(Weave.library.components.heatChip);
+Weave.library.components.heatScale = spec => Weave.library.components.heatKey({ children: [Weave.library.components.hint({ text: spec.least })].concat(Weave.library.components.heatChips(), [Weave.library.components.hint({ text: spec.most })]) });
+
+/* charts, the trend: which way a reading moved, said with an arrow, a word and a status colour at once. */
+Weave.library.components.trendGlyphs = {};
+Weave.library.components.trendGlyphs.up = '▲';
+Weave.library.components.trendGlyphs.down = '▼';
+Weave.library.components.trendGlyphs.level = '▬';
+Weave.library.components.trendNames = Weave.library.components.nameTable(Weave.library.components.trendGlyphs);
+Weave.library.components.trendWay = spec => Weave.library.control.defaultTo(Weave.library.components.trendNames.level)(spec.direction);
+Weave.library.components.trendGlyph = spec => Weave.library.components.trendGlyphs[Weave.library.components.trendWay(spec)];
+Weave.library.components.trendParts = spec => [Weave.library.components.icon({ glyph: Weave.library.components.trendGlyph(spec) }), Weave.library.components.textOf(spec, Weave.library.components.textKey)];
+Weave.library.components.trend = spec => Weave.library.components.trendMark({ children: Weave.library.components.trendParts(spec), tone: spec.tone, aria: Weave.library.components.labelAria(spec) });
+
+/* charts, the look: one row per class the widgets above draw, each still nothing but token references. */
+Weave.library.components.rules.chartBox = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space, margin: Weave.library.components.values.zero };
+Weave.library.components.rules.chartHead = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.between, gap: Weave.library.components.vars.space, flexWrap: Weave.library.components.values.wrap };
+Weave.library.components.rules.chartCaption = { color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall };
+Weave.library.components.rules.legendList = { listStyle: Weave.library.components.values.none, margin: Weave.library.components.values.zero, padding: Weave.library.components.values.zero, display: Weave.library.components.values.flex, flexWrap: Weave.library.components.values.wrap, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.legendItem = { display: Weave.library.components.values.inlineFlex };
+Weave.library.components.rules.legendFace = { display: Weave.library.components.values.inlineFlex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.spaceTight, padding: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.legendButton = { display: Weave.library.components.values.inlineFlex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.spaceTight, padding: Weave.library.components.vars.spaceTight, border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radiusRound, background: Weave.library.components.vars.surface, cursor: Weave.library.components.values.pointer, fontFamily: Weave.library.components.vars.font, fontSize: Weave.library.components.vars.fontSizeSmall, color: Weave.library.components.vars.ink };
+Weave.library.components.rules.legendSwatch = { width: Weave.library.components.vars.swatchSize, height: Weave.library.components.vars.swatchSize, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.values.inherited, flexShrink: Weave.library.components.values.zero };
+Weave.library.components.rules.chartPlot = { display: Weave.library.components.values.block, width: Weave.library.components.values.full, height: Weave.library.components.vars.plotHeight, overflow: Weave.library.components.values.visible, borderBottom: Weave.library.components.borders.hairline };
+Weave.library.components.rules.sparkPlot = { display: Weave.library.components.values.block, width: Weave.library.components.values.full, height: Weave.library.components.vars.sparkHeight, overflow: Weave.library.components.values.visible };
+Weave.library.components.rules.chartLine = { fill: Weave.library.components.values.none, stroke: Weave.library.components.values.inherited, strokeWidth: Weave.library.components.vars.markWidth, strokeLinecap: Weave.library.components.values.round, strokeLinejoin: Weave.library.components.values.round, vectorEffect: Weave.library.components.values.crisp };
+Weave.library.components.rules.axisRow = { display: Weave.library.components.values.flex, justifyContent: Weave.library.components.values.between, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.axisLabel = { color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall, whiteSpace: Weave.library.components.values.nowrap };
+Weave.library.components.rules.barsRow = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.end, gap: Weave.library.components.vars.markWidth, borderBottom: Weave.library.components.borders.hairline };
+Weave.library.components.rules.barColumn = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.spaceTight, flexGrow: Weave.library.components.values.grow, flexBasis: Weave.library.components.values.zero, minWidth: Weave.library.components.values.zero };
+Weave.library.components.rules.barTrack = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.end, width: Weave.library.components.values.full, height: Weave.library.components.vars.plotHeight };
+Weave.library.components.rules.chartBar = { width: Weave.library.components.values.full, background: Weave.library.components.values.inherited, borderTopLeftRadius: Weave.library.components.vars.radiusSmall, borderTopRightRadius: Weave.library.components.vars.radiusSmall, minHeight: Weave.library.components.vars.markWidth };
+Weave.library.components.rules.barValue = { fontSize: Weave.library.components.vars.fontSizeSmall, fontWeight: Weave.library.components.values.heavy, whiteSpace: Weave.library.components.values.nowrap };
+Weave.library.components.rules.rankList = { listStyle: Weave.library.components.values.none, margin: Weave.library.components.values.zero, padding: Weave.library.components.values.zero, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.rankRow = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.space };
+Weave.library.components.rules.rankTrack = { flexGrow: Weave.library.components.values.grow, height: Weave.library.components.vars.swatchSize, background: Weave.library.components.vars.sunken, borderRadius: Weave.library.components.vars.radiusRound, overflow: Weave.library.components.values.clip };
+Weave.library.components.rules.rankFill = { height: Weave.library.components.values.full, background: Weave.library.components.values.inherited, borderRadius: Weave.library.components.vars.radiusRound };
+Weave.library.components.rules.ringBox = { position: Weave.library.components.values.relative, width: Weave.library.components.vars.ringSize, height: Weave.library.components.vars.ringSize, display: Weave.library.components.values.grid, placeItems: Weave.library.components.values.center };
+Weave.library.components.rules.ringPlot = { position: Weave.library.components.values.absolute, width: Weave.library.components.values.full, height: Weave.library.components.values.full, transform: Weave.library.components.values.quarterTurn };
+Weave.library.components.rules.ringSegment = { fill: Weave.library.components.values.none, stroke: Weave.library.components.values.inherited, strokeWidth: Weave.library.components.vars.ringWidth };
+Weave.library.components.rules.ringCentre = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.center, textAlign: Weave.library.components.values.center, zIndex: Weave.library.components.values.one };
+Weave.library.components.rules.heatGrid = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.markWidth };
+Weave.library.components.rules.heatRow = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.markWidth };
+Weave.library.components.rules.heatCell = { flexGrow: Weave.library.components.values.grow, flexBasis: Weave.library.components.values.zero, height: Weave.library.components.vars.swatchSize, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.sunken };
+Weave.library.components.rules.heatKey = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.trendMark = { display: Weave.library.components.values.inlineFlex, alignItems: Weave.library.components.values.center, gap: Weave.library.components.vars.spaceTight, fontSize: Weave.library.components.vars.fontSizeSmall, fontWeight: Weave.library.components.values.heavy };
+Weave.library.components.toneRules.trendMark = Weave.library.components.toneSpends.ink;
+Weave.library.components.stateRules.legendFocus = Weave.library.components.focusRule(Weave.library.components.classNames.legendButton);
+Weave.library.components.stateRules.legendGone = { name: Weave.library.components.classNames.legendButton, state: Weave.library.components.stateNames.unchosen, style: { opacity: Weave.library.components.values.faded, textDecoration: Weave.library.components.values.struck } };
+Weave.library.components.mediaRules.compact.rules.ringBox = { width: Weave.library.components.values.full };
 
 /* overlays: everything that sits above the page. One host, one ladder, and a release for every open thing. */
 Weave.library.overlays = {};
@@ -4310,6 +4539,30 @@ Weave.library.patterns.chipFilter = spec => Weave.library.patterns.view(Weave.li
 Weave.library.patterns.revealFlip = update => () => update(state => ({ shown: !state.shown }));
 Weave.library.patterns.passwordBody = spec => (state, update) => Weave.library.components.passwordField(Weave.library.composition.merge(spec, { shown: state.shown, onReveal: Weave.library.patterns.revealFlip(update) }));
 Weave.library.patterns.passwordField = spec => Weave.library.patterns.view(Weave.library.patterns.passwordBody(spec), { shown: false });
+
+/* chartBoard: readings over a chosen span, with a legend that takes a series off the chart and back on. */
+Weave.library.patterns.chartSpans = spec => Weave.library.control.defaultTo([])(spec.spans);
+Weave.library.patterns.chartHidden = state => Weave.library.control.defaultTo([])(state.hidden);
+Weave.library.patterns.chartShown = (line, state) => !Weave.library.patterns.chartHidden(state).includes(Weave.library.patterns.keyOf(line));
+Weave.library.patterns.chartSlot = (spec, line) => Weave.library.components.seriesAt(Weave.library.components.linesIn(spec).indexOf(line));
+Weave.library.patterns.chartReading = (line, state) => Weave.library.control.defaultTo([])(line.readings[state.span]);
+Weave.library.patterns.chartWithout = (state, key) => Weave.library.patterns.chartHidden(state).filter(held => held !== key);
+Weave.library.patterns.chartFlipped = (state, key) => Weave.library.control.either(() => Weave.library.patterns.chartHidden(state).includes(key), () => Weave.library.patterns.chartWithout(state, key), () => Weave.library.patterns.chartHidden(state).concat([key]))(state);
+Weave.library.patterns.chartToggle = (update, key) => () => update(state => ({ hidden: Weave.library.patterns.chartFlipped(state, key) }));
+Weave.library.patterns.chartPick = update => key => update(() => ({ span: key }));
+Weave.library.patterns.chartStrip = (spec, state, update) => Weave.library.components.segmented({ items: Weave.library.patterns.chartSpans(spec), active: state.span, onPick: Weave.library.patterns.chartPick(update) });
+Weave.library.patterns.chartDraws = (spec, state) => line => ({ series: Weave.library.patterns.chartSlot(spec, line), shown: Weave.library.patterns.chartShown(line, state), values: Weave.library.patterns.chartReading(line, state) });
+Weave.library.patterns.chartMarks = (spec, state, update) => line => Weave.library.composition.merge(Weave.library.patterns.chartDraws(spec, state)(line), { onAction: Weave.library.patterns.chartToggle(update, Weave.library.patterns.keyOf(line)) });
+Weave.library.patterns.chartEntry = (spec, state, update) => line => Weave.library.composition.merge(line, Weave.library.patterns.chartMarks(spec, state, update)(line));
+Weave.library.patterns.chartEntries = (spec, state, update) => Weave.library.components.linesIn(spec).map(Weave.library.patterns.chartEntry(spec, state, update));
+Weave.library.patterns.chartLegend = (spec, state, update) => Weave.library.components.legend({ items: Weave.library.patterns.chartEntries(spec, state, update) });
+Weave.library.patterns.chartDrawn = (spec, state, update) => Weave.library.patterns.chartEntries(spec, state, update).filter(entry => entry.shown);
+Weave.library.patterns.chartView = (spec, state, update) => spec.draw({ span: state.span, lines: Weave.library.patterns.chartDrawn(spec, state, update) });
+Weave.library.patterns.chartParts = (spec, state, update) => [Weave.library.patterns.chartStrip(spec, state, update), Weave.library.patterns.chartLegend(spec, state, update), Weave.library.patterns.chartView(spec, state, update)];
+Weave.library.patterns.chartBody = spec => (state, update) => Weave.library.components.stack({ children: Weave.library.patterns.chartParts(spec, state, update) });
+Weave.library.patterns.chartFirst = spec => Weave.library.patterns.keyOf(Weave.library.composition.first(Weave.library.patterns.chartSpans(spec)));
+Weave.library.patterns.chartState = spec => ({ span: Weave.library.control.defaultTo(Weave.library.patterns.chartFirst(spec))(spec.span), hidden: [] });
+Weave.library.patterns.chartBoard = spec => Weave.library.patterns.view(Weave.library.patterns.chartBody(spec), Weave.library.patterns.chartState(spec));
 
 /* auth: the screens an application shows before it shows anything else, and the session they leave behind. */
 Weave.library.auth = {};

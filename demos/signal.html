@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weave demo — Signal</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: a service analytics console. Every mark is a library chart, so no colour is written here. */
+Weave.application = {};
+
+/* words: the only place this page writes something a reader will see. */
+Weave.application.words = {};
+Weave.application.words.title = 'Signal — service analytics';
+Weave.application.words.blurb = 'One week of four services, drawn with the library chart widgets. The legend takes a series off the plot; the table under it says the same numbers in words.';
+Weave.application.words.traffic = 'Requests a day';
+Weave.application.words.trafficNote = 'One line per service, on one axis. A series keeps its colour when its neighbours are switched off.';
+Weave.application.words.errors = 'Failed requests a day';
+Weave.application.words.errorsNote = 'Every bar carries its own number, so the reading never depends on the colour alone.';
+Weave.application.words.endpoints = 'Busiest endpoints';
+Weave.application.words.endpointsNote = 'The same reading lying down, for names too long to stand up.';
+Weave.application.words.regions = 'Requests by region';
+Weave.application.words.regionsNote = 'Part against whole, at a glance, with the whole written in the middle.';
+Weave.application.words.latency = 'Latency by hour';
+Weave.application.words.latencyNote = 'One hue from light to dark. Every cell names its own reading when you rest on it.';
+Weave.application.words.ledger = 'The same week, in words';
+Weave.application.words.quiet = 'Quiet';
+Weave.application.words.busy = 'Busy';
+Weave.application.words.total = 'This week';
+Weave.application.words.failures = 'Failed requests';
+Weave.application.words.middling = 'Median latency (ms)';
+Weave.application.words.peak = 'Peak latency (ms)';
+Weave.application.words.day = 'Day';
+Weave.application.words.everything = 'All services';
+
+/* spans: the two windows the traffic board offers, and the ticks each one writes under the plot. */
+Weave.application.spans = [{ key: 'week', label: 'Last 7 days' }, { key: 'fortnight', label: 'Last 14 days' }];
+Weave.application.days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+Weave.application.fortnight = () => Weave.library.composition.range(14).map(index => String(index + 1));
+Weave.application.ticksFor = span => Weave.library.control.either(() => span === Weave.library.composition.first(Weave.application.spans).key, () => Weave.application.days, Weave.application.fortnight)(span);
+
+/* services: one row per service, with a reading per span. The order here is the order of the colours. */
+Weave.application.services = [];
+Weave.application.services.push({ key: 'api', label: 'Public API', readings: { week: [8200, 8600, 9100, 8800, 9400, 6100, 5400], fortnight: [7400, 7800, 8100, 7900, 8300, 5600, 5100, 8200, 8600, 9100, 8800, 9400, 6100, 5400] } });
+Weave.application.services.push({ key: 'web', label: 'Web front end', readings: { week: [5100, 5400, 5200, 5600, 6200, 4400, 3900], fortnight: [4800, 4900, 5000, 5100, 5700, 4100, 3600, 5100, 5400, 5200, 5600, 6200, 4400, 3900] } });
+Weave.application.services.push({ key: 'jobs', label: 'Batch jobs', readings: { week: [2200, 2100, 2600, 2400, 2300, 2900, 3100], fortnight: [2000, 1900, 2400, 2200, 2100, 2700, 2800, 2200, 2100, 2600, 2400, 2300, 2900, 3100] } });
+
+/* the numbers the rest of the page reads. Nothing here is random, so the page looks the same twice. */
+Weave.application.data = {};
+Weave.application.data.errors = [42, 38, 96, 61, 55, 24, 19];
+Weave.application.data.endpoints = [{ label: '/v1/search', value: 41200 }, { label: '/v1/orders', value: 28600 }, { label: '/v1/customers', value: 19400 }, { label: '/v1/webhooks', value: 12100 }, { label: '/v1/reports', value: 6800 }];
+Weave.application.data.regions = [{ label: 'Europe', value: 46000 }, { label: 'North America', value: 34000 }, { label: 'Asia Pacific', value: 21000 }, { label: 'Latin America', value: 8000 }];
+Weave.application.data.latency = [{ label: 'Mon', cells: [120, 140, 180, 260, 320, 280, 210, 160] }, { label: 'Tue', cells: [110, 130, 190, 300, 360, 310, 220, 150] }, { label: 'Wed', cells: [130, 150, 240, 380, 420, 340, 260, 180] }, { label: 'Thu', cells: [100, 120, 170, 250, 300, 270, 200, 140] }, { label: 'Fri', cells: [140, 160, 260, 400, 460, 380, 280, 190] }];
+Weave.application.data.middling = [230, 226, 240, 218, 214, 208, 214];
+Weave.application.data.trends = {};
+Weave.application.data.trends.average = { label: Weave.application.words.traffic, text: '+6.4%', direction: Weave.library.components.trendNames.up, tone: Weave.library.components.toneNames.success };
+Weave.application.data.trends.failures = { label: Weave.application.words.failures, text: '+18.1%', direction: Weave.library.components.trendNames.up, tone: Weave.library.components.toneNames.danger };
+Weave.application.data.trends.middling = { label: Weave.application.words.middling, text: '-3.2%', direction: Weave.library.components.trendNames.down, tone: Weave.library.components.toneNames.success };
+Weave.application.data.trends.peak = { label: Weave.application.words.peak, text: 'Friday, 5pm', direction: Weave.library.components.trendNames.level, tone: Weave.library.components.toneNames.warning };
+
+/* the slot every single series chart draws in: the first one, always, so one reading never picks a colour. */
+Weave.application.first = () => Weave.library.components.seriesNames.one;
+Weave.application.slotAt = index => Weave.library.components.seriesAt(index);
+Weave.application.count = value => Weave.kit.whole(value);
+
+/* the headline: four readings, each one added up from the very numbers the charts below draw. */
+Weave.application.weekOf = service => Weave.library.components.chartSum(service.readings.week);
+Weave.application.dayTotal = index => Weave.library.components.chartSum(Weave.application.services.map(service => service.readings.week[index]));
+Weave.application.weekTotal = () => Weave.library.components.chartSum(Weave.application.services.map(Weave.application.weekOf));
+Weave.application.weekSpark = () => Weave.application.days.map((day, index) => Weave.application.dayTotal(index));
+Weave.application.average = () => Weave.application.weekTotal() / Weave.application.days.length;
+Weave.application.cells = () => Weave.application.data.latency.flatMap(row => row.cells);
+Weave.application.peak = () => Weave.library.components.chartTop(Weave.application.cells());
+Weave.application.peakDay = () => Weave.library.composition.last(Weave.application.data.latency).cells;
+Weave.application.failures = () => Weave.library.components.chartSum(Weave.application.data.errors);
+Weave.application.readingOf = (trend, value, spark) => Weave.library.composition.merge(trend, { value, spark });
+Weave.application.busyRead = () => Weave.application.readingOf(Weave.application.data.trends.average, Weave.application.average(), Weave.application.weekSpark());
+Weave.application.failRead = () => Weave.application.readingOf(Weave.application.data.trends.failures, Weave.application.failures(), Weave.application.data.errors);
+Weave.application.middlingRead = () => Weave.application.readingOf(Weave.application.data.trends.middling, Weave.library.composition.last(Weave.application.data.middling), Weave.application.data.middling);
+Weave.application.peakRead = () => Weave.application.readingOf(Weave.application.data.trends.peak, Weave.application.peak(), Weave.application.peakDay());
+Weave.application.readings = () => [Weave.application.busyRead(), Weave.application.failRead(), Weave.application.middlingRead(), Weave.application.peakRead()];
+Weave.application.tile = row => Weave.kit.reading({ label: row.label, value: Weave.application.count(row.value), text: row.text, direction: row.direction, tone: row.tone, values: row.spark, series: Weave.application.first() });
+Weave.application.headline = () => Weave.library.components.tiles({ children: Weave.application.readings().map(Weave.application.tile) });
+
+/* traffic: the board pattern holds the span and which series are on, and hands back the lines to draw. */
+Weave.application.plotParts = view => [Weave.library.components.lineChart({ lines: view.lines, label: Weave.application.words.traffic }), Weave.library.components.axis({ labels: Weave.application.ticksFor(view.span) })];
+Weave.application.plot = view => Weave.library.components.chart({ note: Weave.application.words.trafficNote, children: Weave.application.plotParts(view) });
+Weave.application.traffic = () => Weave.library.patterns.chartBoard({ spans: Weave.application.spans, lines: Weave.application.services, draw: Weave.application.plot }).element;
+
+/* errors: one bar a day, each carrying its own number above it. */
+Weave.application.errorBar = (value, index) => ({ label: Weave.application.days[index], value, reading: Weave.application.count(value), series: Weave.application.first() });
+Weave.application.errorChart = () => Weave.library.components.barChart({ items: Weave.application.data.errors.map(Weave.application.errorBar), label: Weave.application.words.errors });
+Weave.application.errors = () => Weave.library.components.chart({ title: Weave.application.words.errors, note: Weave.application.words.errorsNote, children: [Weave.application.errorChart()] });
+
+/* endpoints: the busiest paths, ranked, each with its count written at the end of its bar. */
+Weave.application.endpointRow = row => Weave.library.composition.merge(row, { reading: Weave.application.count(row.value), series: Weave.application.first() });
+Weave.application.endpointBars = () => Weave.library.components.rankBars({ items: Weave.application.data.endpoints.map(Weave.application.endpointRow), label: Weave.application.words.endpoints });
+Weave.application.endpoints = () => Weave.library.components.chart({ title: Weave.application.words.endpoints, note: Weave.application.words.endpointsNote, children: [Weave.application.endpointBars()] });
+
+/* regions: four slices, each keeping the colour its own row was given, with the total in the middle. */
+Weave.application.regionRow = (row, index) => Weave.library.composition.merge(row, { reading: Weave.application.count(row.value), series: Weave.application.slotAt(index), key: row.label });
+Weave.application.regionRows = () => Weave.application.data.regions.map(Weave.application.regionRow);
+Weave.application.regionTotal = () => Weave.application.count(Weave.library.components.chartSum(Weave.application.data.regions.map(row => row.value)));
+Weave.application.regionRing = () => Weave.library.components.donut({ items: Weave.application.regionRows(), reading: Weave.application.regionTotal(), label: Weave.application.words.total });
+Weave.application.regions = () => Weave.library.components.chart({ title: Weave.application.words.regions, note: Weave.application.words.regionsNote, legend: Weave.application.regionRows(), children: [Weave.application.regionRing()] });
+
+/* latency: a cell an hour, stepped off one ramp, with that ramp drawn under the grid. */
+Weave.application.hourCell = value => ({ value, reading: Weave.application.count(value) });
+Weave.application.hourRow = row => ({ label: row.label, cells: row.cells.map(Weave.application.hourCell) });
+Weave.application.grid = () => Weave.library.components.heatmap({ items: Weave.application.data.latency.map(Weave.application.hourRow), label: Weave.application.words.latency });
+Weave.application.scale = () => Weave.library.components.heatScale({ least: Weave.application.words.quiet, most: Weave.application.words.busy });
+Weave.application.latency = () => Weave.library.components.chart({ title: Weave.application.words.latency, note: Weave.application.words.latencyNote, children: [Weave.application.grid(), Weave.application.scale()] });
+
+/* the ledger: the same week as a table, because three of the five inks sit under three to one on white. */
+Weave.application.dayColumn = { key: 'day', label: Weave.application.words.day };
+Weave.application.serviceColumn = service => ({ key: service.key, label: service.label, format: Weave.application.count });
+Weave.application.columns = () => [Weave.application.dayColumn].concat(Weave.application.services.map(Weave.application.serviceColumn));
+Weave.application.ledgerCell = (carried, service, index) => Weave.library.composition.merge(carried, { [service.key]: service.readings.week[index] });
+Weave.application.ledgerRow = (day, index) => Weave.application.services.reduce((carried, service) => Weave.application.ledgerCell(carried, service, index), { day });
+Weave.application.ledgerRows = () => Weave.application.days.map(Weave.application.ledgerRow);
+Weave.application.ledger = () => Weave.library.components.table({ columns: Weave.application.columns(), rows: Weave.application.ledgerRows() });
+
+/* the page: the headline over the board, then a panel per question, then the words behind the pictures. */
+Weave.application.panelOf = made => Weave.library.components.panel({ children: [made()] });
+Weave.application.gallery = () => Weave.library.components.panels({ children: [Weave.application.errors, Weave.application.endpoints, Weave.application.regions, Weave.application.latency].map(Weave.application.panelOf) });
+Weave.application.ledgerPanel = () => Weave.kit.section({ title: Weave.application.words.ledger, children: [Weave.application.ledger()] });
+Weave.application.trafficPanel = () => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: Weave.application.words.traffic }), Weave.application.traffic()] });
+Weave.application.body = () => [Weave.application.headline(), Weave.application.trafficPanel(), Weave.application.gallery(), Weave.application.ledgerPanel()];
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: Weave.application.body() });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

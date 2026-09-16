@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 20, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 21, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -336,6 +336,31 @@ open('index.html').then(dom => {
   [...document.querySelectorAll('.weave-button')].find(button => button.textContent === 'Book it').click();
   expect('travel asks before it books', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
   [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Cancel').click();
+  return open('signal.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const lines = () => count(dom, '.weave-chart-line');
+  expect('signal draws one line per service', lines() === 3 + 4, `saw ${lines()}`);
+  const points = () => document.querySelector('.weave-chart-plot .weave-chart-line').getAttribute('points').split(' ').length;
+  expect('signal plots a week to begin with', points() === 7, `saw ${points()}`);
+  document.querySelectorAll('.weave-button-group-box .weave-button')[1].click();
+  expect('signal replots the fortnight on the same axis', points() === 14, `saw ${points()}`);
+  expect('signal writes a tick under every point', count(dom, '.weave-axis-row .weave-axis-label') === 14, `saw ${count(dom, '.weave-axis-row .weave-axis-label')}`);
+  document.querySelector('.weave-legend-button').click();
+  expect('signal takes a series off the plot', lines() === 2 + 4, `saw ${lines()}`);
+  expect('signal marks the series it has taken off', count(dom, '.weave-legend-button[aria-selected=false]') === 1, 'none marked');
+  const survivor = () => document.querySelectorAll('.weave-chart-plot .weave-chart-line')[0].dataset.series;
+  expect('signal leaves the survivors their own colour', survivor() === 'two', survivor());
+  document.querySelector('.weave-legend-button').click();
+  expect('signal puts the series back', lines() === 3 + 4, `saw ${lines()}`);
+  expect('signal writes the number above every bar', count(dom, '.weave-bar-value') === 7, `saw ${count(dom, '.weave-bar-value')}`);
+  const tallest = () => document.querySelectorAll('.weave-chart-bar')[2].style.height;
+  expect('signal draws the worst day full height', tallest() === '100%', tallest());
+  expect('signal ranks the busiest endpoints', count(dom, '.weave-rank-row') === 5, `saw ${count(dom, '.weave-rank-row')}`);
+  expect('signal cuts the ring into one arc per region', count(dom, '.weave-ring-segment') === 4, `saw ${count(dom, '.weave-ring-segment')}`);
+  expect('signal gives each region its own slot', document.querySelectorAll('.weave-ring-segment')[3].dataset.series === 'four', 'a slot was reused');
+  expect('signal steps every heat cell off the one ramp', count(dom, '.weave-heat-cell[data-heat]') === 45, `saw ${count(dom, '.weave-heat-cell[data-heat]')}`);
+  expect('signal says the same week in words', count(dom, '.weave-table tbody tr') === 7, `saw ${count(dom, '.weave-table tbody tr')}`);
   return open('kit.html');
 }).then(dom => {
   const document = dom.window.document;

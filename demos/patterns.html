@@ -23,6 +23,9 @@ Weave.application.words.chat = 'Support';
 Weave.application.words.agent = 'Desk';
 Weave.application.words.files = 'Repository';
 Weave.application.words.month = 'This month';
+Weave.application.words.traffic = 'Requests a day';
+Weave.application.words.week = 'Last 7 days';
+Weave.application.words.fortnight = 'Last 14 days';
 Weave.application.words.booking = 'Book a van';
 Weave.application.words.invite = 'Invite somebody';
 Weave.application.words.panel = 'Numbers';
@@ -64,6 +67,10 @@ Weave.application.draws.masterDetail = () => Weave.library.patterns.masterDetail
 Weave.application.draws.board = () => Weave.library.patterns.board({ columns: Weave.application.data.lanes, cards: Weave.application.data.cards }).element;
 Weave.application.draws.chat = () => Weave.library.patterns.chat({ title: Weave.application.words.chat, author: Weave.application.words.agent, messages: Weave.application.data.said }).element;
 Weave.application.draws.explorer = () => Weave.library.patterns.explorer({ title: Weave.application.words.files, nodes: Weave.application.data.tree, detail: node => Weave.library.components.note({ text: node.label }) }).element;
+Weave.application.spans = [{ key: 'week', label: Weave.application.words.week }, { key: 'fortnight', label: Weave.application.words.fortnight }];
+Weave.application.readings = [{ key: 'api', label: 'Public API', readings: { week: [8200, 8600, 9100, 8800, 9400, 6100, 5400], fortnight: [7400, 7800, 8100, 7900, 8300, 5600, 5100, 8200, 8600, 9100, 8800, 9400, 6100, 5400] } }, { key: 'web', label: 'Web front end', readings: { week: [5100, 5400, 5200, 5600, 6200, 4400, 3900], fortnight: [4800, 4900, 5000, 5100, 5700, 4100, 3600, 5100, 5400, 5200, 5600, 6200, 4400, 3900] } }];
+Weave.application.plotOf = view => Weave.library.components.lineChart({ lines: view.lines, label: Weave.application.words.traffic });
+Weave.application.draws.chartBoard = () => Weave.library.patterns.chartBoard({ spans: Weave.application.spans, lines: Weave.application.readings, draw: Weave.application.plotOf }).element;
 Weave.application.draws.dashboard = () => Weave.library.patterns.dashboard({ title: Weave.application.words.panel, stats: Weave.application.data.tiles, panels: Weave.application.data.panels }).element;
 Weave.application.draws.calendar = () => Weave.library.patterns.calendar({ title: Weave.application.words.month, events: [] }).element;
 Weave.application.draws.wizard = () => Weave.library.patterns.wizard({ title: Weave.application.words.booking, steps: Weave.application.data.steps }).element;
@@ -101,6 +108,7 @@ Weave.application.calls.masterDetail = 'patterns.masterDetail({ items, detail })
 Weave.application.calls.board = 'patterns.board({ columns, cards })';
 Weave.application.calls.chat = 'patterns.chat({ title, author, messages })';
 Weave.application.calls.explorer = 'patterns.explorer({ title, nodes, detail })';
+Weave.application.calls.chartBoard = 'patterns.chartBoard({ spans, lines, draw })';
 Weave.application.calls.dashboard = 'patterns.dashboard({ title, stats, panels })';
 Weave.application.calls.calendar = 'patterns.calendar({ title, events })';
 Weave.application.calls.wizard = 'patterns.wizard({ title, steps })';
@@ -125,7 +133,7 @@ Weave.application.calls.tip = 'overlays.tip(text)(element)';
 /* sections: the order the gallery reads in, one row per section. */
 Weave.application.sections = {};
 Weave.application.sections.lists = { title: 'Lists and tables', names: ['todoList', 'dataGrid', 'virtualList', 'virtualGrid', 'chipFilter'] };
-Weave.application.sections.shapes = { title: 'Whole screens', names: ['masterDetail', 'explorer', 'board', 'dashboard', 'calendar', 'chat'] };
+Weave.application.sections.shapes = { title: 'Whole screens', names: ['masterDetail', 'explorer', 'board', 'dashboard', 'chartBoard', 'calendar', 'chat'] };
 Weave.application.sections.asking = { title: 'Asking for things', names: ['entryForm', 'wizard', 'combobox', 'inlineEdit', 'passwordField', 'commandPalette'] };
 Weave.application.sections.switching = { title: 'Switching what shows', names: ['tabsView', 'carousel'] };
 Weave.application.sections.above = { title: 'Above the page', names: ['dialog', 'drawer', 'sheet', 'confirm', 'menu', 'tip', 'notifications'] };
