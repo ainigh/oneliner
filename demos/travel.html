@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — booking a journey</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: booking a journey. One store, four steps, and a summary that is always in step with it. */
+Weave.application = {};
+/* words: the only place this page writes a word of its own. */
+Weave.application.words = {};
+Weave.application.words.title = 'Kestrel Rail';
+Weave.application.words.blurb = 'A booking from one end to the other: where from, when, which train, who is travelling. One store holds all of it, and one connected view draws both the step and the summary, so they cannot disagree.';
+Weave.application.words.currency = 'GBP';
+Weave.application.words.where = 'Where are you going?';
+Weave.application.words.when = 'When?';
+Weave.application.words.which = 'Which train?';
+Weave.application.words.who = 'Who is travelling?';
+Weave.application.words.from = 'From';
+Weave.application.words.to = 'To';
+Weave.application.words.summary = 'Your journey';
+Weave.application.words.travellers = 'Travellers';
+Weave.application.words.cabin = 'Cabin';
+Weave.application.words.date = 'Date';
+Weave.application.words.train = 'Train';
+Weave.application.words.fare = 'Fare';
+Weave.application.words.book = 'Book it';
+Weave.application.words.sure = 'Book this journey?';
+Weave.application.words.once = 'The fare is held for twenty minutes after that.';
+Weave.application.words.booked = 'Booked. The tickets are in your account.';
+Weave.application.words.nothing = 'Not chosen yet';
+Weave.application.words.contact = 'Lead traveller';
+Weave.application.words.leaving = 'Leaves';
+Weave.application.words.taking = 'Takes';
+Weave.application.words.back = 'Back';
+Weave.application.words.next = 'Next';
+Weave.application.words.dayHint = 'Fares open twelve weeks ahead.';
+
+/* the rows: the stations, the cabins, the trains and what each one costs. Fares are in pence. */
+Weave.application.stations = [{ label: 'Leeds', value: 'lds' }, { label: 'York', value: 'yrk' }, { label: 'Manchester Piccadilly', value: 'man' }, { label: 'Edinburgh Waverley', value: 'edb' }, { label: 'London King’s Cross', value: 'kgx' }];
+Weave.application.cabins = [{ key: 'standard', label: 'Standard', extra: 0 }, { key: 'flexible', label: 'Flexible', extra: 1800 }, { key: 'first', label: 'First', extra: 4600 }];
+Weave.application.trains = [{ key: 'early', leaves: '06:42', takes: '2h 14m', fare: 3450 }, { key: 'mid', leaves: '09:10', takes: '2h 02m', fare: 5900 }, { key: 'late', leaves: '17:33', takes: '2h 21m', fare: 4100 }];
+Weave.application.journey = Weave.library.patterns.store({ step: 0, from: undefined, to: undefined, day: undefined, train: undefined, cabin: 'standard', people: 1, lead: 'Ana Ferreira' });
+Weave.application.money = amount => Weave.kit.pence(Weave.application.words.currency)(amount);
+Weave.application.chosenTrain = state => Weave.application.trains.find(row => row.key === state.train);
+Weave.application.chosenCabin = state => Weave.application.cabins.find(row => row.key === state.cabin);
+Weave.application.fare = state => Weave.library.control.maybe(train => (train.fare + Weave.application.chosenCabin(state).extra) * state.people)(Weave.application.chosenTrain(state));
+Weave.application.fareText = state => Weave.library.control.defaultTo(Weave.application.words.nothing)(Weave.library.control.maybe(Weave.application.money)(Weave.application.fare(state)));
+
+/* step one: two pickers over the same station table, each writing one key of the store. */
+Weave.application.stationOptions = () => Weave.application.stations.map(row => ({ value: row.label, label: row.label }));
+Weave.application.picks = key => event => Weave.application.journey.update(() => ({ [key]: Weave.library.events.valueOfTarget(event) }));
+Weave.application.stationBox = (key, state) => Weave.library.components.selectBox({ label: Weave.application.words[key], name: key, value: state[key], options: Weave.application.stationOptions(), onChoose: Weave.application.picks(key) });
+Weave.application.wherePane = state => Weave.library.components.stack({ children: [Weave.application.stationBox('from', state), Weave.application.stationBox('to', state)] });
+
+/* step two: the day, taken by the one control the platform already has for a day. */
+Weave.application.tookDay = event => Weave.application.journey.update(() => ({ day: Weave.library.events.valueOfTarget(event) }));
+Weave.application.whenPane = state => Weave.library.components.field({ label: Weave.application.words.when, name: 'day', type: Weave.library.elements.inputTypes.date, value: state.day, hint: Weave.application.words.dayHint, onEdit: Weave.application.tookDay });
+
+/* step three: the trains as a list group, the cabin as a segmented control, both reading the store back. */
+Weave.application.trainRow = state => row => ({ key: row.key, label: row.leaves, note: Weave.application.trainNote(row), active: row.key === state.train, onAction: () => Weave.application.takeTrain(row) });
+Weave.application.trainNote = row => Weave.application.words.taking + ' ' + row.takes + ' · ' + Weave.application.money(row.fare);
+Weave.application.takeTrain = row => Weave.application.journey.update(() => ({ train: row.key }));
+Weave.application.trainList = state => Weave.library.components.listGroup({ items: Weave.application.trains.map(Weave.application.trainRow(state)) });
+Weave.application.takeCabin = key => Weave.application.journey.update(() => ({ cabin: key }));
+Weave.application.cabinBar = state => Weave.library.components.segmented({ active: state.cabin, items: Weave.application.cabins, onPick: Weave.application.takeCabin });
+Weave.application.whichPane = state => Weave.library.components.stack({ children: [Weave.application.trainList(state), Weave.application.cabinBar(state)] });
+
+/* step four: how many are travelling, and who to put on the booking. */
+Weave.application.countPeople = event => Weave.application.journey.update(() => ({ people: Weave.library.composition.number(Weave.library.events.valueOfTarget(event)) }));
+Weave.application.peopleField = state => Weave.library.components.stepperField({ label: Weave.application.words.travellers, name: 'people', value: state.people, onEdit: Weave.application.countPeople });
+Weave.application.namePerson = event => Weave.application.journey.update(() => ({ lead: Weave.library.events.valueOfTarget(event) }));
+Weave.application.leadField = state => Weave.library.components.field({ label: Weave.application.words.contact, name: 'lead', value: state.lead, onEdit: Weave.application.namePerson });
+Weave.application.whoPane = state => Weave.library.components.stack({ children: [Weave.application.peopleField(state), Weave.application.leadField(state)] });
+
+/* the summary: the store read back as a description list, and the button that ends the booking. */
+Weave.application.said = value => Weave.library.control.defaultTo(Weave.application.words.nothing)(value);
+Weave.application.leaves = state => Weave.library.control.defaultTo(Weave.application.words.nothing)(Weave.library.control.reach(Weave.application.chosenTrain(state), 'leaves'));
+Weave.application.factRows = [['from', 'from'], ['to', 'to'], ['date', 'day'], ['travellers', 'people'], ['contact', 'lead']];
+Weave.application.factFor = state => ([word, key]) => ({ label: Weave.application.words[word], value: Weave.application.said(state[key]) });
+Weave.application.fact = (word, value) => ({ label: Weave.application.words[word], value });
+Weave.application.extraFacts = state => [Weave.application.fact('leaving', Weave.application.leaves(state)), Weave.application.fact('cabin', Weave.application.chosenCabin(state).label), Weave.application.fact('fare', Weave.application.fareText(state))];
+Weave.application.facts = state => Weave.application.factRows.map(Weave.application.factFor(state)).concat(Weave.application.extraFacts(state));
+Weave.application.booker = () => Weave.library.components.actionButton({ label: Weave.application.words.book, variant: Weave.library.components.markNames.variant.primary, width: Weave.library.components.markNames.width.full, onAction: Weave.application.askFirst });
+Weave.application.askFirst = () => Weave.kit.askThen({ title: Weave.application.words.sure, note: Weave.application.words.once }, Weave.application.booked);
+Weave.application.booked = () => Weave.kit.cheer(Weave.application.words.booked);
+Weave.application.summary = state => Weave.kit.section({ title: Weave.application.words.summary, children: [Weave.library.components.descriptions({ rows: Weave.application.facts(state) }), Weave.application.booker()] });
+
+/* the steps: the trail, the pane the step names, and the two buttons that move between them. */
+Weave.application.stepRows = [['where', 'wherePane'], ['when', 'whenPane'], ['which', 'whichPane'], ['who', 'whoPane']];
+Weave.application.paneFor = state => Weave.application[Weave.application.stepRows[state.step][1]](state);
+Weave.application.trail = state => Weave.library.components.steps({ label: Weave.application.words.title, active: state.step, items: Weave.application.stepRows.map(([word]) => Weave.application.words[word]) });
+Weave.application.moves = [['back', -1], ['next', 1]];
+Weave.application.moved = step => () => Weave.application.journey.update(state => ({ step: Weave.library.composition.clamp(0, Weave.application.stepRows.length - 1)(state.step + step) }));
+Weave.application.moveButton = ([word, step]) => ({ label: Weave.application.words[word], onAction: Weave.application.moved(step) });
+Weave.application.nav = () => Weave.library.components.buttonGroup({ items: Weave.application.moves.map(Weave.application.moveButton) });
+Weave.application.stepPanel = state => Weave.library.components.panel({ children: [Weave.library.components.title({ text: Weave.application.words[Weave.application.stepRows[state.step][0]] }), Weave.application.trail(state), Weave.application.paneFor(state), Weave.application.nav()] });
+
+/* the page: one connected view over one store, so the summary can never fall behind the steps. */
+Weave.application.desk = state => Weave.library.components.split({ children: [Weave.application.stepPanel(state), Weave.application.summary(state)] });
+Weave.application.view = () => Weave.library.patterns.connect(Weave.application.journey)(Weave.application.desk).element;
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.view()] });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

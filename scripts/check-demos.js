@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 18, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 20, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -294,6 +294,48 @@ open('index.html').then(dom => {
   groups()[3].querySelectorAll('.weave-button')[2].click();
   expect('tailor moves a modifier on one spec', card().dataset.gap === 'loose', card().dataset.gap);
   expect('tailor brands one panel on its own', document.querySelector('[style*="--weave-accent"]') !== null, 'no branded panel');
+  return open('landing.html');
+}).then(dom => {
+  const document = dom.window.document;
+  expect('landing leads with a hero', count(dom, '.weave-banner-box') === 1, `saw ${count(dom, '.weave-banner-box')}`);
+  expect('landing gives each reason a column', count(dom, '.weave-column') === 3, `saw ${count(dom, '.weave-column')}`);
+  expect('landing prices every plan', count(dom, '.weave-card[data-key]') === 3, `saw ${count(dom, '.weave-card[data-key]')}`);
+  expect('landing marks the plan it wants chosen', count(dom, '.weave-card[data-key] .weave-pill') === 1, `saw ${count(dom, '.weave-card[data-key] .weave-pill')}`);
+  expect('landing heads and foots its price cards', count(dom, '.weave-card-head') === 3 && count(dom, '.weave-card-foot') === 3, 'a card is missing a head or a foot');
+  expect('landing quotes the people who said it', count(dom, '.weave-quote-box .weave-credit') === 2, `saw ${count(dom, '.weave-quote-box .weave-credit')}`);
+  expect('landing answers every question it asks', count(dom, '.weave-disclosure') === 3, `saw ${count(dom, '.weave-disclosure')}`);
+  document.querySelector('.weave-banner-box .weave-button').click();
+  expect('landing answers its own call to action', count(dom, '.weave-toast-host .weave-alert') === 1, `saw ${count(dom, '.weave-toast-host .weave-alert')}`);
+  return open('travel.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const values = () => [...document.querySelectorAll('.weave-definition')].map(node => node.textContent);
+  const step = label => [...document.querySelectorAll('.weave-button-group-box .weave-button')].find(button => button.textContent === label).click();
+  const from = document.querySelector('select[name=from]');
+  from.value = 'York';
+  fire(dom, from, 'change');
+  expect('travel writes the station into the summary', values()[0] === 'York', values()[0]);
+  step('Next');
+  const day = document.querySelector('input[name=day]');
+  expect('travel asks for the day with the control the platform has', day.getAttribute('type') === 'date', day.getAttribute('type'));
+  day.value = '2026-10-01';
+  fire(dom, day, 'input');
+  expect('travel carries the day across', values()[2] === '2026-10-01', values()[2]);
+  step('Next');
+  expect('travel offers every train', count(dom, '.weave-group-row') === 3, `saw ${count(dom, '.weave-group-row')}`);
+  document.querySelectorAll('.weave-group-row .weave-row-button')[1].click();
+  expect('travel prices the train it was given', values()[7] === '£59.00', values()[7]);
+  document.querySelectorAll('.weave-button-group-box .weave-button')[2].click();
+  expect('travel reprices for the cabin', values()[7] === '£105.00', values()[7]);
+  step('Next');
+  const people = document.querySelector('input[name=people]');
+  people.value = '2';
+  fire(dom, people, 'input');
+  expect('travel multiplies the fare by the people travelling', values()[7] === '£210.00', values()[7]);
+  expect('travel marks exactly one step as current', count(dom, '.weave-step[aria-current=true]') === 1, `saw ${count(dom, '.weave-step[aria-current=true]')}`);
+  [...document.querySelectorAll('.weave-button')].find(button => button.textContent === 'Book it').click();
+  expect('travel asks before it books', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
+  [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Cancel').click();
   return open('kit.html');
 }).then(dom => {
   const document = dom.window.document;

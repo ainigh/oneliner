@@ -188,6 +188,23 @@ Weave.application.queue = Weave.library.patterns.connect(Weave.application.store
 | `patterns.persistIn(view, key)` | writes state to any storage view on every update and shows what it finds on the way in; `persist(key)` is that against local storage |
 | `patterns.linkTo(name)` | keeps one state key in the page address, so a view can be linked to |
 
+### Composing patterns
+
+A pattern owns its element. Build it once, put it on the page once, and let it repaint itself. A
+pattern built **inside** another pattern's render is rebuilt on every repaint of the parent, which
+throws away the state it was holding — so when two views need the same data, the answer is not to
+nest them but to give them one store:
+
+```js
+Weave.application.shop = Weave.library.patterns.store({ rows: [], keys: [] });
+Weave.application.shelf = () => Weave.library.patterns.connect(Weave.application.shop)(Weave.application.tiles).element;
+Weave.application.bar = () => Weave.library.patterns.connect(Weave.application.shop)(Weave.application.count).element;
+```
+
+`demos/shop.html` is that shape with two views, and `demos/travel.html` is the same shape taken all
+the way: one store holds the step as well as the booking, so the wizard and the summary beside it
+are drawn by one connected render and cannot disagree.
+
 `patterns.stop(handle)` releases every subscription the handle collected and takes its element out
 of the page. `studio.html` is the reference application for all of it.
 
@@ -391,7 +408,7 @@ npm run check       # all of the above
 
 ## The demos
 
-`demos/index.html` links sixteen pages: two of them catalogues of the library itself, and the rest
+`demos/index.html` links eighteen pages: two of them catalogues of the library itself, and the rest
 applications that put the patterns under load in a different shape. Each is short because the
 patterns do the work:
 
@@ -412,6 +429,8 @@ patterns do the work:
 | `account.html` | signing in | the gate, the session behind it, the desk it lets you at, and sign out |
 | `bank.html` | retail banking | accounts, a transfer that asks first, and a statement drawn twice from one set of rows |
 | `shop.html` | retail | a storefront on one store: a navbar counting the basket, an offer carousel, chips that filter, a basket in a sheet |
+| `landing.html` | marketing | the shape every product site takes: a hero, three reasons, prices, quotes and questions |
+| `travel.html` | booking | four steps and a summary over one store, priced by cabin and by how many are travelling |
 
 None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all of them, and holds the two catalogues to their own contract: an element with no call, a section naming an element that does not exist, or an element filed in no section all fail the build.
 
