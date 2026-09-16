@@ -38,6 +38,7 @@ const cases = [
   { table: 'Weave.library.components.states', target: 'library.components.stateNames', nameOf: key => key },
   { table: 'Weave.library.components.tones', target: 'library.components.toneNames', nameOf: key => key },
   { table: 'Weave.library.components.modifiers', target: 'library.components.markNames', nameOf: key => key },
+  { table: 'Weave.library.auth.screens', target: 'library.auth.gates', nameOf: key => key },
 ];
 
 const baseline = evaluate(source);

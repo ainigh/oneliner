@@ -1828,6 +1828,7 @@ Weave.library.forms.validators.number = () => value => !Weave.library.predicates
 Weave.library.forms.validators.min = limit => value => Weave.library.composition.number(value) < limit;
 Weave.library.forms.validators.max = limit => value => Weave.library.composition.number(value) > limit;
 Weave.library.forms.validators.matches = other => value => value !== other;
+Weave.library.forms.validators.sameAs = other => (value, values) => value !== values[other];
 Weave.library.forms.emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 Weave.library.forms.messages = {};
 Weave.library.forms.messages.required = 'This field is required';
@@ -1839,8 +1840,9 @@ Weave.library.forms.messages.number = 'This is not a number';
 Weave.library.forms.messages.min = 'This value is too small';
 Weave.library.forms.messages.max = 'This value is too large';
 Weave.library.forms.messages.matches = 'These values do not match';
-Weave.library.forms.checkRule = (value, [rule, parameter]) => Weave.library.control.either(() => Weave.library.forms.validators[rule](parameter)(value), () => Weave.library.forms.messages[rule], () => Weave.library.browser.keywords.empty)(value);
-Weave.library.forms.checkControl = (values, rules) => name => Weave.library.composition.pairs(Weave.library.control.defaultTo({})(rules[name])).map(pair => Weave.library.forms.checkRule(values[name], pair)).filter(message => message.length > 0);
+Weave.library.forms.messages.sameAs = 'These two do not match';
+Weave.library.forms.checkRule = (value, [rule, parameter], values) => Weave.library.control.either(() => Weave.library.forms.validators[rule](parameter)(value, values), () => Weave.library.forms.messages[rule], () => Weave.library.browser.keywords.empty)(value);
+Weave.library.forms.checkControl = (values, rules) => name => Weave.library.composition.pairs(Weave.library.control.defaultTo({})(rules[name])).map(pair => Weave.library.forms.checkRule(values[name], pair, values)).filter(message => message.length > 0);
 Weave.library.forms.problemsFor = (form, values, rules) => name => Weave.library.forms.checkControl(values, rules)(name).map(message => ({ el: Weave.library.forms.control(name)(form), message }));
 Weave.library.forms.validateWith = rules => form => Weave.library.composition.keys(rules).flatMap(Weave.library.forms.problemsFor(form, Weave.library.forms.values(form), rules));
 
@@ -4237,3 +4239,205 @@ Weave.library.patterns.menuAt = spec => event => Weave.library.patterns.menu(Wea
 Weave.library.patterns.shortcutStep = handler => event => Weave.library.control.unless(() => Weave.library.interaction.isTyping(), () => handler(event))(event);
 Weave.library.patterns.shortcutBind = ([combo, handler]) => Weave.library.interaction.shortcut(combo, Weave.library.patterns.shortcutStep(handler))(Weave.library.browser.document());
 Weave.library.patterns.shortcuts = map => Weave.library.events.combine(Weave.library.composition.pairs(map).map(Weave.library.patterns.shortcutBind));
+
+/* tabsView: the tab strip with the pane under it, so which pane shows is a state and never a branch. */
+Weave.library.patterns.labels.previous = 'Previous';
+Weave.library.patterns.labels.save = 'Save';
+Weave.library.patterns.labels.edit = 'Edit';
+Weave.library.patterns.labels.choose = 'Choose';
+Weave.library.patterns.keyOf = item => item.key;
+Weave.library.patterns.firstKey = spec => Weave.library.patterns.keyOf(Weave.library.composition.first(spec.items));
+Weave.library.patterns.tabsFound = (spec, state) => Weave.library.control.defaultTo(Weave.library.composition.first(spec.items))(spec.items.find(item => Weave.library.patterns.keyOf(item) === state.active));
+Weave.library.patterns.tabsContent = item => Weave.library.composition.listOf(Weave.library.control.either(Weave.library.predicates.isFunction, make => make(), Weave.library.composition.identity)(item.body));
+Weave.library.patterns.tabsPane = (spec, state) => Weave.library.components.panel({ children: Weave.library.patterns.tabsContent(Weave.library.patterns.tabsFound(spec, state)) });
+Weave.library.patterns.tabsPick = (update, item) => () => update(() => ({ active: Weave.library.patterns.keyOf(item) }));
+Weave.library.patterns.tabsItem = update => item => Weave.library.composition.merge(item, { onAction: Weave.library.patterns.tabsPick(update, item) });
+Weave.library.patterns.tabsStrip = (spec, state, update) => Weave.library.components.tabs({ active: state.active, items: spec.items.map(Weave.library.patterns.tabsItem(update)) });
+Weave.library.patterns.tabsBody = spec => (state, update) => Weave.library.components.stack({ children: [Weave.library.patterns.tabsStrip(spec, state, update), Weave.library.patterns.tabsPane(spec, state)] });
+Weave.library.patterns.tabsState = spec => ({ active: Weave.library.control.defaultTo(Weave.library.patterns.firstKey(spec))(spec.active) });
+Weave.library.patterns.tabsView = spec => Weave.library.patterns.view(Weave.library.patterns.tabsBody(spec), Weave.library.patterns.tabsState(spec));
+
+/* carousel: one slide at a time, the two arrows and a dot per slide. The index wraps rather than stops. */
+Weave.library.patterns.carouselWrap = (spec, index) => (index + spec.slides.length) % spec.slides.length;
+Weave.library.patterns.carouselStep = (spec, update, step) => () => update(state => ({ index: Weave.library.patterns.carouselWrap(spec, state.index + step) }));
+Weave.library.patterns.carouselMoves = [[Weave.library.patterns.labels.previous, Weave.library.patterns.stepBack], [Weave.library.patterns.labels.next, Weave.library.patterns.stepForward]];
+Weave.library.patterns.carouselArrow = (spec, update) => ([label, step]) => ({ label, onAction: Weave.library.patterns.carouselStep(spec, update, step) });
+Weave.library.patterns.carouselDot = (spec, state, update) => (ignored, index) => ({ label: String(index + 1), size: Weave.library.patterns.smallSize(), aria: { selected: String(index === state.index) }, onAction: () => update(() => ({ index })) });
+Weave.library.patterns.carouselDots = (spec, state, update) => Weave.library.components.buttonGroup({ items: spec.slides.map(Weave.library.patterns.carouselDot(spec, state, update)) });
+Weave.library.patterns.carouselStage = (spec, state) => Weave.library.components.panel({ children: Weave.library.composition.listOf(spec.slide(spec.slides[state.index], state.index)) });
+Weave.library.patterns.carouselArrows = (spec, update) => Weave.library.components.buttonGroup({ items: Weave.library.patterns.carouselMoves.map(Weave.library.patterns.carouselArrow(spec, update)) });
+Weave.library.patterns.carouselBar = (spec, state, update) => Weave.library.components.spread({ children: [Weave.library.patterns.carouselArrows(spec, update), Weave.library.patterns.carouselDots(spec, state, update)] });
+Weave.library.patterns.carouselBody = spec => (state, update) => Weave.library.components.stack({ children: [Weave.library.patterns.carouselStage(spec, state), Weave.library.patterns.carouselBar(spec, state, update)] });
+Weave.library.patterns.carousel = spec => Weave.library.patterns.view(Weave.library.patterns.carouselBody(spec), { index: 0 });
+
+/* combobox: a search box over the caller's options, answering with the row the reader chose. */
+Weave.library.patterns.comboMatches = (spec, state) => Weave.library.patterns.search(state.query, spec.options);
+Weave.library.patterns.comboTaken = (spec, update, option) => () => (update(() => ({ query: option.label, value: option.value })), spec.onPick(option));
+Weave.library.patterns.comboRow = (spec, update) => option => ({ label: option.label, hint: option.hint, onAction: Weave.library.patterns.comboTaken(spec, update, option) });
+Weave.library.patterns.comboRows = (spec, state, update) => Weave.library.patterns.comboMatches(spec, state).map(Weave.library.patterns.comboRow(spec, update));
+Weave.library.patterns.comboList = (spec, state, update) => Weave.library.control.either(() => Weave.library.patterns.comboMatches(spec, state).length > 0, () => Weave.library.components.menu({ items: Weave.library.patterns.comboRows(spec, state, update) }), Weave.library.patterns.emptyNote)(state);
+Weave.library.patterns.comboBody = spec => (state, update) => Weave.library.components.stack({ children: [Weave.library.patterns.queryBox(state, update), Weave.library.patterns.comboList(spec, state, update)] });
+Weave.library.patterns.comboState = spec => ({ query: Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(spec.query), value: spec.value });
+Weave.library.patterns.combobox = spec => Weave.library.patterns.view(Weave.library.patterns.comboBody(spec), Weave.library.patterns.comboState(spec));
+
+/* inlineEdit: a value that becomes a field when the reader asks, and a value again once it is saved. */
+Weave.library.patterns.editOpen = update => () => update(() => ({ editing: true }));
+Weave.library.patterns.editTaken = (spec, update) => values => update(() => ({ editing: false, value: Weave.library.patterns.editSaved(spec, values[Weave.library.browser.keywords.value]) }));
+Weave.library.patterns.editSaved = (spec, value) => Weave.library.composition.tap(() => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onSave)(value))(value);
+Weave.library.patterns.editField = (spec, state) => Weave.library.components.field({ label: spec.label, name: Weave.library.browser.keywords.value, value: state.value });
+Weave.library.patterns.editForm = (spec, state, update) => Weave.library.components.form({ submit: Weave.library.patterns.labels.save, fields: [Weave.library.patterns.editField(spec, state)], onSubmit: Weave.library.patterns.editTaken(spec, update) });
+Weave.library.patterns.editShow = (spec, state, update) => Weave.library.components.rowButton({ children: [Weave.library.components.strong({ text: state.value }), Weave.library.components.hint({ text: Weave.library.patterns.labels.edit })], onAction: Weave.library.patterns.editOpen(update) });
+Weave.library.patterns.editBody = spec => (state, update) => Weave.library.control.either(() => state.editing, () => Weave.library.patterns.editForm(spec, state, update), () => Weave.library.patterns.editShow(spec, state, update))(state);
+Weave.library.patterns.inlineEdit = spec => Weave.library.patterns.view(Weave.library.patterns.editBody(spec), { editing: false, value: spec.value });
+
+/* chipFilter: the choices already made as chips, and the ones left in a popover behind one button. */
+Weave.library.patterns.chipChosen = (spec, state) => spec.items.filter(item => state.chosen.includes(Weave.library.patterns.keyOf(item)));
+Weave.library.patterns.chipRest = (spec, state) => spec.items.filter(item => !state.chosen.includes(Weave.library.patterns.keyOf(item)));
+Weave.library.patterns.chipTold = (spec, keys) => Weave.library.composition.tap(() => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onChange)(keys))(keys);
+Weave.library.patterns.chipDrop = (spec, update, item) => () => update(state => ({ chosen: Weave.library.patterns.chipTold(spec, state.chosen.filter(key => key !== Weave.library.patterns.keyOf(item))) }));
+Weave.library.patterns.chipTake = (spec, update, item) => () => update(state => ({ chosen: Weave.library.patterns.chipTold(spec, state.chosen.concat([Weave.library.patterns.keyOf(item)])) }));
+Weave.library.patterns.chipOne = (spec, update) => item => Weave.library.components.chip({ text: item.label, onRemove: Weave.library.patterns.chipDrop(spec, update, item) });
+Weave.library.patterns.chipOffer = (spec, update) => item => ({ label: item.label, onAction: Weave.library.patterns.chipTake(spec, update, item) });
+Weave.library.patterns.chipMenu = (spec, state, update) => Weave.library.patterns.menuAt({ items: Weave.library.patterns.chipRest(spec, state).map(Weave.library.patterns.chipOffer(spec, update)) });
+Weave.library.patterns.chipAdd = (spec, state, update) => Weave.library.components.actionButton({ label: Weave.library.patterns.labels.choose, size: Weave.library.patterns.smallSize(), onAction: Weave.library.patterns.chipMenu(spec, state, update) });
+Weave.library.patterns.chipParts = (spec, state, update) => Weave.library.patterns.chipChosen(spec, state).map(Weave.library.patterns.chipOne(spec, update)).concat([Weave.library.patterns.chipAdd(spec, state, update)]);
+Weave.library.patterns.chipBody = spec => (state, update) => Weave.library.components.row({ children: Weave.library.patterns.chipParts(spec, state, update) });
+Weave.library.patterns.chipFilter = spec => Weave.library.patterns.view(Weave.library.patterns.chipBody(spec), { chosen: Weave.library.control.defaultTo([])(spec.chosen) });
+
+/* passwordField: the one control that has to change what it is showing, so it is a pattern and not a component. */
+Weave.library.patterns.revealFlip = update => () => update(state => ({ shown: !state.shown }));
+Weave.library.patterns.passwordBody = spec => (state, update) => Weave.library.components.passwordField(Weave.library.composition.merge(spec, { shown: state.shown, onReveal: Weave.library.patterns.revealFlip(update) }));
+Weave.library.patterns.passwordField = spec => Weave.library.patterns.view(Weave.library.patterns.passwordBody(spec), { shown: false });
+
+/* auth: the screens an application shows before it shows anything else, and the session they leave behind. */
+Weave.library.auth = {};
+
+/* labels: the only place a word an authentication screen shows is written. One row, one word. */
+Weave.library.auth.labels = {};
+Weave.library.auth.labels.signIn = 'Sign in';
+Weave.library.auth.labels.signUp = 'Create an account';
+Weave.library.auth.labels.signOut = 'Sign out';
+Weave.library.auth.labels.forgot = 'Forgot your password?';
+Weave.library.auth.labels.reset = 'Choose a new password';
+Weave.library.auth.labels.verify = 'Enter your code';
+Weave.library.auth.labels.verifySubmit = 'Verify';
+Weave.library.auth.labels.sendLink = 'Send the reset code';
+Weave.library.auth.labels.backToSignIn = 'Back to sign in';
+Weave.library.auth.labels.email = 'Email';
+Weave.library.auth.labels.password = 'Password';
+Weave.library.auth.labels.confirmation = 'Confirm password';
+Weave.library.auth.labels.person = 'Your name';
+Weave.library.auth.labels.code = 'Verification code';
+Weave.library.auth.labels.strength = 'Password strength';
+Weave.library.auth.labels.signedInAs = 'Signed in as ';
+Weave.library.auth.labels.account = 'Account';
+
+/* notes: one line under each screen title, saying what the screen is about to do. */
+Weave.library.auth.notes = {};
+Weave.library.auth.notes.signIn = 'Welcome back. Your session is kept until you sign out.';
+Weave.library.auth.notes.signUp = 'A code goes to your address before the account opens.';
+Weave.library.auth.notes.forgot = 'Tell us the address and we will send a code to it.';
+Weave.library.auth.notes.verify = 'Six digits, from the message that has just arrived.';
+Weave.library.auth.notes.reset = 'Choose something long. The meter says how it is doing.';
+
+/* fields: one row per field any screen asks for, holding its label, its type and the rules it must pass. */
+Weave.library.auth.fields = {};
+Weave.library.auth.fields.person = { name: 'person', label: Weave.library.auth.labels.person, rules: { required: true, minLength: 2 } };
+Weave.library.auth.fields.email = { name: 'email', label: Weave.library.auth.labels.email, type: Weave.library.elements.inputTypes.email, rules: { required: true, email: true } };
+Weave.library.auth.fields.password = { name: 'password', label: Weave.library.auth.labels.password, type: Weave.library.elements.inputTypes.password, rules: { required: true, minLength: 8 } };
+Weave.library.auth.fields.confirmation = { name: 'confirmation', label: Weave.library.auth.labels.confirmation, type: Weave.library.elements.inputTypes.password, rules: { required: true, sameAs: Weave.library.auth.fields.password.name } };
+Weave.library.auth.fields.code = { name: 'code', label: Weave.library.auth.labels.code, rules: { required: true, minLength: 6 } };
+
+/* names: the only place a screen is named. Every row that points at a screen points at one of these. */
+Weave.library.auth.names = {};
+Weave.library.auth.names.signIn = 'signIn';
+Weave.library.auth.names.signUp = 'signUp';
+Weave.library.auth.names.forgot = 'forgot';
+Weave.library.auth.names.verify = 'verify';
+Weave.library.auth.names.reset = 'reset';
+
+/* screens: one row per screen, naming what it asks for, what its button says, where it goes and what it links to. */
+Weave.library.auth.screens = {};
+Weave.library.auth.screens.signIn = { title: Weave.library.auth.labels.signIn, note: Weave.library.auth.notes.signIn, fields: [Weave.library.auth.fields.email, Weave.library.auth.fields.password], submit: Weave.library.auth.labels.signIn, links: [Weave.library.auth.names.forgot, Weave.library.auth.names.signUp] };
+Weave.library.auth.screens.signUp = { title: Weave.library.auth.labels.signUp, note: Weave.library.auth.notes.signUp, fields: [Weave.library.auth.fields.person, Weave.library.auth.fields.email, Weave.library.auth.fields.password, Weave.library.auth.fields.confirmation], submit: Weave.library.auth.labels.signUp, meter: true, next: Weave.library.auth.names.verify, links: [Weave.library.auth.names.signIn] };
+Weave.library.auth.screens.forgot = { title: Weave.library.auth.labels.forgot, note: Weave.library.auth.notes.forgot, fields: [Weave.library.auth.fields.email], submit: Weave.library.auth.labels.sendLink, next: Weave.library.auth.names.verify, links: [Weave.library.auth.names.signIn] };
+Weave.library.auth.screens.verify = { title: Weave.library.auth.labels.verify, note: Weave.library.auth.notes.verify, fields: [Weave.library.auth.fields.code], submit: Weave.library.auth.labels.verifySubmit, code: true, next: Weave.library.auth.names.reset, links: [Weave.library.auth.names.signIn] };
+Weave.library.auth.screens.reset = { title: Weave.library.auth.labels.reset, note: Weave.library.auth.notes.reset, fields: [Weave.library.auth.fields.password, Weave.library.auth.fields.confirmation], submit: Weave.library.auth.labels.reset, meter: true, next: Weave.library.auth.names.signIn, links: [Weave.library.auth.names.signIn] };
+
+/* links: the words a screen is linked to by, which is its own title unless a row here says otherwise. */
+Weave.library.auth.linkLabels = {};
+Weave.library.auth.linkLabels.signIn = Weave.library.auth.labels.backToSignIn;
+Weave.library.auth.screenOf = name => Weave.library.auth.screens[name];
+Weave.library.auth.linkOf = name => Weave.library.control.defaultTo(Weave.library.components.titleOf(Weave.library.auth.screenOf(name)))(Weave.library.auth.linkLabels[name]);
+
+/* strength: one row per thing a password can carry, so the meter counts rows and never runs a formula. */
+Weave.library.auth.expressions = {};
+Weave.library.auth.expressions.letter = /[a-z]/;
+Weave.library.auth.expressions.capital = /[A-Z]/;
+Weave.library.auth.expressions.digit = /[0-9]/;
+Weave.library.auth.expressions.symbol = /[^a-zA-Z0-9]/;
+Weave.library.auth.longEnough = 12;
+Weave.library.auth.checks = {};
+Weave.library.auth.checks.long = word => String(word).length >= Weave.library.auth.longEnough;
+Weave.library.auth.checks.letter = word => Weave.library.auth.expressions.letter.test(String(word));
+Weave.library.auth.checks.capital = word => Weave.library.auth.expressions.capital.test(String(word));
+Weave.library.auth.checks.digit = word => Weave.library.auth.expressions.digit.test(String(word));
+Weave.library.auth.checks.symbol = word => Weave.library.auth.expressions.symbol.test(String(word));
+Weave.library.auth.checkCount = () => Weave.library.composition.keys(Weave.library.auth.checks).length;
+Weave.library.auth.score = word => Weave.library.composition.values(Weave.library.auth.checks).filter(check => check(word)).length;
+Weave.library.auth.strengthTones = [Weave.library.components.toneNames.danger, Weave.library.components.toneNames.danger, Weave.library.components.toneNames.warning, Weave.library.components.toneNames.warning, Weave.library.components.toneNames.success, Weave.library.components.toneNames.success];
+Weave.library.auth.toneFor = word => Weave.library.auth.strengthTones[Weave.library.auth.score(word)];
+Weave.library.auth.strengthBar = word => Weave.library.components.progressBar({ value: Weave.library.auth.score(word), total: Weave.library.auth.checkCount(), tone: Weave.library.auth.toneFor(word) });
+Weave.library.auth.strengthMeter = word => Weave.library.components.stack({ children: [Weave.library.components.hint({ text: Weave.library.auth.labels.strength }), Weave.library.auth.strengthBar(word)] });
+
+/* the gate: one pattern holding the screen, what has been typed and what was wrong with it. */
+Weave.library.auth.gateState = spec => ({ screen: Weave.library.control.defaultTo(Weave.library.auth.names.signIn)(spec.screen), values: {}, errors: {} });
+Weave.library.auth.gateScreen = state => Weave.library.auth.screenOf(state.screen);
+Weave.library.auth.goTo = (update, name) => () => update(() => ({ screen: name, values: {}, errors: {} }));
+Weave.library.auth.linkRow = update => name => ({ label: Weave.library.auth.linkOf(name), variant: Weave.library.auth.linkVariant, onAction: Weave.library.auth.goTo(update, name) });
+Weave.library.auth.linkVariant = 'link';
+Weave.library.auth.linkButton = update => name => Weave.library.components.actionButton(Weave.library.auth.linkRow(update)(name));
+Weave.library.auth.linkBar = (state, update) => Weave.library.components.row({ children: Weave.library.auth.gateScreen(state).links.map(Weave.library.auth.linkButton(update)) });
+Weave.library.auth.handled = (spec, state, values) => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onDone)(state.screen, values);
+Weave.library.auth.moved = state => ({ screen: Weave.library.control.defaultTo(state.screen)(Weave.library.auth.gateScreen(state).next), values: {}, errors: {} });
+Weave.library.auth.accepted = (spec, state, update, values) => (Weave.library.auth.handled(spec, state, values), update(() => Weave.library.auth.moved(state)));
+Weave.library.auth.refused = (update, values, errors) => update(() => ({ values, errors }));
+Weave.library.auth.judged = (spec, state, update, values, errors) => Weave.library.control.either(() => Weave.library.patterns.isClean(errors), () => Weave.library.auth.accepted(spec, state, update, values), () => Weave.library.auth.refused(update, values, errors))(values);
+Weave.library.auth.gateSubmit = (spec, state, update) => values => Weave.library.auth.judged(spec, state, update, values, Weave.library.patterns.problemsOf(Weave.library.auth.gateScreen(state), values));
+Weave.library.auth.gateField = state => field => Weave.library.patterns.entryField(state)(field);
+Weave.library.auth.gateFields = state => Weave.library.auth.gateScreen(state).fields.map(Weave.library.auth.gateField(state));
+Weave.library.auth.typedPassword = state => Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(state.values[Weave.library.auth.fields.password.name]);
+Weave.library.auth.gateMeter = state => Weave.library.control.maybe(() => Weave.library.auth.strengthMeter(Weave.library.auth.typedPassword(state)))(Weave.library.auth.gateScreen(state).meter);
+Weave.library.auth.gateForm = (spec, state, update) => Weave.library.components.form({ submit: Weave.library.auth.gateScreen(state).submit, fields: Weave.library.auth.gateFields(state), onSubmit: Weave.library.auth.gateSubmit(spec, state, update) });
+Weave.library.auth.gateTitle = state => Weave.library.components.title({ text: Weave.library.components.titleOf(Weave.library.auth.gateScreen(state)) });
+Weave.library.auth.gateNote = state => Weave.library.components.note({ text: Weave.library.components.noteOf(Weave.library.auth.gateScreen(state)) });
+Weave.library.auth.gateHead = state => Weave.library.components.stack({ children: [Weave.library.auth.gateTitle(state), Weave.library.auth.gateNote(state)] });
+Weave.library.auth.gateParts = (spec, state, update) => Weave.library.composition.compact([Weave.library.auth.gateHead(state), Weave.library.auth.gateForm(spec, state, update), Weave.library.auth.gateMeter(state), Weave.library.auth.linkBar(state, update)]);
+Weave.library.auth.gateBody = spec => (state, update) => Weave.library.components.panel({ width: Weave.library.components.markNames.width.gate, children: Weave.library.auth.gateParts(spec, state, update) });
+Weave.library.auth.gate = spec => Weave.library.patterns.view(Weave.library.auth.gateBody(spec), Weave.library.auth.gateState(spec));
+Weave.library.auth.gateAt = name => (spec = {}) => Weave.library.auth.gate(Weave.library.composition.merge(spec, { screen: name }));
+Weave.library.auth.gates = {};
+Weave.library.composition.defineEach(Weave.library.auth.gates, (row, name) => Weave.library.auth.gateAt(name))(Weave.library.auth.screens);
+
+/* session: who is signed in, in one store, so every view of it agrees and a reload does not forget. */
+Weave.library.auth.sessionKey = 'weave-session';
+Weave.library.auth.personKey = 'person';
+Weave.library.auth.emptySession = () => ({ [Weave.library.auth.personKey]: undefined });
+Weave.library.auth.sessionIn = (view, key) => Weave.library.patterns.persistIn(view, key)(Weave.library.patterns.store(Weave.library.auth.emptySession()));
+Weave.library.auth.session = (key = Weave.library.auth.sessionKey) => Weave.library.auth.sessionIn(Weave.library.storage.local, key);
+Weave.library.auth.personOf = session => session.state[Weave.library.auth.personKey];
+Weave.library.auth.isSignedIn = session => Weave.library.predicates.isDefined(Weave.library.auth.personOf(session));
+Weave.library.auth.signIn = session => person => session.update(() => ({ [Weave.library.auth.personKey]: person }));
+Weave.library.auth.signOut = session => () => session.update(Weave.library.auth.emptySession);
+Weave.library.auth.forget = key => Weave.library.patterns.forget(Weave.library.control.defaultTo(Weave.library.auth.sessionKey)(key));
+
+/* guard: the one place an application asks whether to show itself or the gate. */
+Weave.library.auth.guardPane = (spec, state) => Weave.library.control.either(() => Weave.library.predicates.isDefined(state[Weave.library.auth.personKey]), () => spec.signedIn(state[Weave.library.auth.personKey]), () => spec.signedOut())(state);
+Weave.library.auth.guardBody = spec => state => Weave.library.components.holder({ children: [Weave.library.auth.guardPane(spec, state)] });
+Weave.library.auth.guard = spec => Weave.library.patterns.connect(spec.session)(Weave.library.auth.guardBody(spec));
+
+/* accountMenu: the button every signed in page carries, with sign out as its last row. */
+Weave.library.auth.accountRows = spec => Weave.library.control.defaultTo([])(spec.items).concat([{ label: Weave.library.auth.labels.signOut, onAction: spec.onSignOut }]);
+Weave.library.auth.accountLabel = spec => Weave.library.control.defaultTo(Weave.library.auth.labels.account)(spec.person);
+Weave.library.auth.accountMenu = spec => Weave.library.components.actionButton({ label: Weave.library.auth.accountLabel(spec), onAction: Weave.library.patterns.menuAt({ items: Weave.library.auth.accountRows(spec) }) });
+Weave.library.auth.welcome = spec => Weave.library.components.note({ text: Weave.library.auth.labels.signedInAs + Weave.library.auth.accountLabel(spec) });

@@ -48,6 +48,7 @@ Weave.library.forms.validators.number = () => value => !Weave.library.predicates
 Weave.library.forms.validators.min = limit => value => Weave.library.composition.number(value) < limit;
 Weave.library.forms.validators.max = limit => value => Weave.library.composition.number(value) > limit;
 Weave.library.forms.validators.matches = other => value => value !== other;
+Weave.library.forms.validators.sameAs = other => (value, values) => value !== values[other];
 Weave.library.forms.emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 Weave.library.forms.messages = {};
 Weave.library.forms.messages.required = 'This field is required';
@@ -59,7 +60,8 @@ Weave.library.forms.messages.number = 'This is not a number';
 Weave.library.forms.messages.min = 'This value is too small';
 Weave.library.forms.messages.max = 'This value is too large';
 Weave.library.forms.messages.matches = 'These values do not match';
-Weave.library.forms.checkRule = (value, [rule, parameter]) => Weave.library.control.either(() => Weave.library.forms.validators[rule](parameter)(value), () => Weave.library.forms.messages[rule], () => Weave.library.browser.keywords.empty)(value);
-Weave.library.forms.checkControl = (values, rules) => name => Weave.library.composition.pairs(Weave.library.control.defaultTo({})(rules[name])).map(pair => Weave.library.forms.checkRule(values[name], pair)).filter(message => message.length > 0);
+Weave.library.forms.messages.sameAs = 'These two do not match';
+Weave.library.forms.checkRule = (value, [rule, parameter], values) => Weave.library.control.either(() => Weave.library.forms.validators[rule](parameter)(value, values), () => Weave.library.forms.messages[rule], () => Weave.library.browser.keywords.empty)(value);
+Weave.library.forms.checkControl = (values, rules) => name => Weave.library.composition.pairs(Weave.library.control.defaultTo({})(rules[name])).map(pair => Weave.library.forms.checkRule(values[name], pair, values)).filter(message => message.length > 0);
 Weave.library.forms.problemsFor = (form, values, rules) => name => Weave.library.forms.checkControl(values, rules)(name).map(message => ({ el: Weave.library.forms.control(name)(form), message }));
 Weave.library.forms.validateWith = rules => form => Weave.library.composition.keys(rules).flatMap(Weave.library.forms.problemsFor(form, Weave.library.forms.values(form), rules));
