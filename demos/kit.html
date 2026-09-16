@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weave demo — the kit</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: the kit drawn from its own tables, so a piece cannot be added without appearing here. */
+Weave.application = {};
+Weave.application.title = 'The kit';
+Weave.application.blurb = 'Every piece the demos share, drawn live from the table that documents it. Add a row to the kit and a card appears here on its own.';
+
+/* the call: the line a demo would write, rebuilt from the name so the gallery never quotes stale code. */
+Weave.application.callPrefix = 'Weave.kit.';
+Weave.application.callSuffix = '(…)';
+Weave.application.callFor = name => Weave.application.callPrefix + name + Weave.application.callSuffix;
+Weave.application.code = name => Weave.library.components.code({ text: Weave.application.callFor(name) });
+
+/* one card per row of the notes table: the name, the sentence, the call, and the piece itself. */
+Weave.application.heading = name => Weave.library.components.subtitle({ text: name });
+Weave.application.drawn = name => Weave.kit.samples[name]();
+Weave.application.cardParts = ([name, note]) => [Weave.application.heading(name), Weave.library.components.note({ text: note }), Weave.application.code(name), Weave.library.components.divider({}), Weave.application.drawn(name)];
+Weave.application.card = row => Weave.library.components.card({ data: { key: Weave.library.composition.first(row) }, children: Weave.application.cardParts(row) });
+Weave.application.rows = () => Weave.library.composition.pairs(Weave.kit.notes);
+Weave.application.gallery = () => Weave.library.components.panels({ children: Weave.application.rows().map(Weave.application.card) });
+
+/* the tally: how large the kit has grown, and who is drawing on it, with nobody keeping score by hand. */
+Weave.application.countLabel = 'Pieces in the kit';
+Weave.application.countTile = () => Weave.library.components.statTile({ label: Weave.application.countLabel, value: Weave.kit.whole(Weave.application.rows().length) });
+Weave.application.sharedLabel = 'Demos drawing on it';
+Weave.application.users = ['Sales desk', 'Engineering board', 'Help desk', 'Conference programme', 'Tenants', 'This gallery'];
+Weave.application.sharedTile = () => Weave.library.components.statTile({ label: Weave.application.sharedLabel, value: Weave.kit.whole(Weave.application.users.length) });
+Weave.application.credits = () => Weave.kit.section({ title: Weave.application.sharedLabel, children: [Weave.kit.chips({ items: Weave.application.users })] });
+Weave.application.tiles = () => Weave.library.components.tiles({ children: [Weave.application.countTile(), Weave.application.sharedTile()] });
+
+/* start: the gallery is itself one of the pieces, so the page proves the shell on the way in. */
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.title, note: Weave.application.blurb, children: [Weave.application.tiles(), Weave.application.credits(), Weave.application.gallery()] });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

@@ -487,6 +487,32 @@ because half the library had no demo at all. `patterns.menu`, `patterns.confirm`
 - [x] **`actionButton` dropped the `aria` a caller gave it**, so a tree node or a menu row could
       never say it was the chosen one.
 
+## The kit — a third namespace, and a contract that keeps it honest
+
+The ninth demo is the kit itself. `Weave.kit` sits between the library and a page: the pieces the
+demos had started writing twice — a page shell with a theme switch, a meter against a limit, a
+person cell, a confirm-then-do, a popover picker, a toast host, a currency in minor units.
+
+- [x] **A piece only exists if it is documented and drawn.** `Weave.kit.notes` says what each one
+      is for and `Weave.kit.samples` draws it; `demos/kit.html` is generated from the notes table,
+      so a card appears the moment a row does. `check:demos` fails a piece with no note, a note
+      with no piece, and a gallery whose card count has drifted from either — the contract was
+      tested by adding an undocumented piece and watching five assertions go red.
+- [x] **Helpers stay out of the gallery.** Anything nobody outside `kit.js` calls lives under
+      `Weave.kit.parts`, so the public surface is exactly what the gallery shows.
+- [x] **The kit is audited as application code**, in `Audit.run.files`, under the same rules with
+      no new exemptions and no new globals.
+- [x] **The flagships deliberately do not use it.** `apps.md` requires Relay and Pantry to be
+      written against the library alone, so a gap in the library cannot be hidden behind a demo
+      helper.
+- [x] **Six demos were moved onto it**: the gallery, the sales desk, the board, the help desk, the
+      conference programme and the tenants console. Tenants lost sixteen lines and gained nothing
+      a screenshot can see, which is the point.
+- [x] **`components.code` was missing**, so the gallery had nowhere to print the call that draws a
+      piece. Adding it also found that a `parts` row assigned after the `blueprints` row that
+      spends it captures `undefined` — the part must be declared with the other parts, not beside
+      the component that uses it.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

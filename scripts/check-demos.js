@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo, both flagships and the style guide', count(dom, '.weave-card') === 11, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo, both flagships and the style guide', count(dom, '.weave-card') === 12, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -169,4 +169,29 @@ open('index.html').then(dom => {
 }).then(dom => {
   expect('tenants frees the seat once you confirm', count(dom, '.weave-table tbody tr') === 3, `saw ${count(dom, '.weave-table tbody tr')}`);
   expect('tenants leaves no overlay behind', count(dom, '.weave-dialog-box') === 0, `saw ${count(dom, '.weave-dialog-box')}`);
+  return open('kit.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const kit = dom.window.eval('Weave.kit');
+  const tables = ['words', 'sizes', 'parts', 'notes', 'demoWords', 'samples'];
+  const pieces = Object.keys(kit).filter(name => !tables.includes(name) && typeof kit[name] === 'function');
+  const undocumented = pieces.filter(name => !kit.notes[name]);
+  const unsampled = pieces.filter(name => typeof kit.samples[name] !== 'function');
+  const orphaned = Object.keys(kit.notes).filter(name => typeof kit[name] !== 'function');
+  expect('kit documents every piece it offers', undocumented.length === 0, `no note for ${undocumented}`);
+  expect('kit draws every piece it offers', unsampled.length === 0, `no sample for ${unsampled}`);
+  expect('kit notes nothing it does not offer', orphaned.length === 0, `no piece for ${orphaned}`);
+  expect('kit gallery shows one card per piece', count(dom, '.weave-card') === pieces.length, `${count(dom, '.weave-card')} cards for ${pieces.length} pieces`);
+  expect('kit gallery prints the call for each', count(dom, '.weave-code') === pieces.length, `saw ${count(dom, '.weave-code')}`);
+  expect('kit counts itself in its own tile', document.querySelector('.weave-stat-tile').textContent.includes(String(pieces.length)), document.querySelector('.weave-stat-tile').textContent);
+  expect('kit keeps its helpers out of the gallery', Object.keys(kit.parts).length > pieces.length / 2, `${Object.keys(kit.parts).length} helpers`);
+  document.querySelector('[data-key=say] .weave-button').click();
+  expect('kit raises a toast on its own host', count(dom, '.weave-toast-host .weave-alert') === 1, `saw ${count(dom, '.weave-toast-host .weave-alert')}`);
+  document.querySelector('[data-key=askThen] .weave-button').click();
+  expect('kit asks before it acts', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
+  [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Cancel').click();
+  expect('kit does nothing when the answer is no', count(dom, '.weave-dialog-box') === 0, `saw ${count(dom, '.weave-dialog-box')}`);
+  document.querySelector('[data-key=picker] .weave-button').click();
+  expect('kit picker offers every choice', count(dom, '.weave-popover-box .weave-menu li') === 3, `saw ${count(dom, '.weave-popover-box .weave-menu li')}`);
+  expect('kit picker marks the one in force', count(dom, '.weave-popover-box .weave-button[aria-selected=true]') === 1, 'none marked');
 }).then(() => process.exit(failures.length === 0 ? 0 : 1)).catch(error => { console.error(error); process.exit(1); });

@@ -297,7 +297,8 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `apps.md` | What each flagship had to be able to do. |
 | `sample.html`, `todo.html`, `studio.html` | The reference applications, written against the library directly. |
 | `styleguide.html` | The live reference for the styling system, generated from its own tables. |
-| `demos/*.html` | Eight domain applications, written only against patterns. |
+| `demos/*.html` | Nine domain applications, written only against patterns. |
+| `demos/kit.js` | The kit the demos share: application code, built only on the library. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
 
 ## Commands
@@ -308,14 +309,14 @@ npm run audit       # the style rules, plus catalog.json
 npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
 npm run check:apps  # drive sample.html, todo.html, studio.html, styleguide.html and tests.html in jsdom
-npm run check:demos # drive all eight demo applications in jsdom
+npm run check:demos # drive all nine demo applications in jsdom, and hold the kit to its contract
 npm run check:flagships # drive Relay and Pantry the way a person would use them
 npm run check       # all of the above
 ```
 
 ## The demos
 
-`demos/index.html` links eight applications in eight domains. Each one exists to put the patterns
+`demos/index.html` links nine applications. Each one exists to put the patterns
 under load in a different shape, and each is short because the patterns do the work:
 
 | Demo | Domain | What it exercises |
@@ -328,8 +329,26 @@ under load in a different shape, and each is short because the patterns do the w
 | `clinic.html` | healthcare | a day schedule and a three step intake form |
 | `agenda.html` | conferences | a calendar of sessions, with prices and a countdown |
 | `tenants.html` | multi-tenant SaaS | four customers in one console: a workspace switcher in a popover, per-plan limits, roles changed in place, and a confirm before a seat is taken back |
+| `kit.html` | the kit itself | every shared piece, drawn live from the table that documents it |
 
-None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all eight.
+None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all nine.
+
+## The kit
+
+`Weave.library` is the library. `Weave.application` is one page. Between them sits `Weave.kit` —
+the pieces the demos found themselves writing twice. It lives in `demos/kit.js`, is audited under
+the same rules with no new exemptions, and is written only against `Weave.library.*`, exactly as a
+demo is. The flagships do not use it: `apps.md` requires them to be written against the library
+alone, so that a gap in the library cannot be papered over by a demo helper.
+
+A piece earns its place by being needed twice. Each one carries a row in `Weave.kit.notes` saying
+what it is for, and a row in `Weave.kit.samples` drawing it. Helpers nobody outside the file calls
+live under `Weave.kit.parts` and stay out of the gallery.
+
+`demos/kit.html` is that gallery, and it is generated from `Weave.kit.notes` — so a piece cannot
+be added without a card appearing, and `check:demos` refuses a piece with no note, a note with no
+piece, and a gallery whose card count has drifted from either. The gallery is a demo like the
+others, and grows every time another demo finds something worth sharing.
 
 ## Extending
 

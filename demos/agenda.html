@@ -6,15 +6,16 @@
 </head>
 <body>
 <script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
 <script>
 /* application: a conference programme. The calendar, the money and the countdown all come from Weave. */
 Weave.application = {};
 Weave.application.day = count => Weave.library.dates.iso(Weave.library.dates.add(Weave.library.dates.names.day, count)(Weave.library.dates.today()));
 Weave.application.when = count => Weave.library.dates.parse(Weave.application.day(count));
 Weave.application.opensIn = 3;
-Weave.application.ticket = 349;
+Weave.application.ticket = 34900;
 Weave.application.currency = 'EUR';
-Weave.application.price = () => Weave.library.formatting.money(Weave.application.currency)(Weave.application.ticket);
+Weave.application.price = () => Weave.kit.pence(Weave.application.currency)(Weave.application.ticket);
 Weave.application.startOfToday = 0;
 Weave.application.countdown = () => Weave.library.formatting.relative(Weave.application.when(Weave.application.opensIn), Weave.application.when(Weave.application.startOfToday));
 /* lineups: one row per talk. The day is an offset from today, so the programme is always ahead. */

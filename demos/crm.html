@@ -6,6 +6,7 @@
 </head>
 <body>
 <script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
 <script>
 /* application: a sales desk. Every pixel comes from a pattern, so no tag, class or colour lives here. */
 Weave.application = {};
@@ -18,7 +19,9 @@ Weave.application.columns = [{ key: 'name', label: 'Contact' }, { key: 'company'
 Weave.application.wonDeals = () => Weave.application.deals.filter(deal => deal.stage === Weave.application.stages.won);
 Weave.application.total = () => Weave.application.deals.reduce((carried, deal) => carried + deal.value, 0);
 Weave.application.stats = () => [{ label: 'Deals in play', value: Weave.application.deals.length }, { label: 'Closed won', value: Weave.application.wonDeals().length }, { label: Weave.application.headings.pipeline, value: Weave.application.money(Weave.application.total()) }];
-Weave.application.profileParts = deal => [Weave.library.components.subtitle({ text: deal.company }), Weave.library.components.pill({ text: deal.stage }), Weave.library.components.note({ text: deal.note }), Weave.library.components.value({ text: Weave.application.money(deal.value) })];
+Weave.application.valueLabel = 'Deal value';
+Weave.application.profileValue = deal => Weave.kit.pair({ label: Weave.application.valueLabel, value: Weave.application.money(deal.value) });
+Weave.application.profileParts = deal => [Weave.library.components.subtitle({ text: deal.company }), Weave.library.components.pill({ text: deal.stage }), Weave.library.components.note({ text: deal.note }), Weave.application.profileValue(deal)];
 Weave.application.profile = deal => Weave.library.components.stack({ children: Weave.application.profileParts(deal) });
 Weave.application.people = () => Weave.application.deals.map(deal => Weave.library.composition.merge(deal, { label: deal.name }));
 Weave.application.pipeline = () => Weave.library.patterns.dataGrid({ title: Weave.application.headings.pipeline, pageSize: 4, columns: Weave.application.columns, rows: Weave.application.deals }).element;

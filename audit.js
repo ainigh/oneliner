@@ -179,7 +179,7 @@ Audit.rules.recordSource = (file, source) => Audit.rules.sourcesOf[file] = sourc
 Audit.rules.styleRows = (file, entries) => Audit.style.check(file, Audit.control.defaultSource(Audit.rules.sourcesOf[file]), entries);
 Audit.rules.checkComment = (file, entry) => Audit.reportWhen(!Audit.rules.commentsBefore[file].includes(entry.index - 1), file, entry.index, 'R19', 'namespace has no group comment');
 Audit.rules.recordComments = (file, source) => Audit.rules.commentsBefore[file] = Audit.text.lines(source).map((line, index) => ({ line, index })).filter(entry => Audit.text.isComment(entry.line)).map(entry => entry.index);
-Audit.rules.applicationRoots = ['Weave.application', 'Weave.tests'];
+Audit.rules.applicationRoots = ['Weave.application', 'Weave.tests', 'Weave.kit'];
 Audit.rules.isApplicationLine = line => Audit.rules.applicationRoots.some(root => Audit.text.pathOf(line).startsWith(root));
 Audit.rules.checkIsolation = (file, entry) => name => Audit.reportWhen(Audit.text.hasToken(entry.line, name), file, entry.index, 'R20', 'application code names the global ' + name);
 Audit.rules.applicationIsolation = (file, entries) => entries.filter(entry => Audit.rules.isApplicationLine(entry.line)).forEach(entry => Audit.policy.globals.forEach(Audit.rules.checkIsolation(file, entry)));
@@ -202,8 +202,8 @@ Audit.catalog.emit = (file, entries) => Audit.platform.write(file, JSON.stringif
 
 /* run: audit every file, print every finding, exit non-zero when anything failed. */
 Audit.run = {};
-Audit.run.files = ['dist/weave.js', 'audit.js', 'tests/tests.js'];
-Audit.run.applications = ['sample.html', 'todo.html', 'tests.html', 'studio.html', 'styleguide.html', 'apps/relay.html', 'apps/pantry.html', 'demos/index.html', 'demos/crm.html', 'demos/board.html', 'demos/helpdesk.html', 'demos/warehouse.html', 'demos/school.html', 'demos/clinic.html', 'demos/agenda.html', 'demos/tenants.html'];
+Audit.run.files = ['dist/weave.js', 'audit.js', 'tests/tests.js', 'demos/kit.js'];
+Audit.run.applications = ['sample.html', 'todo.html', 'tests.html', 'studio.html', 'styleguide.html', 'apps/relay.html', 'apps/pantry.html', 'demos/index.html', 'demos/crm.html', 'demos/board.html', 'demos/helpdesk.html', 'demos/warehouse.html', 'demos/school.html', 'demos/clinic.html', 'demos/agenda.html', 'demos/tenants.html', 'demos/kit.html'];
 Audit.run.auditMarkup = file => Audit.run.withSource(file, Audit.text.scriptSource(Audit.platform.read(file)));
 Audit.run.auditFile = file => Audit.run.withSource(file, Audit.platform.read(file));
 Audit.run.withSource = (file, source) => Audit.run.applyRules(file, Audit.codeLines(source), Audit.rules.recordComments(file, source), Audit.rules.recordSource(file, source));
