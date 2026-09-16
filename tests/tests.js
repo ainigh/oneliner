@@ -440,7 +440,7 @@ Weave.tests.listsTwoEvents = handle => (Weave.tests.clickDay(handle), Weave.test
 Weave.tests.cases.patternsCalendarListsTheChosenDay = () => Weave.tests.withPattern(Weave.tests.calendarPattern(), Weave.tests.listsTwoEvents);
 Weave.tests.stepsAMonth = handle => (Weave.tests.clickIn(handle, 'button', 1), Weave.library.dates.monthKey(handle.state.month) === '2026-03');
 Weave.tests.cases.patternsCalendarStepsToTheNextMonth = () => Weave.tests.withPattern(Weave.tests.calendarPattern(), Weave.tests.stepsAMonth);
-Weave.tests.tallyText = handle => Weave.library.elements.textOf(Weave.library.query.oneWithin(Weave.tests.selectorFor('tag'))(handle.element));
+Weave.tests.tallyText = handle => Weave.library.elements.textOf(Weave.library.query.oneWithin(Weave.tests.selectorFor('badge'))(handle.element));
 Weave.tests.cases.patternsCalendarCountsTheDaysEvents = () => Weave.tests.withPattern(Weave.tests.calendarPattern(), handle => Weave.tests.tallyText(handle) === '2');
 /* repaint cost: the morph rewires listeners every time, so a repaint must not leave the old ones behind. */
 Weave.tests.formIn = handle => Weave.library.query.oneWithin(Weave.tests.selectorFor('form'))(handle.element);

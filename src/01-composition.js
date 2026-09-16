@@ -55,6 +55,8 @@ Weave.library.composition.number = value => Weave.library.control.either(Number.
 Weave.library.composition.zero = () => 0;
 Weave.library.composition.clamp = (low, high) => value => Math.min(Math.max(value, low), high);
 Weave.library.composition.random = count => Math.floor(Math.random() * count);
+Weave.library.composition.noise = seed => Math.abs(Math.sin(seed * 12.9898 + 78.233) * 43758.5453) % 1;
+Weave.library.composition.noisyIndex = (count, seed) => Math.floor(Weave.library.composition.noise(seed) * count);
 Weave.library.composition.randomId = prefix => prefix + Weave.library.composition.random(Number.MAX_SAFE_INTEGER).toString(36);
 Weave.library.composition.json = value => JSON.stringify(value);
 Weave.library.composition.parseJson = text => Weave.library.control.attemptOr(JSON.parse, undefined)(text);

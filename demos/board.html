@@ -18,7 +18,12 @@ Weave.application.sweepTo = lane => () => Weave.application.board.update(state =
 Weave.application.command = lane => ({ label: Weave.application.sweepLabel + lane.label, onAction: Weave.application.sweepTo(lane) });
 Weave.application.sweepLabel = 'Move everything to ';
 Weave.application.palette = () => Weave.library.patterns.commandPalette({ commands: Weave.application.lanes.map(Weave.application.command) });
-Weave.application.page = () => Weave.library.components.stack({ children: [Weave.library.components.title({ text: 'Engineering board' }), Weave.application.palette().element, Weave.application.board.element] });
+Weave.application.title = 'Engineering board';
+Weave.application.themeToggle = () => Weave.library.components.actionButton({ label: Weave.application.themeLabel, size: Weave.library.components.markNames.size.small, onAction: Weave.library.components.toggleTheme });
+Weave.application.themeLabel = 'Theme';
+Weave.application.header = () => Weave.library.components.pageHeader({ children: [Weave.library.components.title({ text: Weave.application.title }), Weave.application.themeToggle()] });
+Weave.application.blurb = 'Drag a card between lanes, or sweep every card at once from the palette below.';
+Weave.application.page = () => Weave.library.components.page({ children: [Weave.application.header(), Weave.library.components.note({ text: Weave.application.blurb }), Weave.application.palette().element, Weave.application.board.element] });
 Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
 Weave.library.events.ready(Weave.application.start);
 </script>

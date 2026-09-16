@@ -14,7 +14,13 @@ Weave.application.tickets = [{ label: 'Login loop on Safari', who: 'ana@acme.tes
 Weave.application.thread = ticket => Weave.library.patterns.chat({ title: ticket.label, author: Weave.application.agent, messages: ticket.said }).element;
 Weave.application.detail = ticket => Weave.library.components.stack({ children: [Weave.library.components.note({ text: ticket.who }), Weave.application.thread(ticket)] });
 Weave.application.queue = () => Weave.library.patterns.masterDetail({ items: Weave.application.tickets, detail: Weave.application.detail });
-Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.queue());
+Weave.application.title = 'Help desk';
+Weave.application.themeToggle = () => Weave.library.components.actionButton({ label: Weave.application.themeLabel, size: Weave.library.components.markNames.size.small, onAction: Weave.library.components.toggleTheme });
+Weave.application.themeLabel = 'Theme';
+Weave.application.header = () => Weave.library.components.pageHeader({ children: [Weave.library.components.title({ text: Weave.application.title }), Weave.application.themeToggle()] });
+Weave.application.page = () => Weave.library.components.page({ children: [Weave.application.header(), Weave.library.components.note({ text: Weave.application.blurb }), Weave.application.queue().element] });
+Weave.application.blurb = 'Three tickets, one open at a time. The detail pane is a live chat, and the reply lands in it.';
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
 Weave.library.events.ready(Weave.application.start);
 </script>
 </body>

@@ -423,6 +423,49 @@ Each is now pinned by a test row naming the exact condition that showed it.
       now pass the library's own accessibility audit, and so do both flagships after every
       interaction the harness performs.
 
+## The look pass — what a real browser said about the demos
+
+Screenshots of every demo and both flagships, at 1440px, at 420px and in both themes, found
+layout faults no unit test could see. Each one is closed by a row, never by a `<style>` block.
+
+- [x] **Every dashboard was a column of 220px panels in a 1,440px window.** `tileTrack` used
+      `auto-fill`, which keeps the empty tracks it creates. A new `panelTrack` row on `auto-fit`,
+      and a `panels` class that spends it, gives the dashboard, the board and the flagships a
+      grid that divides the width it has.
+- [x] **Tables were clipped inside those panels**, because there was no width to clip to. The same
+      row fixed it.
+- [x] **`splitView` centred the chooser against the detail**, because it borrowed `row`, which
+      centres. A `split` class starts both columns at the top, and the rail carries its own edge.
+- [x] **The virtual grid drew its rows on top of one another.** A row with a fixed height had no
+      `overflow`, so a wrapped cell spilled into the row beneath it. Rows now clip, cells truncate
+      into a `dataRow` that fills its scroller, and a header row names the columns.
+- [x] **A panel inside a panel drew two frames**, and a card inside a card drew two. `nestRules` is
+      the new table for a rule about one class inside another — one row per pair, and it flattens
+      a pattern nested in a dashboard panel or in a dialog.
+- [x] **Every form control was white in the dark theme**, because `control`, `searchBox`,
+      `selectBox` and `textArea` set a border but never a ground.
+- [x] **The wizard's trail was a breadcrumb**, which says where you have been, not where you are.
+      It is the `steps` progress track now, with exactly one step current.
+- [x] **A tag or a pill stretched to its column** in any vertical stack. They hug their words now,
+      and a tag keeps a column of its own in a dense list, as a timestamp does.
+- [x] **A menu item was a button-shaped box**, not a row. One `nestRules` row makes menu and tree
+      items full-width quiet rows, and the chosen one is tinted — in the queue, in the tree and in
+      the list alike.
+- [x] **The calendar's day counts knocked the weeks out of alignment**, because a table cell
+      aligns on the baseline by default.
+- [x] **An empty state was two lines of grey text.** It can lead with a glyph now, and the same
+      `glyphMark` carries the gallery's icons.
+- [x] **A search box with a label still looked empty**, because nothing became a placeholder.
+- [x] **Relay's threads marched in step**: every folder held exactly eighty unread, because the
+      generator was `index % n` all the way down. `composition.noise` is a deterministic
+      one-dimensional hash; the inbox now has avatars, unread dots, stars, and counts that differ.
+- [x] **Relay's reader was four identical cards.** It is a conversation: the snippet opens it,
+      replies alternate sides, and the bubble knows whose side it is on — the same `side` mark the
+      help desk chat uses.
+- [x] **Pantry's photographs were 28px emoji in a grey box.** `glyphSize` and a `mediaWash`
+      gradient, and on a phone the menu is two columns rather than one full-bleed tile per screen.
+- [x] **The style guide listed colours as hex strings.** Each one is a swatch.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

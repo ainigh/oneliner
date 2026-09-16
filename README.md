@@ -215,6 +215,7 @@ documents, so the page cannot drift from the system.
 | `components.values` | every bare CSS keyword | referenced by rules, never written twice |
 | `components.rules` | one row per class, values may only be token references | change one row, one widget moves |
 | `components.hostRules` | the rules on the document itself, keyed by `components.hostSelectors` | the page ground, its type and its margin |
+| `components.nestRules` | one row per class-inside-a-class pair | a panel inside a panel drops its frame; a menu item becomes a row |
 | `components.themes` | one row of token overrides per theme | `setTheme`, `toggleTheme`, `followScheme` |
 | `components.tones` / `toneRules` | a tone's colour, and how a class spends it | one palette for `alert`, `statusDot`, anything toned |
 | `components.variants` | one row per button intent | `actionButton({ label, variant })` |

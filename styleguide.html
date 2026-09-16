@@ -12,9 +12,13 @@
 Weave.application = {};
 
 /* tokens: the whole table, read straight out of the library, as the custom property each one becomes. */
-Weave.application.tokenRow = ([name, value]) => ({ property: Weave.library.components.variableName(name), value });
+Weave.application.isColour = value => String(value).startsWith(Weave.application.hashMark);
+Weave.application.hashMark = '#';
+Weave.application.swatchOf = value => Weave.library.components.swatch({ styles: { background: value }, aria: { label: value } });
+Weave.application.showValue = value => Weave.library.control.either(() => Weave.application.isColour(value), () => Weave.application.swatchOf(value), () => Weave.library.browser.keywords.empty)(value);
+Weave.application.tokenRow = ([name, value]) => ({ property: Weave.library.components.variableName(name), value, swatch: Weave.application.showValue(value) });
 Weave.application.tokenRows = () => Weave.library.composition.pairs(Weave.library.components.tokens).map(Weave.application.tokenRow);
-Weave.application.tokenColumns = [{ key: 'property', label: 'Custom property' }, { key: 'value', label: 'Written value' }];
+Weave.application.tokenColumns = [{ key: 'property', label: 'Custom property' }, { key: 'swatch', label: 'Colour' }, { key: 'value', label: 'Written value' }];
 Weave.application.tokenTable = () => Weave.library.components.table({ columns: Weave.application.tokenColumns, rows: Weave.application.tokenRows() });
 
 /* themes: one button per theme name, plus the one that hands the choice back to the operating system. */

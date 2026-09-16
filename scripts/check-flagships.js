@@ -48,7 +48,7 @@ open('apps/relay.html').then(settle).then(dom => {
 
   expect('relay opens nothing until asked', it.count('.weave-empty-state') === 1, it.text('.weave-empty-state'));
   it.click(it.one('.weave-pane[data-pane=list] .weave-list-row .weave-row-button'));
-  expect('relay opens a thread into the reader', it.count('.weave-empty-state') === 0 && it.count('.weave-card') > 0, `${it.count('.weave-card')} messages`);
+  expect('relay opens a thread into the reader', it.count('.weave-empty-state') === 0 && it.count('.weave-bubble') > 0, `${it.count('.weave-bubble')} messages`);
   expect('relay marks the opened thread read', it.Weave.application.threadById(it.Weave.application.store.state.chosen).unread === false, 'still unread');
 
   const firstChosen = it.Weave.application.store.state.chosen;

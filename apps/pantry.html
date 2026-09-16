@@ -59,7 +59,7 @@ Weave.application.dishMedia = dish => Weave.library.components.media({ glyph: di
 Weave.application.dishAdd = dish => Weave.library.components.actionButton({ label: Weave.application.chooseLabel, variant: Weave.library.components.markNames.variant.primary, onAction: () => Weave.application.chooseDish(dish) });
 Weave.application.chooseLabel = 'Choose';
 Weave.application.dishFoot = dish => Weave.library.components.spread({ children: [Weave.library.components.strong({ text: Weave.application.price(dish.price) }), Weave.application.dishAdd(dish)] });
-Weave.application.dishParts = dish => [Weave.application.dishMedia(dish), Weave.library.components.subtitle({ text: dish.name }), Weave.library.components.note({ text: dish.note }), Weave.application.dishFoot(dish)];
+Weave.application.dishParts = dish => [Weave.application.dishMedia(dish), Weave.library.components.subtitle({ text: dish.name }), Weave.library.components.note({ text: dish.note }), Weave.library.components.fill({}), Weave.application.dishFoot(dish)];
 Weave.application.dishCard = dish => Weave.library.components.card({ children: Weave.application.dishParts(dish) });
 Weave.application.menuReady = () => Weave.library.components.tiles({ children: Weave.application.inCategory(Weave.application.store.state.category).map(Weave.application.dishCard) });
 Weave.application.menu = Weave.library.patterns.resource({ load: Weave.application.loadMenu, ready: Weave.application.menuReady, loading: Weave.application.menuSkeleton });
@@ -135,7 +135,8 @@ Weave.application.categoryTabs = state => Weave.library.components.tabs({ active
 Weave.application.progress = state => Weave.library.components.steps({ label: Weave.application.progressLabel, active: state.stage, items: Weave.application.stages });
 Weave.application.progressLabel = 'Where your order is';
 Weave.application.progressPanel = state => Weave.library.control.either(() => state.stage >= 0, () => Weave.library.components.panel({ children: [Weave.application.progress(state)] }), Weave.library.composition.noop)(state);
-Weave.application.barItems = state => [Weave.library.components.note({ text: Weave.application.price(Weave.application.orderTotal(state)) }), Weave.application.basketButton(state)];
+Weave.application.barTotal = state => Weave.library.components.stack({ children: [Weave.library.components.note({ text: Weave.application.dueLabel }), Weave.library.components.strong({ text: Weave.application.price(Weave.application.orderTotal(state)) })] });
+Weave.application.barItems = state => [Weave.application.barTotal(state), Weave.application.basketButton(state)];
 Weave.application.tabBar = state => Weave.library.components.tabBar({ children: Weave.application.barItems(state), aria: { label: Weave.application.basketTitle } });
 Weave.application.pageParts = state => Weave.library.composition.compact([Weave.application.header(state), Weave.application.categoryTabs(state), Weave.application.progressPanel(state), Weave.application.menu.element, Weave.application.tabBar(state)]);
 Weave.application.pageBody = (state, ignored) => Weave.library.components.page({ children: Weave.application.pageParts(state) });
