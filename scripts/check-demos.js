@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 21, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 23, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -181,7 +181,7 @@ open('index.html').then(dom => {
   expect('elements files every element in a section', names.every(name => listed.includes(name)), `unfiled ${names.filter(name => !listed.includes(name))}`);
   expect('elements sections name nothing it does not draw', listed.every(name => names.includes(name)), `orphans ${listed.filter(name => !names.includes(name))}`);
   expect('elements counts itself in its own tile', document.querySelector('.weave-stat-tile').textContent.includes(String(names.length)), document.querySelector('.weave-stat-tile').textContent);
-  expect('elements draws the new widgets it promises', count(dom, '.weave-navbar-box') === 1 && count(dom, '.weave-group-list') === 1 && count(dom, '.weave-terms-box') === 1, 'a Bootstrap shaped widget is missing');
+  expect('elements draws the new widgets it promises', count(dom, '.weave-navbar-box') === 1 && count(dom, '.weave-group-list') === 1 && count(dom, '.weave-terms-box') === 1 && count(dom, '.weave-callout-box') === 1 && count(dom, '.weave-code-listing-box') === 1 && count(dom, '.weave-diff-box') === 1 && count(dom, '.weave-dropzone-box') === 1, 'a Bootstrap shaped widget is missing');
   expect('elements uses no hand written class', !document.body.innerHTML.includes('class="weave-undefined'), 'an undefined class appeared');
   return open('patterns.html');
 }).then(dom => {
@@ -361,6 +361,65 @@ open('index.html').then(dom => {
   expect('signal gives each region its own slot', document.querySelectorAll('.weave-ring-segment')[3].dataset.series === 'four', 'a slot was reused');
   expect('signal steps every heat cell off the one ramp', count(dom, '.weave-heat-cell[data-heat]') === 45, `saw ${count(dom, '.weave-heat-cell[data-heat]')}`);
   expect('signal says the same week in words', count(dom, '.weave-table tbody tr') === 7, `saw ${count(dom, '.weave-table tbody tr')}`);
+  return open('handbook.html');
+}).then(dom => {
+  const document = dom.window.document;
+  expect('handbook sets its chapter in one measured column', count(dom, '.weave-prose') === 1, `saw ${count(dom, '.weave-prose')}`);
+  expect('handbook lists every chapter in its contents', count(dom, '.weave-contents-list li') === 4, `saw ${count(dom, '.weave-contents-list li')}`);
+  expect('handbook marks the chapter being read', count(dom, '.weave-contents-list [aria-current=true]') === 1, `saw ${count(dom, '.weave-contents-list [aria-current=true]')}`);
+  expect('handbook numbers every line of its listing', count(dom, '.weave-code-line') === 3, `saw ${count(dom, '.weave-code-line')}`);
+  expect('handbook tones its callout from the chapter', document.querySelector('.weave-callout-box').dataset.tone === 'info', String(document.querySelector('.weave-callout-box').dataset.tone));
+  expect('handbook holds the near end of the pager open', count(dom, '.weave-pager-gap') === 1, `saw ${count(dom, '.weave-pager-gap')}`);
+  document.querySelectorAll('.weave-contents-list .weave-anchor')[2].click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('handbook opens the chapter picked from the contents', document.querySelector('.weave-title').textContent === 'Changing the look', document.querySelector('.weave-title').textContent);
+  expect('handbook retones the callout with the chapter', document.querySelector('.weave-callout-box').dataset.tone === 'warning', String(document.querySelector('.weave-callout-box').dataset.tone));
+  expect('handbook offers both ends once the chapter has neighbours', count(dom, '.weave-pager-gap') === 0, `saw ${count(dom, '.weave-pager-gap')}`);
+  [...document.querySelectorAll('.weave-pager-box .weave-anchor')][1].click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('handbook walks on with the pager', document.querySelector('.weave-title').textContent === 'Shipping a change', document.querySelector('.weave-title').textContent);
+  expect('handbook holds the far end of the pager open', count(dom, '.weave-pager-gap') === 1, `saw ${count(dom, '.weave-pager-gap')}`);
+  expect('handbook passes its own accessibility audit', dom.window.eval('Weave.library.accessibility.audit(document.body).length') === 0, dom.window.eval('JSON.stringify(Weave.library.accessibility.audit(document.body).map(row => row.message))'));
+  return open('review.html');
+}).then(dom => {
+  const document = dom.window.document;
+  expect('review lists every changed file', count(dom, '.weave-row-button') === 4, `saw ${count(dom, '.weave-row-button')}`);
+  expect('review counts what each file did to itself', count(dom, '.weave-row-button .weave-diff-stat-box') === 4, `saw ${count(dom, '.weave-row-button .weave-diff-stat-box')}`);
+  expect('review adds the whole change up from those rows', document.querySelectorAll('.weave-stat-tile')[1].textContent.includes('25'), document.querySelectorAll('.weave-stat-tile')[1].textContent);
+  expect('review marks every line of the diff with what it is', [...document.querySelectorAll('.weave-diff-row')].map(row => row.dataset.edit).join(',') === 'same,removed,added,same', [...document.querySelectorAll('.weave-diff-row')].map(row => row.dataset.edit).join(','));
+  expect('review shows what was already said about the file', count(dom, '.weave-comment-box') === 1, `saw ${count(dom, '.weave-comment-box')}`);
+  document.querySelectorAll('.weave-row-button')[1].click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('review opens the file picked from the list', document.querySelector('.weave-diff-box .weave-code').textContent === 'src/22-components.js', document.querySelector('.weave-diff-box .weave-code').textContent);
+  expect('review says when nothing has been said yet', count(dom, '.weave-empty-state') === 1, `saw ${count(dom, '.weave-empty-state')}`);
+  document.querySelector('.weave-text-area').value = 'The wash belongs in the token table, not here.';
+  fire(dom, document.querySelector('.weave-text-area'), 'input');
+  [...document.querySelectorAll('.weave-button')].find(button => button.textContent === 'Comment').click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('review posts the comment against the open file', count(dom, '.weave-comment-box') === 1, `saw ${count(dom, '.weave-comment-box')}`);
+  expect('review says so in a toast', count(dom, '.weave-toast-host .weave-alert') === 1, `saw ${count(dom, '.weave-toast-host .weave-alert')}`);
+  expect('review empties the box it was typed in', document.querySelector('.weave-text-area').value === '', document.querySelector('.weave-text-area').value);
+  fire(dom, document.querySelector('.weave-dropzone-box'), 'dragenter');
+  expect('review marks the target while a file is over it', document.querySelector('.weave-dropzone-box').dataset.over === 'true', String(document.querySelector('.weave-dropzone-box').dataset.over));
+  drop(dom, document.querySelector('.weave-dropzone-box'), 'shot');
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('review attaches a file dropped on the target', count(dom, '.weave-comment-box') === 2, `saw ${count(dom, '.weave-comment-box')}`);
+  expect('review leaves the dropped mark off again', document.querySelector('.weave-dropzone-box').dataset.over !== 'true', String(document.querySelector('.weave-dropzone-box').dataset.over));
+  document.querySelectorAll('.weave-row-button')[0].click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  expect('review keeps each conversation with its own file', count(dom, '.weave-comment-box') === 1, `saw ${count(dom, '.weave-comment-box')}`);
+  expect('review passes its own accessibility audit', dom.window.eval('Weave.library.accessibility.audit(document.body).length') === 0, dom.window.eval('JSON.stringify(Weave.library.accessibility.audit(document.body).map(row => row.message))'));
   return open('kit.html');
 }).then(dom => {
   const document = dom.window.document;

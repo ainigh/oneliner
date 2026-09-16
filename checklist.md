@@ -6,8 +6,8 @@ rather than by editing a spec.
 
 Status of every box below is machine-checked by `npm run check`
 (`build` → `audit` → `test` → `audit:rows` → `check:apps` → `check:demos` → `check:flagships`),
-currently green: **0 audit findings · 340/340 tests · 450/450 row removals · 24/24 application
-checks · 35/35 demo checks · 48/48 flagship checks · 3,443 catalog paths.**
+currently green: **0 audit findings · 438/438 tests · 618/618 row removals · 24/24 application
+checks · 179/179 demo checks · 48/48 flagship checks · 4,317 catalog paths.**
 
 ---
 
@@ -640,6 +640,63 @@ Every demo so far could say a number, and none of them could draw one. This roun
       now and the stroke is one `spaceLoose`, and `signal.html` keeps the word in the hole short.
 - [x] **`Weave.kit.reading`** is the piece the tiles found twice: a label, the way it moved, the
       number, and the week behind it.
+
+## The written pages (this round)
+
+Two demos the dashboards had no shape for: `demos/handbook.html`, a page of prose, and
+`demos/review.html`, a page of diff. Between them they added ten widgets, three tables and one
+state rule, and every one of them is a row somewhere rather than a rule written in a page.
+
+### The widgets they needed
+
+- [x] **`components.prose`** — the column a page of writing is set in, measured by `proseWidth` and
+      given up under the compact query, so no page picks its own measure.
+- [x] **`components.callout`** — the aside a handbook leans on. It carries a tone the same way an
+      alert does (`toneRules.calloutBox` spends it on the edge), so how much an aside matters is a
+      row and never a colour.
+- [x] **`components.contents`** — the list of where a page goes, marking the section being read with
+      `aria-current`, the state row the pagination buttons already answered to.
+- [x] **`components.codeListing`** — a block of code under its own numbers, with the file it came
+      from written under it as a caption.
+- [x] **`components.pager`** — the chapter on either side of this one. Given one end and not the
+      other it draws a `pagerGap` where the missing link would be, so the one link it has still sits
+      on the side it belongs on.
+- [x] **`components.diff`** — every line numbered, signed and marked with what it is.
+- [x] **`components.diffStat`** — what a change added and what it took away, spending the same two
+      signs the diff does, so a file list and a diff cannot disagree about which way is which.
+- [x] **`components.comment` and `components.commentThread`** — one remark, and the remarks in
+      order with a slot under the last one for the box a reader answers in.
+- [x] **`components.dropzone`** — the one widget that wires its own listeners. It marks itself with
+      the `over` state while a file is above it, clears the mark on drop, and hands the event on.
+
+### The tables behind them
+
+- [x] **`components.editKinds`** — one row per thing a line of a diff can be, as a modifier table,
+      so a row asks for a kind by name and the stylesheet carries the wash and the stripe. Both
+      washes have their own value in `themes.dark`.
+- [x] **`components.diffSigns`** — the one place `+` and `−` are written. Every line carries its
+      number and its sign, because the wash is the part of the reading a colour-blind reader cannot
+      see.
+- [x] **`components.pagerKeys`** — the two ends a pager has, so the widget walks a table rather than
+      naming either end twice.
+
+### What building them found
+
+- [x] **Three helpers already existed.** The audit's structural rule caught `calloutGlyph`,
+      `linesOf` and `dropzoneAction` as copies of `mediaGlyph`, `linesIn` and `alertAction`; all
+      three now call the original.
+- [x] **The href an anchor falls back to was written twice.** `components.hrefAttribute` is now the
+      one place it is written, and `crumb` was rewritten onto it — which is why `pager` could be
+      built out of `crumb` rather than a second link widget.
+- [x] **`attributes.data` gives back a parsed value.** The dropzone test read `true`, not `'true'`;
+      the state selector still matches on the attribute, so nothing in the sheet changed.
+- [x] **The board was already marking a drop target**, with its own copy of the same two lines. The
+      one-place rule caught it the moment `components.dropMark` existed: `patterns.boardOver`,
+      `boardEnter` and `boardLeave` are gone, and the board now spends `components.dropEnter` and
+      `components.dropLeave`, from the one table that names the `over` key.
+- [x] **A drop repaints the page that owns the target**, so the cleared mark is on the node that is
+      being replaced. `check:demos` asserts the mark on `dragenter` and its absence after the drop,
+      which is the behaviour a reader actually sees.
 
 ## Not done
 

@@ -90,7 +90,6 @@ Weave.library.patterns.todoList = spec => Weave.library.patterns.view(Weave.libr
 
 /* board: cards in columns, moved by the arrow buttons or by dragging a card onto a lane. The columns are the caller's table. */
 Weave.library.patterns.columnKey = 'column';
-Weave.library.patterns.overKey = 'over';
 Weave.library.patterns.boardKeys = spec => spec.columns.map(column => column.key);
 Weave.library.patterns.boardIndex = (spec, card) => Weave.library.patterns.boardKeys(spec).indexOf(card[Weave.library.patterns.columnKey]);
 Weave.library.patterns.boardTarget = (spec, card, step) => Weave.library.patterns.boardKeys(spec)[Weave.library.patterns.stepper(spec.columns.length, step)(Weave.library.patterns.boardIndex(spec, card))];
@@ -106,10 +105,7 @@ Weave.library.patterns.boardCards = (spec, state, update, column) => state.cards
 Weave.library.patterns.boardLanded = column => () => ({ [Weave.library.patterns.columnKey]: column.key });
 Weave.library.patterns.boardMoved = (state, column, identifier) => Weave.library.patterns.replaced(state.cards, { [Weave.library.patterns.idKey]: identifier }, Weave.library.patterns.boardLanded(column));
 Weave.library.patterns.boardDropped = (state, update, column) => event => update(() => ({ cards: Weave.library.patterns.boardMoved(state, column, Weave.library.interaction.droppedData(Weave.library.events.preventDefault(event))) }));
-Weave.library.patterns.boardOver = value => event => Weave.library.attributes.setData(Weave.library.patterns.overKey, value)(Weave.library.browser.currentTargetOf(event));
-Weave.library.patterns.boardEnter = Weave.library.patterns.boardOver(Weave.library.browser.keywords.true);
-Weave.library.patterns.boardLeave = Weave.library.patterns.boardOver(Weave.library.browser.keywords.false);
-Weave.library.patterns.boardDropOptions = (state, update, column) => ({ onEnter: Weave.library.patterns.boardEnter, onLeave: Weave.library.patterns.boardLeave, onDrop: Weave.library.patterns.boardDropped(state, update, column) });
+Weave.library.patterns.boardDropOptions = (state, update, column) => ({ onEnter: Weave.library.components.dropEnter, onLeave: Weave.library.components.dropLeave, onDrop: Weave.library.patterns.boardDropped(state, update, column) });
 Weave.library.patterns.boardLane = (state, update, column) => el => Weave.library.interaction.droppable(Weave.library.patterns.boardDropOptions(state, update, column))(el);
 Weave.library.patterns.boardLaneHead = (spec, state, update, column) => Weave.library.components.spread({ children: [Weave.library.components.subtitle({ text: column.label }), Weave.library.components.tag({ text: String(Weave.library.patterns.boardCards(spec, state, update, column).length) })] });
 Weave.library.patterns.boardLaneBody = (spec, state, update, column) => Weave.library.control.either(cards => cards.length > 0, cards => Weave.library.components.stack({ children: cards }), Weave.library.patterns.emptyNote)(Weave.library.patterns.boardCards(spec, state, update, column));

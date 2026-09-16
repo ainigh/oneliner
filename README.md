@@ -135,7 +135,9 @@ Containers come from one table, so adding `blueprints.pill = parts.inline` adds
 built from those same containers and never reach past them. The chart widgets — `chart`, `legend`,
 `sparkline`, `lineChart`, `axis`, `barChart`, `rankBars`, `donut`, `heatmap`, `heatScale` and
 `trend` — are the same idea again: a reading in, an element out, with no caller ever naming a
-colour.
+colour. The written widgets — `prose`, `callout`, `contents`, `codeListing`, `pager`, `diff`,
+`diffStat`, `comment`, `commentThread` and `dropzone` — carry a page of words and a page of diff
+the same way.
 
 `demos/elements.html` draws every one of them, live, with the call that draws it underneath.
 
@@ -376,6 +378,44 @@ the survivors:
 Weave.library.patterns.chartBoard({ spans, lines: services, draw: view => Weave.library.components.lineChart({ lines: view.lines }) });
 ```
 
+## The written pages
+
+Two shapes the dashboards never asked for: a page of prose, and a page of diff. Both are components
+like any other, and both keep their colour and their measure in library tables.
+
+```js
+Weave.library.components.prose({ children: [title, paragraphs, callout, listing, pager] });
+Weave.library.components.callout({ glyph: '📦', title: 'Worth knowing', tone: 'warning', body: [note] });
+Weave.library.components.contents({ title: 'Chapters', active: 'install', items: chapters });
+Weave.library.components.codeListing({ lines: ['npm run check'], caption: 'package.json' });
+Weave.library.components.pager({ label: 'Between chapters', previous, next });
+```
+
+`contents` marks the section being read with `aria-current`, which is the same state row the
+pagination buttons already answered to, so being *here* is written once. `pager` is given a row per
+end and draws a `pagerGap` where it was given none, so a chapter with no neighbour on one side still
+pushes its one link to the side it belongs on.
+
+A diff is the same idea with a third table behind it. `components.editKinds` holds one row per thing
+a line can be — `added`, `removed`, `same` — and it is a modifier table, so a row asks for a kind by
+name and the stylesheet carries the wash and the stripe:
+
+```js
+Weave.library.components.diff({ title: 'src/22-components.js', label: 'The change', rows: lines });
+Weave.library.components.diffStat({ added: 12, removed: 1 });
+Weave.library.components.commentThread({ items: remarks, reply: [box, dropTarget] });
+Weave.library.components.dropzone({ glyph: '🖼️', title: 'Drop a screenshot here', onDrop: attach });
+```
+
+Every line carries its number *and* its sign, because the two washes are the only part of the
+reading that a colour-blind reader cannot see; `components.diffSigns` is the one place either sign
+is written, and `diffStat` spends the same two rows, so a file list and a diff can never disagree
+about which way is which. `dropzone` is the one widget that wires its own listeners: it marks itself
+with the `over` state while a file is above it, clears the mark on drop, and then hands the event on.
+
+`demos/handbook.html` and `demos/review.html` are those two pages, and every widget in this section
+exists because one of them could not say something without it.
+
 ## Above the page
 
 `overlays` is the layer between `components` and `patterns`, and the only place the system positions
@@ -438,14 +478,14 @@ npm run audit       # the style rules, plus catalog.json
 npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
 npm run check:apps  # drive sample.html, todo.html, studio.html, styleguide.html and tests.html in jsdom
-npm run check:demos # drive all nine demo applications in jsdom, and hold the kit to its contract
+npm run check:demos # drive every demo application in jsdom, and hold the kit to its contract
 npm run check:flagships # drive Relay and Pantry the way a person would use them
 npm run check       # all of the above
 ```
 
 ## The demos
 
-`demos/index.html` links nineteen pages: two of them catalogues of the library itself, and the rest
+`demos/index.html` links twenty-three pages: two of them catalogues of the library itself, and the rest
 applications that put the patterns under load in a different shape. Each is short because the
 patterns do the work:
 
@@ -469,6 +509,8 @@ patterns do the work:
 | `landing.html` | marketing | the shape every product site takes: a hero, three reasons, prices, quotes and questions |
 | `signal.html` | service analytics | every chart the library draws: a line board whose legend switches a series off, bars with their own numbers, ranked bars, a ring, a heatmap, and the same week again as a table |
 | `travel.html` | booking | four steps and a summary over one store, priced by cabin and by how many are travelling |
+| `handbook.html` | documentation | prose in a measured column: a contents that marks where you are, callouts that carry a tone, numbered listings, and a pager that holds an end open when there is no chapter there |
+| `review.html` | code review | four changed files, a diff that marks every line with what it is, the conversation hanging off the open file, and a target a screenshot can be dropped on |
 
 None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all of them, and holds the two catalogues to their own contract: an element with no call, a section naming an element that does not exist, or an element filed in no section all fail the build.
 
