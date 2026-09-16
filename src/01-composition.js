@@ -50,6 +50,7 @@ Weave.library.composition.trim = text => String(text).trim();
 Weave.library.composition.capitalize = text => text.slice(0, 1).toUpperCase() + text.slice(1);
 Weave.library.composition.camelCase = text => text.replace(/-([a-z])/g, (whole, letter) => letter.toUpperCase());
 Weave.library.composition.kebabCase = text => text.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase());
+Weave.library.composition.startCase = text => Weave.library.composition.capitalize(text.replace(/[A-Z]/g, letter => ' ' + letter.toLowerCase()));
 Weave.library.composition.pixels = value => value + 'px';
 Weave.library.composition.number = value => Weave.library.control.either(Number.isFinite, Weave.library.composition.identity, Weave.library.composition.zero)(parseFloat(value));
 Weave.library.composition.zero = () => 0;

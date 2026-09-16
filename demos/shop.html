@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — storefront</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: a shop. A navbar over an offer carousel, filters as chips, and a basket in a sheet. */
+Weave.application = {};
+/* words: the only place this page writes a word of its own. */
+Weave.application.words = {};
+Weave.application.words.title = 'Greengrocer';
+Weave.application.words.blurb = 'A storefront put together out of nothing but library rows: a navbar, a carousel, chips that filter, cards that price, and a basket over the page.';
+Weave.application.words.currency = 'GBP';
+Weave.application.words.offers = 'This week';
+Weave.application.words.shelf = 'The shelf';
+Weave.application.words.basket = 'Your basket';
+Weave.application.words.basketEmpty = 'Nothing in it yet';
+Weave.application.words.basketHint = 'Add something from the shelf and it will show here.';
+Weave.application.words.add = 'Add to basket';
+Weave.application.words.open = 'Basket';
+Weave.application.words.checkout = 'Check out';
+Weave.application.words.total = 'To pay';
+Weave.application.words.added = ' is in the basket.';
+Weave.application.words.paid = 'Thank you. It leaves the depot in the morning.';
+Weave.application.words.search = 'Jump to a shelf';
+Weave.application.words.home = 'Shop';
+Weave.application.words.orders = 'Orders';
+Weave.application.words.help = 'Help';
+
+/* the stock: one row per thing on the shelf, and one per filter it can answer to. Prices are in pence. */
+Weave.application.marks = {};
+Weave.application.marks.cheap = 'cheap';
+Weave.application.marks.fresh = 'new';
+Weave.application.marks.bulk = 'bulk';
+Weave.application.stock = [{ key: 'lemons', label: 'Lemons, by the crate', glyph: '🍋', price: 640, score: 4, tags: [Weave.application.marks.cheap, Weave.application.marks.fresh] }, { key: 'potatoes', label: 'Potatoes, by the sack', glyph: '🥔', price: 1150, score: 5, tags: [Weave.application.marks.bulk] }, { key: 'cheese', label: 'Cheese, by the wheel', glyph: '🧀', price: 2400, score: 5, tags: [Weave.application.marks.fresh] }, { key: 'bread', label: 'Sourdough, by the loaf', glyph: '🍞', price: 380, score: 3, tags: [Weave.application.marks.cheap] }, { key: 'olives', label: 'Olives, by the jar', glyph: '🫒', price: 520, score: 4, tags: [Weave.application.marks.cheap, Weave.application.marks.bulk] }, { key: 'honey', label: 'Honey, by the pot', glyph: '🍯', price: 890, score: 4, tags: [Weave.application.marks.fresh] }];
+Weave.application.filters = [{ key: Weave.application.marks.cheap, label: 'Under seven pounds' }, { key: Weave.application.marks.fresh, label: 'New in' }, { key: Weave.application.marks.bulk, label: 'By the sack' }];
+Weave.application.offers = [{ key: 'delivery', title: 'Free delivery over £20', note: 'Anywhere we drive, which is most of Yorkshire.' }, { key: 'seconds', title: 'Wonky boxes, half price', note: 'Same crop, worse looking, packed on Fridays.' }, { key: 'club', title: 'The standing order', note: 'The same box every week, five per cent off.' }];
+Weave.application.shop = Weave.library.patterns.store({ rows: [], keys: [] });
+Weave.application.price = amount => Weave.kit.pence(Weave.application.words.currency)(amount);
+Weave.application.matches = state => item => Weave.library.control.either(() => state.keys.length === 0, () => true, () => state.keys.some(key => item.tags.includes(key)))(item);
+Weave.application.shown = state => Weave.application.stock.filter(Weave.application.matches(state));
+
+/* the shelf: one card per thing, with its picture, its score, its price and the button that takes it. */
+Weave.application.picture = item => Weave.library.components.media({ glyph: item.glyph, label: item.label, ratio: Weave.library.components.markNames.ratio.square });
+Weave.application.pricing = item => Weave.library.components.spread({ children: [Weave.library.components.value({ text: Weave.application.price(item.price) }), Weave.library.components.rating({ value: item.score })] });
+Weave.application.taker = item => Weave.library.components.actionButton({ label: Weave.application.words.add, variant: Weave.library.components.markNames.variant.primary, width: Weave.library.components.markNames.width.full, onAction: () => Weave.application.take(item) });
+Weave.application.tile = item => Weave.library.components.card({ data: { key: item.key }, children: [Weave.application.picture(item), Weave.library.components.strong({ text: item.label }), Weave.application.pricing(item), Weave.application.taker(item)] });
+Weave.application.shelf = state => Weave.library.components.tiles({ children: Weave.application.shown(state).map(Weave.application.tile) });
+Weave.application.shelfView = () => Weave.library.patterns.connect(Weave.application.shop)(Weave.application.shelf).element;
+
+/* taking something: the basket rows, the count on the navbar, and the sheet that shows both. */
+Weave.application.take = item => (Weave.application.shop.update(state => ({ rows: state.rows.concat([item]) })), Weave.kit.cheer(item.label + Weave.application.words.added));
+Weave.application.total = rows => rows.reduce((sum, row) => sum + row.price, 0);
+Weave.application.basketRow = row => ({ key: row.key, label: row.label, note: Weave.application.price(row.price) });
+Weave.application.basketList = rows => Weave.library.components.listGroup({ items: rows.map(Weave.application.basketRow) });
+Weave.application.basketEmpty = () => Weave.kit.nothing({ glyph: '🧺', title: Weave.application.words.basketEmpty, note: Weave.application.words.basketHint });
+Weave.application.basketBody = () => Weave.library.control.either(rows => rows.length > 0, Weave.application.basketFull, Weave.application.basketEmpty)(Weave.application.shop.state.rows);
+Weave.application.basketFull = rows => Weave.library.components.stack({ children: [Weave.application.basketList(rows), Weave.kit.pair({ label: Weave.application.words.total, value: Weave.application.price(Weave.application.total(rows)) })] });
+Weave.application.checkout = close => [{ label: Weave.application.words.checkout, variant: Weave.library.components.markNames.variant.primary, onAction: () => Weave.application.pay(close) }];
+Weave.application.pay = close => (Weave.application.empty(), close(), Weave.kit.cheer(Weave.application.words.paid));
+Weave.application.empty = () => Weave.application.shop.update(() => ({ rows: [] }));
+Weave.application.openBasket = () => Weave.library.patterns.sheet({ title: Weave.application.words.basket, body: [Weave.application.basketBody()], actions: Weave.application.checkout });
+Weave.application.basketButton = state => Weave.library.components.actionButton({ label: Weave.application.words.open + Weave.application.count(state), onAction: Weave.application.openBasket });
+Weave.application.count = state => Weave.library.control.either(rows => rows.length > 0, rows => ' (' + String(rows.length) + ')', () => Weave.library.browser.keywords.empty)(state.rows);
+
+/* the top of the page: the navbar, the offers, and the chips that decide what the shelf shows. */
+Weave.application.links = [{ label: Weave.application.words.home, active: true }, { label: Weave.application.words.orders }, { label: Weave.application.words.help }];
+Weave.application.bar = () => Weave.library.components.navbar({ title: Weave.application.words.title, items: Weave.application.links, actions: [] });
+Weave.application.barRow = state => Weave.library.components.spread({ children: [Weave.application.bar(), Weave.application.basketButton(state)] });
+Weave.application.barView = () => Weave.library.patterns.connect(Weave.application.shop)(Weave.application.barRow).element;
+Weave.application.offer = row => Weave.library.components.stack({ children: [Weave.library.components.subtitle({ text: row.title }), Weave.library.components.note({ text: row.note })] });
+Weave.application.carousel = () => Weave.library.patterns.carousel({ slides: Weave.application.offers, slide: Weave.application.offer }).element;
+Weave.application.refilter = keys => Weave.application.shop.update(() => ({ keys }));
+Weave.application.chips = () => Weave.library.patterns.chipFilter({ items: Weave.application.filters, onChange: Weave.application.refilter }).element;
+Weave.application.jump = () => Weave.library.patterns.combobox({ options: Weave.application.stock.map(item => ({ label: item.label, value: item.key })), onPick: Weave.application.take }).element;
+
+/* the page: four sections over one store, so the shelf and the basket count can never fall out of step. */
+Weave.application.offerSection = () => Weave.kit.section({ title: Weave.application.words.offers, children: [Weave.application.carousel()] });
+Weave.application.jumpSection = () => Weave.kit.section({ title: Weave.application.words.search, children: [Weave.application.jump()] });
+Weave.application.shelfSection = () => Weave.kit.section({ title: Weave.application.words.shelf, children: [Weave.application.chips(), Weave.application.shelfView()] });
+Weave.application.sections = () => [Weave.application.barView(), Weave.application.offerSection(), Weave.application.jumpSection(), Weave.application.shelfSection()];
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: Weave.application.sections() });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

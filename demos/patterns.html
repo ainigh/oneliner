@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — every pattern</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: the pattern gallery. Every stateful piece, live, beside the call that starts it. */
+Weave.application = {};
+/* words: the only place this page writes a word of its own. */
+Weave.application.words = {};
+Weave.application.words.title = 'Every pattern';
+Weave.application.words.blurb = 'A pattern is a component with state. Each card below is a running one, and the line under it is the whole call.';
+Weave.application.words.tasks = 'This week';
+Weave.application.words.stock = 'Stock';
+Weave.application.words.people = 'People';
+Weave.application.words.ledger = 'Ledger';
+Weave.application.words.board = 'Delivery';
+Weave.application.words.chat = 'Support';
+Weave.application.words.agent = 'Desk';
+Weave.application.words.files = 'Repository';
+Weave.application.words.month = 'This month';
+Weave.application.words.booking = 'Book a van';
+Weave.application.words.invite = 'Invite somebody';
+Weave.application.words.panel = 'Numbers';
+Weave.application.words.open = 'Open it';
+Weave.application.words.ask = 'Ask first';
+Weave.application.words.hover = 'Point at me';
+Weave.application.words.tip = 'A bubble that follows its target';
+Weave.application.words.layer = 'Everything above the page is one call';
+Weave.application.words.sure = 'Delete the branch?';
+Weave.application.words.nothing = 'Nothing else points at it.';
+Weave.application.words.done = 'Deleted. Nothing else changed.';
+
+/* data: the rows the patterns below run on, each written once. */
+Weave.application.data = {};
+Weave.application.data.items = [{ label: 'Write the release note' }, { label: 'Answer Ana', done: true }, { label: 'Book the van' }];
+Weave.application.data.rows = [{ name: 'Bolts', count: 420, where: 'A1' }, { name: 'Nuts', count: 160, where: 'A2' }, { name: 'Washers', count: 940, where: 'B1' }, { name: 'Rivets', count: 75, where: 'B2' }];
+Weave.application.data.columns = [{ key: 'name', label: 'Part' }, { key: 'count', label: 'Count' }, { key: 'where', label: 'Aisle' }];
+Weave.application.data.people = [{ label: 'Noor Al-Sayed', bio: 'Platform, joined in March' }, { label: 'Wren Ashby', bio: 'Support, joined in July' }];
+Weave.application.data.lanes = [{ key: 'todo', label: 'To do' }, { key: 'doing', label: 'Doing' }, { key: 'done', label: 'Done' }];
+Weave.application.data.cards = [{ label: 'Crate the order', column: Weave.library.composition.first(Weave.application.data.lanes).key }, { label: 'Load the van', column: Weave.application.data.lanes[1].key }];
+Weave.application.data.said = [{ from: 'Ana', text: 'The export stalls at 20k rows.' }, { from: 'Desk', text: 'Trying a smaller batch now.' }];
+Weave.application.data.tree = [{ label: 'src', children: [{ label: 'components.js' }, { label: 'patterns.js' }] }, { label: 'tests' }];
+Weave.application.data.steps = [{ title: 'Where from', body: [] }, { title: 'Where to', body: [] }, { title: 'When', body: [] }];
+Weave.application.data.commands = [{ label: 'Open the board' }, { label: 'Start a chat' }, { label: 'Close the week' }];
+Weave.application.data.slides = [{ glyph: '🍋', label: 'Lemons, by the crate' }, { glyph: '🥔', label: 'Potatoes, by the sack' }, { glyph: '🧀', label: 'Cheese, by the wheel' }];
+Weave.application.data.places = [{ label: 'Lisbon', value: 'lis' }, { label: 'Lima', value: 'lim' }, { label: 'Oslo', value: 'osl' }];
+Weave.application.data.filters = [{ key: 'cheap', label: 'Under ten' }, { key: 'near', label: 'Nearby' }, { key: 'new', label: 'New in' }];
+Weave.application.data.entry = [{ label: 'Who', name: 'who', rules: { required: true } }, { label: 'Where', name: 'address', rules: { required: true, email: true } }];
+Weave.application.data.tabs = [{ key: 'summary', label: 'Summary', body: [Weave.library.components.note({ text: 'Four vans out, one back early.' })] }, { key: 'detail', label: 'Detail', body: () => [Weave.library.components.note({ text: 'Drawn only when the tab is opened.' })] }];
+Weave.application.data.tiles = [{ label: 'Open', value: 14 }, { label: 'Late', value: 2 }];
+Weave.application.data.panels = [{ title: 'By depot', body: Weave.library.components.note({ text: 'Two out of Leeds, two out of Hull.' }) }];
+Weave.application.data.big = Weave.library.composition.range(2000).map(index => ({ label: 'Row ' + (index + 1) }));
+
+/* draws: one row per pattern, each returning the element it is running in. */
+Weave.application.draws = {};
+Weave.application.draws.todoList = () => Weave.library.patterns.todoList({ title: Weave.application.words.tasks, items: Weave.application.data.items }).element;
+Weave.application.draws.dataGrid = () => Weave.library.patterns.dataGrid({ title: Weave.application.words.stock, pageSize: 2, columns: Weave.application.data.columns, rows: Weave.application.data.rows }).element;
+Weave.application.draws.masterDetail = () => Weave.library.patterns.masterDetail({ items: Weave.application.data.people, detail: person => Weave.library.components.note({ text: person.bio }) }).element;
+Weave.application.draws.board = () => Weave.library.patterns.board({ columns: Weave.application.data.lanes, cards: Weave.application.data.cards }).element;
+Weave.application.draws.chat = () => Weave.library.patterns.chat({ title: Weave.application.words.chat, author: Weave.application.words.agent, messages: Weave.application.data.said }).element;
+Weave.application.draws.explorer = () => Weave.library.patterns.explorer({ title: Weave.application.words.files, nodes: Weave.application.data.tree, detail: node => Weave.library.components.note({ text: node.label }) }).element;
+Weave.application.draws.dashboard = () => Weave.library.patterns.dashboard({ title: Weave.application.words.panel, stats: Weave.application.data.tiles, panels: Weave.application.data.panels }).element;
+Weave.application.draws.calendar = () => Weave.library.patterns.calendar({ title: Weave.application.words.month, events: [] }).element;
+Weave.application.draws.wizard = () => Weave.library.patterns.wizard({ title: Weave.application.words.booking, steps: Weave.application.data.steps }).element;
+Weave.application.draws.commandPalette = () => Weave.library.patterns.commandPalette({ commands: Weave.application.data.commands }).element;
+Weave.application.draws.entryForm = () => Weave.library.patterns.entryForm({ title: Weave.application.words.invite, submit: 'Invite', fields: Weave.application.data.entry }).element;
+Weave.application.draws.virtualList = () => Weave.library.patterns.virtualList({ items: Weave.application.data.big, row: item => Weave.library.components.note({ text: item.label }) }).element;
+Weave.application.draws.virtualGrid = () => Weave.library.patterns.virtualGrid({ title: Weave.application.words.ledger, columns: [{ key: 'label', label: 'Line' }], rows: Weave.application.data.big }).element;
+Weave.application.draws.tabsView = () => Weave.library.patterns.tabsView({ items: Weave.application.data.tabs }).element;
+Weave.application.draws.carousel = () => Weave.library.patterns.carousel({ slides: Weave.application.data.slides, slide: Weave.application.slide }).element;
+Weave.application.slide = row => Weave.library.components.stack({ children: [Weave.library.components.media({ glyph: row.glyph }), Weave.library.components.strong({ text: row.label })] });
+Weave.application.draws.combobox = () => Weave.library.patterns.combobox({ options: Weave.application.data.places, onPick: Weave.application.picked }).element;
+Weave.application.picked = option => Weave.kit.cheer(option.label);
+Weave.application.draws.inlineEdit = () => Weave.library.patterns.inlineEdit({ label: 'Company', value: 'Acme' }).element;
+Weave.application.draws.chipFilter = () => Weave.library.patterns.chipFilter({ items: Weave.application.data.filters, chosen: ['cheap'] }).element;
+Weave.application.draws.passwordField = () => Weave.library.patterns.passwordField({ label: 'Password', name: 'password' }).element;
+Weave.application.draws.notifications = () => Weave.library.components.actionButton({ label: 'Raise a toast', onAction: () => Weave.kit.say(Weave.application.words.done, Weave.library.components.toneNames.info) });
+Weave.application.draws.dialog = () => Weave.library.components.actionButton({ label: Weave.application.words.open, onAction: Weave.application.openDialog });
+Weave.application.openDialog = () => Weave.library.patterns.dialog({ title: Weave.application.words.layer, body: close => [Weave.library.components.note({ text: Weave.application.words.nothing })], actions: close => [{ label: 'Close it', onAction: close }] });
+Weave.application.draws.drawer = () => Weave.library.components.actionButton({ label: 'From the side', onAction: Weave.application.openDrawer });
+Weave.application.openDrawer = () => Weave.library.patterns.drawer({ title: 'A drawer', body: [Weave.library.components.note({ text: 'The same layer, against the edge.' })] });
+Weave.application.draws.sheet = () => Weave.library.components.actionButton({ label: 'From the bottom', onAction: Weave.application.openSheet });
+Weave.application.openSheet = () => Weave.library.patterns.sheet({ title: 'A sheet', body: [Weave.library.components.note({ text: 'The same layer again, thumb first.' })] });
+Weave.application.draws.confirm = () => Weave.library.components.actionButton({ label: Weave.application.words.ask, onAction: Weave.application.askFirst });
+Weave.application.askFirst = () => Weave.kit.askThen({ title: Weave.application.words.sure, note: Weave.application.words.nothing }, Weave.application.deleted);
+Weave.application.deleted = () => Weave.kit.cheer(Weave.application.words.done);
+Weave.application.draws.menu = () => Weave.library.components.actionButton({ label: 'Hang a menu', onAction: Weave.library.patterns.menuAt({ items: Weave.application.data.commands }) });
+Weave.application.tipped = button => Weave.library.composition.tap(() => Weave.library.overlays.tip(Weave.application.words.tip)(button))(button);
+Weave.application.draws.tip = () => Weave.application.tipped(Weave.library.components.actionButton({ label: Weave.application.words.hover }));
+
+/* calls: one row per draw, so the line under a card is always the call above it. */
+Weave.application.calls = {};
+Weave.application.calls.todoList = 'patterns.todoList({ title, items })';
+Weave.application.calls.dataGrid = 'patterns.dataGrid({ title, pageSize, columns, rows })';
+Weave.application.calls.masterDetail = 'patterns.masterDetail({ items, detail })';
+Weave.application.calls.board = 'patterns.board({ columns, cards })';
+Weave.application.calls.chat = 'patterns.chat({ title, author, messages })';
+Weave.application.calls.explorer = 'patterns.explorer({ title, nodes, detail })';
+Weave.application.calls.dashboard = 'patterns.dashboard({ title, stats, panels })';
+Weave.application.calls.calendar = 'patterns.calendar({ title, events })';
+Weave.application.calls.wizard = 'patterns.wizard({ title, steps })';
+Weave.application.calls.commandPalette = 'patterns.commandPalette({ commands })';
+Weave.application.calls.entryForm = 'patterns.entryForm({ title, submit, fields })';
+Weave.application.calls.virtualList = 'patterns.virtualList({ items, row })';
+Weave.application.calls.virtualGrid = 'patterns.virtualGrid({ title, columns, rows })';
+Weave.application.calls.tabsView = 'patterns.tabsView({ items })';
+Weave.application.calls.carousel = 'patterns.carousel({ slides, slide })';
+Weave.application.calls.combobox = 'patterns.combobox({ options, onPick })';
+Weave.application.calls.inlineEdit = 'patterns.inlineEdit({ label, value, onSave })';
+Weave.application.calls.chipFilter = 'patterns.chipFilter({ items, chosen, onChange })';
+Weave.application.calls.passwordField = 'patterns.passwordField({ label, name })';
+Weave.application.calls.notifications = 'patterns.notifications({}).push(message, tone)';
+Weave.application.calls.dialog = 'patterns.dialog({ title, body, actions })';
+Weave.application.calls.drawer = 'patterns.drawer({ title, body })';
+Weave.application.calls.sheet = 'patterns.sheet({ title, body })';
+Weave.application.calls.confirm = 'patterns.confirm({ title, note })';
+Weave.application.calls.menu = 'patterns.menuAt({ items })';
+Weave.application.calls.tip = 'overlays.tip(text)(element)';
+
+/* sections: the order the gallery reads in, one row per section. */
+Weave.application.sections = {};
+Weave.application.sections.lists = { title: 'Lists and tables', names: ['todoList', 'dataGrid', 'virtualList', 'virtualGrid', 'chipFilter'] };
+Weave.application.sections.shapes = { title: 'Whole screens', names: ['masterDetail', 'explorer', 'board', 'dashboard', 'calendar', 'chat'] };
+Weave.application.sections.asking = { title: 'Asking for things', names: ['entryForm', 'wizard', 'combobox', 'inlineEdit', 'passwordField', 'commandPalette'] };
+Weave.application.sections.switching = { title: 'Switching what shows', names: ['tabsView', 'carousel'] };
+Weave.application.sections.above = { title: 'Above the page', names: ['dialog', 'drawer', 'sheet', 'confirm', 'menu', 'tip', 'notifications'] };
+
+/* the page: one card per pattern, one panel per section, and the count of the whole set. */
+Weave.application.sample = name => Weave.library.components.holder({ children: [Weave.application.draws[name]()] });
+Weave.application.card = name => Weave.library.components.card({ data: { key: name }, children: [Weave.library.components.sectionLabel({ text: Weave.library.composition.startCase(name) }), Weave.application.sample(name), Weave.library.components.code({ text: Weave.application.calls[name] })] });
+Weave.application.section = row => Weave.kit.section({ title: row.title, children: [Weave.library.components.tiles({ children: row.names.map(Weave.application.card) })] });
+Weave.application.sectionList = () => Weave.library.composition.values(Weave.application.sections).map(Weave.application.section);
+Weave.application.total = () => Weave.library.composition.keys(Weave.application.draws).length;
+Weave.application.tally = () => Weave.library.components.statTile({ label: Weave.application.words.title, value: Weave.application.total() });
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.tally()].concat(Weave.application.sectionList()) });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

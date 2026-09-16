@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — tailoring</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: tailoring. Every knob the styling system offers, wired to the page you are looking at. */
+Weave.application = {};
+/* words: the only place this page writes a word of its own. */
+Weave.application.words = {};
+Weave.application.words.title = 'Make it yours';
+Weave.application.words.blurb = 'Four ways to change how the system looks, none of which is a stylesheet: a theme, a density, a palette, and a modifier asked for by name on one spec.';
+Weave.application.words.theme = 'Theme — a row of token overrides on the document';
+Weave.application.words.density = 'Density — the same idea, for measurements';
+Weave.application.words.preset = 'Palette — tokens set on the page, with no theme and no rule';
+Weave.application.words.brand = 'One panel, branded on its own';
+Weave.application.words.brandNote = 'components.applyTokens sets the same custom properties on a single element, so a section can differ from the page around it.';
+Weave.application.words.knobs = 'Modifiers — what a spec can ask for by name';
+Weave.application.words.sample = 'A card, under whatever you have chosen';
+Weave.application.words.sampleNote = 'Nothing below is styled by this page. Every difference you can see is a row in a library table.';
+Weave.application.words.action = 'A button';
+Weave.application.words.variants = 'Every button intent, from components.variants';
+Weave.application.words.tones = 'Every tone, from components.tones';
+Weave.application.words.sizes = 'Every control size, from components.sizes';
+Weave.application.words.reading = 'A reading';
+Weave.application.words.count = 42;
+
+/* the state: one store, watched by the two views that have to agree about it. */
+Weave.application.knobs = ['gap', 'pad', 'shape', 'align'];
+Weave.application.start = { theme: Weave.library.components.themeNames.light, density: Weave.library.components.densityNames.snug, preset: Weave.library.components.presetNames.ocean, gap: Weave.library.components.markNames.gap.tight, pad: Weave.library.components.markNames.pad.snug, shape: Weave.library.components.markNames.shape.round, align: Weave.library.components.markNames.align.start };
+Weave.application.store = Weave.library.patterns.store(Weave.application.start);
+
+/* the pickers: one segmented control per table, each generated from the table it drives. */
+Weave.application.rowFor = key => ({ key, label: Weave.library.composition.startCase(key) });
+Weave.application.rowsOf = table => Weave.library.composition.keys(table).map(Weave.application.rowFor);
+Weave.application.picked = (name, key) => Weave.application.store.update(() => ({ [name]: key }));
+Weave.application.picker = (name, table, state) => Weave.library.components.segmented({ active: state[name], items: Weave.application.rowsOf(table), onPick: key => Weave.application.picked(name, key) });
+Weave.application.knobRow = state => name => Weave.library.components.spread({ children: [Weave.library.components.hint({ text: name }), Weave.application.picker(name, Weave.library.components.modifiers[name].styles, state)] });
+Weave.application.knobRows = state => Weave.application.knobs.map(Weave.application.knobRow(state));
+
+/* what the choices do: a theme and a density are attributes, a palette is tokens on the page. */
+Weave.application.wearTheme = state => Weave.library.components.setTheme(state.theme);
+Weave.application.wearDensity = state => Weave.library.components.setDensity(state.density);
+Weave.application.wearPreset = state => Weave.library.components.usePreset(state.preset);
+Weave.application.wear = state => (Weave.application.wearTheme(state), Weave.application.wearDensity(state), Weave.application.wearPreset(state), state);
+
+/* the sample: one card, drawn with whatever the modifiers above are set to. */
+Weave.application.marks = state => ({ gap: state.gap, pad: state.pad, shape: state.shape, align: state.align });
+Weave.application.sampleParts = () => [Weave.library.components.subtitle({ text: Weave.application.words.sample }), Weave.library.components.note({ text: Weave.application.words.sampleNote }), Weave.application.variantRow(), Weave.application.toneRow(), Weave.application.sizeRow()];
+Weave.application.sample = state => Weave.library.components.card(Weave.library.composition.merge(Weave.application.marks(state), { children: Weave.application.sampleParts() }));
+Weave.application.variantRow = () => Weave.kit.section({ title: Weave.application.words.variants, children: [Weave.library.components.row({ children: Weave.application.variantButtons() })] });
+Weave.application.variantButtons = () => Weave.library.composition.keys(Weave.library.components.variants).map(variant => Weave.library.components.actionButton({ label: variant, variant }));
+Weave.application.toneRow = () => Weave.kit.section({ title: Weave.application.words.tones, children: [Weave.library.components.row({ children: Weave.application.toneChips() })] });
+Weave.application.toneChips = () => Weave.library.composition.keys(Weave.library.components.tones).map(tone => Weave.library.components.tag({ text: tone, tone }));
+Weave.application.sizeRow = () => Weave.kit.section({ title: Weave.application.words.sizes, children: [Weave.library.components.row({ children: Weave.application.sizeButtons() })] });
+Weave.application.sizeButtons = () => Weave.library.composition.keys(Weave.library.components.sizes).map(size => Weave.library.components.actionButton({ label: size, size }));
+
+/* the branded panel: the same components, under tokens set on that one element and nowhere else. */
+Weave.application.brandTokens = { accent: '#b45309', radius: '2px', surface: '#fffbeb' };
+Weave.application.brandButton = () => Weave.library.components.actionButton({ label: Weave.application.words.action, variant: Weave.library.components.markNames.variant.primary });
+Weave.application.brandBar = () => Weave.library.components.progressBar({ value: 3, total: 5 });
+Weave.application.brandWords = () => [Weave.library.components.strong({ text: Weave.application.words.brand }), Weave.library.components.note({ text: Weave.application.words.brandNote })];
+Weave.application.brandParts = () => Weave.application.brandWords().concat([Weave.application.brandButton(), Weave.application.brandBar()]);
+Weave.application.branded = () => Weave.library.components.applyTokens(Weave.application.brandTokens)(Weave.library.components.panel({ children: Weave.application.brandParts() }));
+
+/* the page: the pickers above the sample, both watching the one store. */
+Weave.application.pickers = [['theme', 'themeNames'], ['density', 'densities'], ['preset', 'presets']];
+Weave.application.pickerLine = state => ([name, table]) => Weave.application.line(Weave.application.words[name], Weave.application.picker(name, Weave.library.components[table], state));
+Weave.application.pickerParts = state => Weave.application.pickers.map(Weave.application.pickerLine(state));
+Weave.application.line = (words, control) => Weave.library.components.stack({ children: [Weave.library.components.hint({ text: words }), control] });
+Weave.application.knobPanel = state => Weave.kit.section({ title: Weave.application.words.knobs, children: Weave.application.knobRows(state) });
+Weave.application.deskParts = state => Weave.application.pickerParts(state).concat([Weave.application.knobPanel(state), Weave.application.sample(state), Weave.application.branded()]);
+Weave.application.desk = state => Weave.library.components.stack({ children: Weave.application.deskParts(Weave.application.wear(state)) });
+Weave.application.view = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.desk).element;
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.view()] });
+Weave.application.open = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.open);
+</script>
+</body>
+</html>

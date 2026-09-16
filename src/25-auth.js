@@ -79,7 +79,7 @@ Weave.library.auth.toneFor = word => Weave.library.auth.strengthTones[Weave.libr
 Weave.library.auth.strengthBar = word => Weave.library.components.progressBar({ value: Weave.library.auth.score(word), total: Weave.library.auth.checkCount(), tone: Weave.library.auth.toneFor(word) });
 Weave.library.auth.strengthMeter = word => Weave.library.components.stack({ children: [Weave.library.components.hint({ text: Weave.library.auth.labels.strength }), Weave.library.auth.strengthBar(word)] });
 
-/* the gate: one pattern holding the screen, what has been typed and what was wrong with it. */
+/* the gate: one pattern holding the screen, what has been typed and what was wrong with it. The screen moves before the caller is told, so a caller that takes the gate off the page is the last thing to happen. */
 Weave.library.auth.gateState = spec => ({ screen: Weave.library.control.defaultTo(Weave.library.auth.names.signIn)(spec.screen), values: {}, errors: {} });
 Weave.library.auth.gateScreen = state => Weave.library.auth.screenOf(state.screen);
 Weave.library.auth.goTo = (update, name) => () => update(() => ({ screen: name, values: {}, errors: {} }));
@@ -89,7 +89,7 @@ Weave.library.auth.linkButton = update => name => Weave.library.components.actio
 Weave.library.auth.linkBar = (state, update) => Weave.library.components.row({ children: Weave.library.auth.gateScreen(state).links.map(Weave.library.auth.linkButton(update)) });
 Weave.library.auth.handled = (spec, state, values) => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onDone)(state.screen, values);
 Weave.library.auth.moved = state => ({ screen: Weave.library.control.defaultTo(state.screen)(Weave.library.auth.gateScreen(state).next), values: {}, errors: {} });
-Weave.library.auth.accepted = (spec, state, update, values) => (Weave.library.auth.handled(spec, state, values), update(() => Weave.library.auth.moved(state)));
+Weave.library.auth.accepted = (spec, state, update, values) => (update(() => Weave.library.auth.moved(state)), Weave.library.auth.handled(spec, state, values));
 Weave.library.auth.refused = (update, values, errors) => update(() => ({ values, errors }));
 Weave.library.auth.judged = (spec, state, update, values, errors) => Weave.library.control.either(() => Weave.library.patterns.isClean(errors), () => Weave.library.auth.accepted(spec, state, update, values), () => Weave.library.auth.refused(update, values, errors))(values);
 Weave.library.auth.gateSubmit = (spec, state, update) => values => Weave.library.auth.judged(spec, state, update, values, Weave.library.patterns.problemsOf(Weave.library.auth.gateScreen(state), values));

@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo, both flagships and the style guide', count(dom, '.weave-card') === 12, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo, both flagships and the reference pages', count(dom, '.weave-card') === 18, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -169,6 +169,131 @@ open('index.html').then(dom => {
 }).then(dom => {
   expect('tenants frees the seat once you confirm', count(dom, '.weave-table tbody tr') === 3, `saw ${count(dom, '.weave-table tbody tr')}`);
   expect('tenants leaves no overlay behind', count(dom, '.weave-dialog-box') === 0, `saw ${count(dom, '.weave-dialog-box')}`);
+  return open('elements.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const names = dom.window.eval('Object.keys(Weave.application.draws)');
+  const calls = dom.window.eval('Object.keys(Weave.application.calls)');
+  const listed = dom.window.eval('Object.values(Weave.application.sections).flatMap(row => row.names)');
+  expect('elements draws one card per element', count(dom, '.weave-card[data-key]') === names.length, `${count(dom, '.weave-card[data-key]')} cards for ${names.length} elements`);
+  expect('elements prints the call under every card', count(dom, '.weave-card[data-key] > .weave-code') === names.length, `saw ${count(dom, '.weave-card[data-key] > .weave-code')}`);
+  expect('elements documents every element it draws', names.every(name => calls.includes(name)), `missing ${names.filter(name => !calls.includes(name))}`);
+  expect('elements files every element in a section', names.every(name => listed.includes(name)), `unfiled ${names.filter(name => !listed.includes(name))}`);
+  expect('elements sections name nothing it does not draw', listed.every(name => names.includes(name)), `orphans ${listed.filter(name => !names.includes(name))}`);
+  expect('elements counts itself in its own tile', document.querySelector('.weave-stat-tile').textContent.includes(String(names.length)), document.querySelector('.weave-stat-tile').textContent);
+  expect('elements draws the new widgets it promises', count(dom, '.weave-navbar-box') === 1 && count(dom, '.weave-group-list') === 1 && count(dom, '.weave-terms-box') === 1, 'a Bootstrap shaped widget is missing');
+  expect('elements uses no hand written class', !document.body.innerHTML.includes('class="weave-undefined'), 'an undefined class appeared');
+  return open('patterns.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const names = dom.window.eval('Object.keys(Weave.application.draws)');
+  expect('patterns prints the call under every card it runs', count(dom, '.weave-card[data-key] > .weave-code') === names.length, `${count(dom, '.weave-card[data-key] > .weave-code')} calls for ${names.length} patterns`);
+  expect('patterns runs the virtual list without drawing two thousand rows', count(dom, '.weave-scroller .weave-list-row') < 60, `saw ${count(dom, '.weave-scroller .weave-list-row')}`);
+  const carousel = () => document.querySelector('[data-key=carousel]');
+  const slide = () => carousel().querySelector('.weave-strong').textContent;
+  const before = slide();
+  carousel().querySelectorAll('.weave-button-group-box .weave-button')[1].click();
+  expect('patterns steps the carousel', slide() !== before, `${before} then ${slide()}`);
+  const tabs = () => document.querySelector('[data-key=tabsView]');
+  tabs().querySelectorAll('.weave-tab')[1].click();
+  expect('patterns switches a tabbed pane', tabs().textContent.includes('only when the tab is opened'), tabs().textContent);
+  const combo = () => document.querySelector('[data-key=combobox]');
+  const query = combo().querySelector('input[name=query]');
+  query.value = 'oslo';
+  fire(dom, query, 'input');
+  expect('patterns narrows the combobox', combo().querySelectorAll('.weave-menu li').length === 1, `saw ${combo().querySelectorAll('.weave-menu li').length}`);
+  document.querySelector('[data-key=inlineEdit] .weave-row-button').click();
+  expect('patterns opens an inline edit', count(dom, '[data-key=inlineEdit] .weave-control') === 1, 'no field opened');
+  document.querySelector('[data-key=dialog] .weave-button').click();
+  expect('patterns opens a dialog over the page', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
+  [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Close it').click();
+  expect('patterns leaves no overlay behind', count(dom, '.weave-dialog-box') === 0, `saw ${count(dom, '.weave-dialog-box')}`);
+  return open('account.html');
+}).then(dom => {
+  const document = dom.window.document;
+  expect('account shows the gate while signed out', count(dom, '.weave-form') === 1 && document.querySelector('.weave-title').textContent === 'Sign in', document.querySelector('.weave-title').textContent);
+  expect('account offers the other two screens', count(dom, '.weave-row > .weave-button[data-variant=link]') === 2, `saw ${count(dom, '.weave-row > .weave-button[data-variant=link]')}`);
+  fire(dom, document.querySelector('.weave-form'), 'submit');
+  expect('account refuses an empty sign in', count(dom, '.weave-field-error') === 4, `saw ${count(dom, '.weave-field-error')}`);
+  document.querySelectorAll('.weave-row > .weave-button[data-variant=link]')[1].click();
+  expect('account walks to the sign up screen', document.querySelector('.weave-title').textContent === 'Create an account', document.querySelector('.weave-title').textContent);
+  expect('account meters the password it is about to take', count(dom, '.weave-progress-bar') === 1, `saw ${count(dom, '.weave-progress-bar')}`);
+  document.querySelector('input[name=person]').value = 'Ana Ferreira';
+  document.querySelector('input[name=email]').value = 'ana@acme.test';
+  document.querySelector('input[name=password]').value = 'longenough1';
+  document.querySelector('input[name=confirmation]').value = 'longenough1';
+  fire(dom, document.querySelector('.weave-form'), 'submit');
+  expect('account signs the new person in', document.body.textContent.includes('Signed in as Ana Ferreira'), document.querySelector('.weave-title').textContent);
+  expect('account shows the desk behind the gate', count(dom, '.weave-tab') === 2, `saw ${count(dom, '.weave-tab')}`);
+  document.querySelectorAll('.weave-tab')[1].click();
+  expect('account opens the security tab', count(dom, '.weave-switch-control') === 1, `saw ${count(dom, '.weave-switch-control')}`);
+  document.querySelector('.weave-spread > .weave-button').click();
+  expect('account hangs the menu off the account button', count(dom, '.weave-popover-box .weave-menu li') === 1, `saw ${count(dom, '.weave-popover-box .weave-menu li')}`);
+  document.querySelector('.weave-popover-box .weave-button').click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('account puts the gate back on sign out', document.querySelector('.weave-title').textContent === 'Sign in', document.querySelector('.weave-title').textContent);
+  return open('bank.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const tiles = () => [...document.querySelectorAll('.weave-stat-tile')].map(tile => tile.textContent);
+  expect('bank totals what is held', tiles()[0].includes('£17,326.30'), tiles()[0]);
+  expect('bank counts the card separately', tiles()[1].includes('£874.15'), tiles()[1]);
+  expect('bank lists every account', count(dom, '.weave-group-row') === 3, `saw ${count(dom, '.weave-group-row')}`);
+  expect('bank says where the money lives', count(dom, '.weave-terms-box .weave-definition') === 3, `saw ${count(dom, '.weave-terms-box .weave-definition')}`);
+  document.querySelectorAll('.weave-tab')[1].click();
+  expect('bank welds the currency to the amount', document.querySelector('.weave-input-group-box .weave-addon').textContent === '£', 'no addon');
+  document.querySelector('.weave-button[data-variant=primary]').click();
+  expect('bank asks before it sends anything', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
+  [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Confirm').click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('bank says it went', count(dom, '.weave-toast-host .weave-alert') === 1, `saw ${count(dom, '.weave-toast-host .weave-alert')}`);
+  document.querySelectorAll('.weave-tab')[2].click();
+  expect('bank states the month as a table', count(dom, '.weave-table tbody tr') === 4, `saw ${count(dom, '.weave-table tbody tr')}`);
+  expect('bank states the same lines as a timeline', count(dom, '.weave-timeline-row') === 4, `saw ${count(dom, '.weave-timeline-row')}`);
+  return open('shop.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const tiles = () => count(dom, '.weave-tiles > .weave-card');
+  expect('shop fills the shelf', tiles() === 6, `saw ${tiles()}`);
+  expect('shop carries a navbar', count(dom, '.weave-navbar-box .weave-anchor') === 3, `saw ${count(dom, '.weave-navbar-box .weave-anchor')}`);
+  expect('shop scores what it sells', count(dom, '.weave-rating-box') === 6, `saw ${count(dom, '.weave-rating-box')}`);
+  [...document.querySelectorAll('.weave-row > .weave-button')].find(button => button.textContent === 'Choose').click();
+  expect('shop offers every filter in a popover', count(dom, '.weave-popover-box .weave-menu li') === 3, `saw ${count(dom, '.weave-popover-box .weave-menu li')}`);
+  document.querySelector('.weave-popover-box .weave-button').click();
+  expect('shop narrows the shelf to the filter', tiles() === 3, `saw ${tiles()}`);
+  expect('shop shows the filter it took as a chip', count(dom, '.weave-chip-box') === 1, `saw ${count(dom, '.weave-chip-box')}`);
+  document.querySelector('.weave-card .weave-button[data-variant=primary]').click();
+  expect('shop counts the basket in the bar', document.querySelector('.weave-spread > .weave-button').textContent === 'Basket (1)', document.querySelector('.weave-spread > .weave-button').textContent);
+  document.querySelector('.weave-spread > .weave-button').click();
+  expect('shop opens the basket as a sheet', count(dom, '.weave-sheet-box') === 1, `saw ${count(dom, '.weave-sheet-box')}`);
+  expect('shop totals the basket', document.querySelector('.weave-sheet-box').textContent.includes('£6.40'), document.querySelector('.weave-sheet-box').textContent);
+  [...document.querySelectorAll('.weave-sheet-box .weave-button')].find(button => button.textContent === 'Check out').click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  const document = dom.window.document;
+  expect('shop empties the basket once it is paid for', document.querySelector('.weave-spread > .weave-button').textContent === 'Basket', document.querySelector('.weave-spread > .weave-button').textContent);
+  expect('shop leaves no overlay behind', count(dom, '.weave-sheet-box') === 0, `saw ${count(dom, '.weave-sheet-box')}`);
+  return open('tailor.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const groups = () => [...document.querySelectorAll('.weave-button-group-box')];
+  const root = () => document.documentElement;
+  expect('tailor offers one picker per table it drives', groups().length === 7, `saw ${groups().length}`);
+  expect('tailor starts under the theme it says it does', root().getAttribute('data-theme') === 'light', root().getAttribute('data-theme'));
+  groups()[0].querySelectorAll('.weave-button')[2].click();
+  expect('tailor changes the theme on the document', root().getAttribute('data-theme') === 'contrast', root().getAttribute('data-theme'));
+  groups()[1].querySelectorAll('.weave-button')[1].click();
+  expect('tailor changes the density the same way', root().getAttribute('data-density') === 'roomy', root().getAttribute('data-density'));
+  groups()[2].querySelectorAll('.weave-button')[2].click();
+  expect('tailor spends a palette on the page itself', root().style.getPropertyValue('--weave-accent') === '#7c3aed', root().style.getPropertyValue('--weave-accent'));
+  const card = () => document.querySelector('.weave-stack > .weave-card');
+  groups()[3].querySelectorAll('.weave-button')[2].click();
+  expect('tailor moves a modifier on one spec', card().dataset.gap === 'loose', card().dataset.gap);
+  expect('tailor brands one panel on its own', document.querySelector('[style*="--weave-accent"]') !== null, 'no branded panel');
   return open('kit.html');
 }).then(dom => {
   const document = dom.window.document;
