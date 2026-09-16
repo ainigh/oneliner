@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weave demo — handbook</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: a handbook. A contents list beside one chapter of prose, and the pager that walks between them. */
+Weave.application = {};
+
+/* words: the only place this page writes something a reader sees that is not part of a chapter. */
+Weave.application.words = {};
+Weave.application.words.title = 'Handbook — a written site';
+Weave.application.words.blurb = 'One chapter at a time, set in a column the library measures. The contents marks where you are, the callout says what to watch for, and the pager walks you on.';
+Weave.application.words.contents = 'Chapters';
+Weave.application.words.pager = 'Move between chapters';
+Weave.application.words.counter = 'Chapter ';
+
+/* chapters: one row per chapter. Every word on the right of this page comes from this table. */
+Weave.application.chapters = {};
+Weave.application.chapters.install = { label: 'Install it', title: 'Putting the library on a page', lead: 'One file, no build step, and nothing to configure before the first widget appears.', body: ['Drop the bundle in front of your own script and the whole library is on the page. There is no module graph to satisfy and no compiler to keep happy, because the bundle is the library concatenated in dependency order.', 'Every page then does the same two things: install the stylesheet once, and append whatever it has drawn. Nothing else in the library touches the document until you ask it to.'], callout: { glyph: '📦', title: 'The sheet is installed once', note: 'Calling it twice is safe and does nothing the second time, so a page that mounts more than one view cannot end up with two stylesheets.', tone: 'info' }, listing: { caption: 'index.html', lines: ['Weave.library.components.installStyles();', 'Weave.library.elements.append([page()])(Weave.library.browser.body());', 'Weave.library.events.ready(start);'] } };
+Weave.application.chapters.compose = { label: 'Compose a page', title: 'Composing a page', lead: 'A page is a call that returns an element, and every widget takes one specification.', body: ['Each component takes a single object and returns a single element. There is nothing else to learn: the same shape holds from a tag to a whole dashboard, so a page reads as one expression rather than a sequence of steps.', 'Because the argument is data, the parts of a page can be held in a table and mapped over. Most of the demos in this set are a table of rows plus one function that draws a row.'], callout: { glyph: '🧱', title: 'Children are elements, never markup', note: 'A widget takes elements in its children, so nothing in an application is ever written as a string of HTML and nothing needs escaping later.', tone: 'success' }, listing: { caption: 'page.js', lines: ['const panel = Weave.library.components.panel({ children: rows.map(draw) });', 'const draw = row => Weave.library.components.listRow({ children: [face(row), name(row)] });'] } };
+Weave.application.chapters.style = { label: 'Change the look', title: 'Changing the look', lead: 'Colour, spacing and shape live in tables of tokens, and nothing else writes a value.', body: ['A token is a row. Move the row and every widget that spends it moves with it, because the stylesheet is generated from the same table the widgets read. That is the whole theming story: there is no cascade to fight and no override to place correctly.', 'A preset is a named set of those overrides, and it can be applied to the document or to one subtree, so a section can differ from the page around it without anybody writing a rule.'], callout: { glyph: '🎚️', title: 'A page never writes a rule', note: 'If an application finds itself wanting a class, that is a missing row in a library table. The audit fails a build where an application names a tag, a class or a colour.', tone: 'warning' }, listing: { caption: 'theme.js', lines: ['Weave.library.components.configure({ accent: "#0e7490" });', 'Weave.library.components.usePreset(Weave.library.components.presetNames.forest);'] } };
+Weave.application.chapters.ship = { label: 'Ship it', title: 'Shipping a change', lead: 'The checks that stand between a change and the branch it lands on.', body: ['The build concatenates the source in order and writes both a script and a module. The audit then reads what it wrote and holds every line to the style: one statement, fully qualified, no declaration, no branch and no literal that is already written somewhere else.', 'After that the tests run in a real document, every generated table row is removed in turn to prove it generates exactly what it claims, and each demo on this site is opened and driven the way a person would drive it.'], callout: { glyph: '🚦', title: 'A red check is the answer', note: 'Every rule in the audit exists because something broke once. The fastest way to understand the style is to break one deliberately and read what it says.', tone: 'danger' }, listing: { caption: 'package.json', lines: ['npm run build', 'npm run audit', 'npm run check'] } };
+Weave.application.chapterKeys = Weave.library.composition.keys(Weave.application.chapters);
+Weave.application.firstChapter = Weave.library.composition.first(Weave.application.chapterKeys);
+Weave.application.chapterOf = state => Weave.application.chapters[state.chapter];
+Weave.application.placeOf = state => Weave.application.chapterKeys.indexOf(state.chapter);
+
+/* the store: which chapter is open, and the one move that opens another. */
+Weave.application.store = Weave.library.patterns.store({ chapter: Weave.application.firstChapter });
+Weave.application.open = key => () => Weave.application.store.update(() => ({ chapter: key }));
+
+/* the contents: one row per chapter, with the one being read marked as current. */
+Weave.application.contentsRow = key => ({ key, label: Weave.application.chapters[key].label, onAction: Weave.application.open(key) });
+Weave.application.contentsRows = () => Weave.application.chapterKeys.map(Weave.application.contentsRow);
+Weave.application.contents = state => Weave.library.components.contents({ title: Weave.application.words.contents, active: state.chapter, items: Weave.application.contentsRows() });
+Weave.application.side = state => Weave.library.components.rail({ children: [Weave.application.contents(state)] });
+
+/* the pager: the chapter on either side of this one, and nothing where there is no chapter. */
+Weave.application.endRow = key => ({ label: Weave.application.chapters[key].label, onAction: Weave.application.open(key) });
+Weave.application.endAt = place => Weave.library.control.maybe(Weave.application.endRow)(Weave.application.chapterKeys[place]);
+Weave.application.pagerSpec = state => ({ label: Weave.application.words.pager, previous: Weave.application.endAt(Weave.application.placeOf(state) - 1), next: Weave.application.endAt(Weave.application.placeOf(state) + 1) });
+Weave.application.pager = state => Weave.library.components.pager(Weave.application.pagerSpec(state));
+
+/* the chapter: a heading, its paragraphs, the one thing to watch for, and the lines that show it. */
+Weave.application.counter = state => Weave.library.components.sectionLabel({ text: Weave.application.words.counter + Weave.kit.whole(Weave.application.placeOf(state) + 1) });
+Weave.application.paragraph = words => Weave.library.components.text({ text: words });
+Weave.application.heading = chapter => Weave.library.components.title({ text: chapter.title });
+Weave.application.lead = chapter => Weave.library.components.note({ text: chapter.lead });
+Weave.application.watchFor = chapter => Weave.library.components.callout({ glyph: chapter.callout.glyph, title: chapter.callout.title, tone: chapter.callout.tone, body: [Weave.library.components.note({ text: chapter.callout.note })] });
+Weave.application.listing = chapter => Weave.library.components.codeListing({ lines: chapter.listing.lines, caption: chapter.listing.caption });
+Weave.application.chapterHead = (state, chapter) => [Weave.application.counter(state), Weave.application.heading(chapter), Weave.application.lead(chapter)];
+Weave.application.chapterTail = (state, chapter) => [Weave.application.watchFor(chapter), Weave.application.listing(chapter), Weave.application.pager(state)];
+Weave.application.chapterParts = (state, chapter) => Weave.application.chapterHead(state, chapter).concat(chapter.body.map(Weave.application.paragraph), Weave.application.chapterTail(state, chapter));
+Weave.application.article = state => Weave.library.components.prose({ children: Weave.application.chapterParts(state, Weave.application.chapterOf(state)) });
+
+/* the page: the contents on one side, the chapter on the other, under the shell every demo carries. */
+Weave.application.spread = state => Weave.library.components.split({ children: [Weave.application.side(state), Weave.application.article(state)] });
+Weave.application.pageBody = (state, ignored) => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.spread(state)] });
+Weave.application.handbook = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.pageBody);
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.handbook());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

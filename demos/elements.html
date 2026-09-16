@@ -37,6 +37,18 @@ Weave.application.words.quiet = 'Quiet';
 Weave.application.words.busy = 'Busy';
 Weave.application.words.moved = '+6.4%';
 Weave.application.words.total = 'This week';
+Weave.application.words.bulb = '💡';
+Weave.application.words.asideTitle = 'Worth knowing';
+Weave.application.words.asideNote = 'A callout is an aside that carries a tone, so a page can say how much an aside matters.';
+Weave.application.words.contentsTitle = 'On this page';
+Weave.application.words.pagerLabel = 'Between chapters';
+Weave.application.words.listingCaption = 'components.js';
+Weave.application.words.remarkTime = 'ten minutes ago';
+Weave.application.words.remarkText = 'The second gutter carries the sign, so the reading never depends on the colour alone.';
+Weave.application.words.dropGlyph = '📎';
+Weave.application.words.dropTitle = 'Drop a file here';
+Weave.application.words.dropNote = 'Or pick one from this machine instead.';
+Weave.application.words.dropButton = 'Choose a file';
 
 /* sample data: the rows the cards below draw, each written once and spent by whichever cards need it. */
 Weave.application.data = {};
@@ -67,6 +79,9 @@ Weave.application.data.keys = ['Ctrl', 'K'];
 Weave.application.data.names = ['Noor Al-Sayed', 'Wren Ashby', 'Dae-ho Lim'];
 Weave.application.data.choices = [{ value: 'post', label: 'By post', note: 'three days' }, { value: 'wire', label: 'By wire', note: 'same day' }];
 Weave.application.data.fields = [{ label: 'Your name', name: 'who' }, { label: 'Your address', name: 'where' }];
+Weave.application.data.lines = ['Weave.library.components.diffSigns.added = "+";', 'Weave.library.components.rules.statAdded = { color: toneSuccess };'];
+Weave.application.data.edits = [{ line: 1, kind: Weave.library.components.markNames.edit.same, text: 'Weave.library.components.blueprints.diffRow = parts.listItem;' }, { line: 2, kind: Weave.library.components.markNames.edit.removed, text: 'Weave.library.components.rules.diffRow = { display: block };' }, { line: 3, kind: Weave.library.components.markNames.edit.added, text: 'Weave.library.components.rules.diffRow = { display: flex, gap: space };' }];
+Weave.application.data.remarks = [{ name: Weave.application.words.second, when: 'this morning', text: 'One sign, one number, one line of code.' }, { name: Weave.application.words.third, when: 'an hour ago', text: 'Agreed, and the sign survives whatever the theme does.' }];
 
 /* draws: one row per element, each a call a reader can copy. Nothing on this page draws anything twice. */
 Weave.application.draws = {};
@@ -140,6 +155,16 @@ Weave.application.draws.spinner = () => Weave.library.components.spinner({});
 Weave.application.draws.emptyState = () => Weave.library.components.emptyState({ glyph: '🗂️', title: 'Nothing filed yet', note: 'Drop something in and it will be listed.' });
 Weave.application.draws.alert = () => Weave.library.components.alert({ title: 'Card expired', note: 'The next charge will fail unless it is replaced.', tone: Weave.library.components.toneNames.danger, onClose: Weave.library.composition.noop });
 Weave.application.draws.toast = () => Weave.library.components.toast({ message: 'Saved. Nothing else changed.' });
+Weave.application.draws.prose = () => Weave.library.components.prose({ children: [Weave.library.components.title({ text: Weave.application.words.headline }), Weave.library.components.text({ text: Weave.application.words.saying })] });
+Weave.application.draws.callout = () => Weave.library.components.callout({ glyph: Weave.application.words.bulb, title: Weave.application.words.asideTitle, tone: Weave.library.components.toneNames.warning, body: [Weave.library.components.note({ text: Weave.application.words.asideNote })] });
+Weave.application.draws.contents = () => Weave.library.components.contents({ title: Weave.application.words.contentsTitle, active: Weave.library.composition.first(Weave.application.data.group).key, items: Weave.application.data.group });
+Weave.application.draws.codeListing = () => Weave.library.components.codeListing({ lines: Weave.application.data.lines, caption: Weave.application.words.listingCaption });
+Weave.application.draws.pager = () => Weave.library.components.pager({ label: Weave.application.words.pagerLabel, previous: Weave.library.composition.first(Weave.application.data.crumbs), next: Weave.library.composition.last(Weave.application.data.crumbs) });
+Weave.application.draws.diff = () => Weave.library.components.diff({ label: Weave.application.words.listingCaption, title: Weave.application.words.listingCaption, rows: Weave.application.data.edits });
+Weave.application.draws.diffStat = () => Weave.library.components.diffStat({ added: Weave.application.words.count, removed: Weave.application.words.tally });
+Weave.application.draws.comment = () => Weave.library.components.comment({ name: Weave.application.words.person, when: Weave.application.words.remarkTime, text: Weave.application.words.remarkText });
+Weave.application.draws.commentThread = () => Weave.library.components.commentThread({ items: Weave.application.data.remarks });
+Weave.application.draws.dropzone = () => Weave.library.components.dropzone({ glyph: Weave.application.words.dropGlyph, title: Weave.application.words.dropTitle, note: Weave.application.words.dropNote, action: { label: Weave.application.words.dropButton, onAction: Weave.library.composition.noop } });
 Weave.application.draws.tooltip = () => Weave.library.components.tooltip({ label: 'Retry', note: 'Runs the job again from the top' });
 
 /* calls: the line under each card. One row per draw, so a card can never show a call that is not the one above it. */
@@ -221,6 +246,16 @@ Weave.application.calls.donut = 'components.donut({ items, reading, label })';
 Weave.application.calls.heatmap = 'components.heatmap({ items, label })';
 Weave.application.calls.heatScale = 'components.heatScale({ least, most })';
 Weave.application.calls.trend = 'components.trend({ direction, tone, text })';
+Weave.application.calls.prose = 'components.prose({ children })';
+Weave.application.calls.callout = 'components.callout({ glyph, title, tone, body })';
+Weave.application.calls.contents = 'components.contents({ title, active, items })';
+Weave.application.calls.codeListing = 'components.codeListing({ lines, caption })';
+Weave.application.calls.pager = 'components.pager({ label, previous, next })';
+Weave.application.calls.diff = 'components.diff({ label, title, rows })';
+Weave.application.calls.diffStat = 'components.diffStat({ added, removed })';
+Weave.application.calls.comment = 'components.comment({ name, when, text })';
+Weave.application.calls.commentThread = 'components.commentThread({ items, reply })';
+Weave.application.calls.dropzone = 'components.dropzone({ glyph, title, note, action, onDrop })';
 Weave.application.calls.tooltip = 'components.tooltip({ label, note })';
 
 /* sections: the order the catalogue reads in. One row per section, naming the elements it carries. */Weave.application.slotAt = index => Weave.library.components.seriesAt(index);
@@ -253,13 +288,13 @@ Weave.application.draws.trend = () => Weave.library.components.trend({ direction
 /* sections: the table the page is filed under, one row per heading, naming the cards it gathers. */
 Weave.application.sections = {};
 Weave.application.sections.layout = { title: 'Layout', names: ['panel', 'card', 'columns', 'tiles', 'split', 'divider', 'navbar', 'pageHeader', 'banner'] };
-Weave.application.sections.writing = { title: 'Writing', names: ['display', 'title', 'subtitle', 'sectionLabel', 'note', 'text', 'strong', 'hint', 'code', 'quote'] };
+Weave.application.sections.writing = { title: 'Writing', names: ['display', 'title', 'subtitle', 'sectionLabel', 'note', 'text', 'strong', 'hint', 'code', 'quote', 'prose', 'codeListing'] };
 Weave.application.sections.marks = { title: 'Marks and figures', names: ['value', 'statTile', 'tag', 'pill', 'chip', 'badge', 'statusDot', 'rating', 'avatar', 'avatarGroup', 'icon', 'kbd'] };
-Weave.application.sections.controls = { title: 'Controls', names: ['button', 'buttonGroup', 'segmented', 'field', 'inputGroup', 'passwordField', 'codeField', 'textArea', 'selectBox', 'searchBox', 'checkField', 'switchField', 'sliderField', 'stepperField', 'choices', 'form', 'toolbar'] };
-Weave.application.sections.moving = { title: 'Getting around', names: ['tabs', 'breadcrumb', 'pagination', 'menu', 'dropdown', 'tree', 'listGroup', 'steps'] };
-Weave.application.sections.showing = { title: 'Showing data', names: ['table', 'descriptions', 'timeline', 'media', 'progressBar', 'skeleton', 'spinner', 'emptyState'] };
+Weave.application.sections.controls = { title: 'Controls', names: ['button', 'buttonGroup', 'segmented', 'field', 'inputGroup', 'passwordField', 'codeField', 'textArea', 'selectBox', 'searchBox', 'checkField', 'switchField', 'sliderField', 'stepperField', 'choices', 'form', 'toolbar', 'dropzone'] };
+Weave.application.sections.moving = { title: 'Getting around', names: ['tabs', 'breadcrumb', 'pagination', 'menu', 'dropdown', 'tree', 'listGroup', 'steps', 'contents', 'pager'] };
+Weave.application.sections.showing = { title: 'Showing data', names: ['table', 'descriptions', 'timeline', 'media', 'progressBar', 'skeleton', 'spinner', 'emptyState', 'diff', 'diffStat', 'comment', 'commentThread'] };
 Weave.application.sections.charts = { title: 'Charts', names: ['chart', 'legend', 'sparkline', 'lineChart', 'axis', 'barChart', 'rankBars', 'donut', 'heatmap', 'heatScale', 'trend'] };
-Weave.application.sections.saying = { title: 'Saying something', names: ['alert', 'toast', 'tooltip'] };
+Weave.application.sections.saying = { title: 'Saying something', names: ['alert', 'toast', 'tooltip', 'callout'] };
 
 /* the page: a card per element, a section per row of the table above, and a count of the whole thing. */
 Weave.application.humanise = name => Weave.library.composition.startCase(name);

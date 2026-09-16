@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weave demo — code review</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: a code review. The changed files on one side, the diff and the conversation about it on the other. */
+Weave.application = {};
+
+/* words: the only place this page writes something a reader sees that is not part of the change. */
+Weave.application.words = {};
+Weave.application.words.title = 'Forge — reviewing a change';
+Weave.application.words.blurb = 'Four changed files, the lines each one touched, and the conversation hanging off them. The colour of a line is a library row, never a rule written here.';
+Weave.application.words.files = 'Changed files';
+Weave.application.words.replyLabel = 'Leave a review comment';
+Weave.application.words.send = 'Comment';
+Weave.application.words.thread = 'Conversation';
+Weave.application.words.reviewer = 'Wren Ashby';
+Weave.application.words.shotTitle = 'Drop a screenshot here';
+Weave.application.words.shotNote = 'Or pick one, and it is attached to the file you are reading.';
+Weave.application.words.shotButton = 'Attach a screenshot';
+Weave.application.words.shotText = 'Attached a screenshot of the failing case.';
+Weave.application.words.shotSaid = 'Screenshot attached to this file.';
+Weave.application.words.replied = 'Comment posted.';
+Weave.application.words.quiet = 'Nothing said about this file yet';
+Weave.application.words.quietNote = 'Be the first to say something about it.';
+Weave.application.words.quietGlyph = '💬';
+Weave.application.words.dropGlyph = '🖼️';
+Weave.application.words.touched = 'Files touched';
+Weave.application.words.written = 'Lines written';
+Weave.application.words.deleted = 'Lines deleted';
+Weave.application.words.replyField = 'reply';
+Weave.application.words.now = 'just now';
+
+/* the kinds a line of a diff can be, taken from the library table that colours them. */
+Weave.application.kinds = Weave.library.components.markNames.edit;
+
+/* the change: one row per file, holding the lines it touched and what was already said about it. */
+Weave.application.changes = {};
+Weave.application.changes.store = { path: 'src/24-patterns.js', added: 6, removed: 2, lines: [{ kind: Weave.application.kinds.same, text: 'Weave.library.patterns.storeFrom = state => ({ state });' }, { kind: Weave.application.kinds.removed, text: 'Weave.library.patterns.notify = store => store.watchers.forEach(run => run(store.state));' }, { kind: Weave.application.kinds.added, text: 'Weave.library.patterns.notify = store => store.watchers.slice().forEach(run => run(store.state));' }, { kind: Weave.application.kinds.same, text: 'Weave.library.patterns.watch = store => watcher => store.watchers.push(watcher);' }], said: [{ name: 'Dae-ho Lim', when: 'yesterday', text: 'Copying the list before walking it is the fix: a watcher that stops listening while the walk is running used to skip its neighbour.' }] };
+Weave.application.changes.components = { path: 'src/22-components.js', added: 4, removed: 0, lines: [{ kind: Weave.application.kinds.same, text: 'Weave.library.components.rules.diffRow = { display: flex, gap: space };' }, { kind: Weave.application.kinds.added, text: 'Weave.library.components.editKinds.added = { background: addedWash };' }, { kind: Weave.application.kinds.added, text: 'Weave.library.components.editKinds.removed = { background: removedWash };' }] };
+Weave.application.changes.tests = { path: 'tests/tests.js', added: 12, removed: 1, lines: [{ kind: Weave.application.kinds.removed, text: 'Weave.tests.cases.watcherKeepsGoing = () => true;' }, { kind: Weave.application.kinds.added, text: 'Weave.tests.cases.watcherKeepsGoing = () => Weave.tests.walkedBoth();' }, { kind: Weave.application.kinds.same, text: 'Weave.tests.cases.storeMerges = () => Weave.tests.merged().count === 2;' }], said: [{ name: 'Noor Al-Sayed', when: 'this morning', text: 'This is the one that would have caught it. Worth a second case for the watcher that removes itself.' }, { name: 'Dae-ho Lim', when: 'an hour ago', text: 'Added below. It fails on the old line and passes on the new one.' }] };
+Weave.application.changes.readme = { path: 'README.md', added: 3, removed: 3, lines: [{ kind: Weave.application.kinds.removed, text: 'A watcher is called in the order watchers were added.' }, { kind: Weave.application.kinds.added, text: 'A watcher is called against the list as it stood when the walk began.' }] };
+Weave.application.changeKeys = Weave.library.composition.keys(Weave.application.changes);
+Weave.application.firstChange = Weave.library.composition.first(Weave.application.changeKeys);
+Weave.application.changeOf = state => Weave.application.changes[state.file];
+Weave.application.saidIn = key => Weave.library.control.defaultTo([])(Weave.application.changes[key].said);
+
+/* the totals: the three numbers at the top, added up from the very rows the list below draws. */
+Weave.application.sumOf = read => Weave.library.components.chartSum(Weave.application.changeKeys.map(read));
+Weave.application.addedTotal = () => Weave.application.sumOf(key => Weave.application.changes[key].added);
+Weave.application.removedTotal = () => Weave.application.sumOf(key => Weave.application.changes[key].removed);
+Weave.application.tileRows = () => [{ label: Weave.application.words.touched, value: Weave.application.changeKeys.length }, { label: Weave.application.words.written, value: Weave.application.addedTotal() }, { label: Weave.application.words.deleted, value: Weave.application.removedTotal() }];
+Weave.application.tile = row => Weave.library.components.statTile({ label: row.label, value: Weave.kit.whole(row.value) });
+Weave.application.tiles = () => Weave.library.components.tiles({ children: Weave.application.tileRows().map(Weave.application.tile) });
+
+/* the store: which file is open, what has been said about each, and the comment being typed. */
+Weave.application.startingThreads = () => Weave.library.composition.fromPairs(Weave.application.changeKeys.map(key => [key, Weave.application.saidIn(key)]));
+Weave.application.store = Weave.library.patterns.store({ file: Weave.application.firstChange, draft: Weave.library.browser.keywords.empty, threads: Weave.application.startingThreads() });
+Weave.application.threadOf = state => state.threads[state.file];
+Weave.application.openFile = key => () => Weave.application.store.update(() => ({ file: key }));
+Weave.application.draftTyped = event => Weave.application.store.update(() => ({ draft: Weave.library.events.valueOfTarget(event) }));
+
+/* saying something: one move adds a comment to the file being read, and both ways in go through it. */
+Weave.application.newComment = words => ({ name: Weave.application.words.reviewer, when: Weave.application.words.now, text: words });
+Weave.application.withComment = (state, words) => ({ draft: Weave.library.browser.keywords.empty, threads: Weave.library.composition.merge(state.threads, { [state.file]: Weave.application.threadOf(state).concat([Weave.application.newComment(words)]) }) });
+Weave.application.addComment = words => Weave.application.store.update(state => Weave.application.withComment(state, words));
+Weave.application.postDraft = state => (Weave.application.addComment(state.draft), Weave.kit.cheer(Weave.application.words.replied));
+Weave.application.hasDraft = state => !Weave.library.predicates.isEmpty(state.draft);
+Weave.application.send = () => Weave.library.control.when(Weave.application.hasDraft, Weave.application.postDraft)(Weave.application.store.state);
+Weave.application.attach = () => (Weave.application.addComment(Weave.application.words.shotText), Weave.kit.say(Weave.application.words.shotSaid, Weave.library.components.toneNames.info));
+
+/* the file list: one row per file, each carrying what it did to the file at the end of its own line. */
+Weave.application.fileStat = key => Weave.library.components.diffStat({ added: Weave.application.changes[key].added, removed: Weave.application.changes[key].removed });
+Weave.application.fileName = key => Weave.library.components.truncate({ text: Weave.application.changes[key].path, cell: Weave.library.components.markNames.cell.grow });
+Weave.application.fileRow = state => key => Weave.library.components.rowButton({ children: [Weave.application.fileName(key), Weave.application.fileStat(key)], onAction: Weave.application.openFile(key), aria: { selected: String(key === state.file) } });
+Weave.application.fileList = state => Weave.library.components.stack({ children: Weave.application.changeKeys.map(Weave.application.fileRow(state)) });
+Weave.application.side = state => Weave.kit.section({ title: Weave.application.words.files, children: [Weave.application.fileList(state)] });
+
+/* the diff: the lines the open file touched, numbered as they are drawn. */
+Weave.application.numbered = (row, index) => Weave.library.composition.merge(row, { line: index + 1 });
+Weave.application.diffRows = state => Weave.application.changeOf(state).lines.map(Weave.application.numbered);
+Weave.application.diff = state => Weave.library.components.diff({ title: Weave.application.changeOf(state).path, label: Weave.application.changeOf(state).path, rows: Weave.application.diffRows(state) });
+
+/* the conversation: what has been said about this file, the box to answer in, and a place to drop a picture. */
+Weave.application.replyBox = state => Weave.library.components.textArea({ label: Weave.application.words.replyLabel, name: Weave.application.words.replyField, value: state.draft, onEdit: Weave.application.draftTyped });
+Weave.application.sendButton = () => Weave.library.components.actionButton({ label: Weave.application.words.send, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.send });
+Weave.application.replyParts = state => [Weave.library.components.fieldLabel({ label: Weave.application.words.replyLabel }), Weave.application.replyBox(state), Weave.library.components.actions({ children: [Weave.application.sendButton()] })];
+Weave.application.reply = state => Weave.library.components.stack({ children: Weave.application.replyParts(state) });
+Weave.application.shot = () => Weave.library.components.dropzone({ glyph: Weave.application.words.dropGlyph, title: Weave.application.words.shotTitle, note: Weave.application.words.shotNote, action: { label: Weave.application.words.shotButton, onAction: Weave.application.attach }, onDrop: Weave.application.attach });
+Weave.application.nothingSaid = () => Weave.kit.nothing({ glyph: Weave.application.words.quietGlyph, title: Weave.application.words.quiet, note: Weave.application.words.quietNote });
+Weave.application.thread = state => Weave.library.components.commentThread({ items: Weave.application.threadOf(state), reply: [Weave.application.reply(state), Weave.application.shot()] });
+Weave.application.quietWhenEmpty = state => Weave.library.control.either(() => Weave.application.threadOf(state).length > 0, Weave.library.composition.noop, Weave.application.nothingSaid)(state);
+Weave.application.saidParts = state => Weave.library.composition.compact([Weave.application.quietWhenEmpty(state), Weave.application.thread(state)]);
+Weave.application.said = state => Weave.kit.section({ title: Weave.application.words.thread, children: Weave.application.saidParts(state) });
+
+/* the page: the totals, the files on one side and the file itself on the other. */
+Weave.application.main = state => Weave.library.components.stack({ children: [Weave.application.diff(state), Weave.application.said(state)] });
+Weave.application.spread = state => Weave.library.components.split({ children: [Weave.library.components.rail({ children: [Weave.application.side(state)] }), Weave.application.main(state)] });
+Weave.application.pageBody = (state, ignored) => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.tiles(), Weave.application.spread(state)] });
+Weave.application.review = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.pageBody);
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.review());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>
