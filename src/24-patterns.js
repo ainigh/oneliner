@@ -494,3 +494,72 @@ Weave.library.patterns.menuAt = spec => event => Weave.library.patterns.menu(Wea
 Weave.library.patterns.shortcutStep = handler => event => Weave.library.control.unless(() => Weave.library.interaction.isTyping(), () => handler(event))(event);
 Weave.library.patterns.shortcutBind = ([combo, handler]) => Weave.library.interaction.shortcut(combo, Weave.library.patterns.shortcutStep(handler))(Weave.library.browser.document());
 Weave.library.patterns.shortcuts = map => Weave.library.events.combine(Weave.library.composition.pairs(map).map(Weave.library.patterns.shortcutBind));
+
+/* tabsView: the tab strip with the pane under it, so which pane shows is a state and never a branch. */
+Weave.library.patterns.labels.previous = 'Previous';
+Weave.library.patterns.labels.save = 'Save';
+Weave.library.patterns.labels.edit = 'Edit';
+Weave.library.patterns.labels.choose = 'Choose';
+Weave.library.patterns.keyOf = item => item.key;
+Weave.library.patterns.firstKey = spec => Weave.library.patterns.keyOf(Weave.library.composition.first(spec.items));
+Weave.library.patterns.tabsFound = (spec, state) => Weave.library.control.defaultTo(Weave.library.composition.first(spec.items))(spec.items.find(item => Weave.library.patterns.keyOf(item) === state.active));
+Weave.library.patterns.tabsContent = item => Weave.library.composition.listOf(Weave.library.control.either(Weave.library.predicates.isFunction, make => make(), Weave.library.composition.identity)(item.body));
+Weave.library.patterns.tabsPane = (spec, state) => Weave.library.components.panel({ children: Weave.library.patterns.tabsContent(Weave.library.patterns.tabsFound(spec, state)) });
+Weave.library.patterns.tabsPick = (update, item) => () => update(() => ({ active: Weave.library.patterns.keyOf(item) }));
+Weave.library.patterns.tabsItem = update => item => Weave.library.composition.merge(item, { onAction: Weave.library.patterns.tabsPick(update, item) });
+Weave.library.patterns.tabsStrip = (spec, state, update) => Weave.library.components.tabs({ active: state.active, items: spec.items.map(Weave.library.patterns.tabsItem(update)) });
+Weave.library.patterns.tabsBody = spec => (state, update) => Weave.library.components.stack({ children: [Weave.library.patterns.tabsStrip(spec, state, update), Weave.library.patterns.tabsPane(spec, state)] });
+Weave.library.patterns.tabsState = spec => ({ active: Weave.library.control.defaultTo(Weave.library.patterns.firstKey(spec))(spec.active) });
+Weave.library.patterns.tabsView = spec => Weave.library.patterns.view(Weave.library.patterns.tabsBody(spec), Weave.library.patterns.tabsState(spec));
+
+/* carousel: one slide at a time, the two arrows and a dot per slide. The index wraps rather than stops. */
+Weave.library.patterns.carouselWrap = (spec, index) => (index + spec.slides.length) % spec.slides.length;
+Weave.library.patterns.carouselStep = (spec, update, step) => () => update(state => ({ index: Weave.library.patterns.carouselWrap(spec, state.index + step) }));
+Weave.library.patterns.carouselMoves = [[Weave.library.patterns.labels.previous, Weave.library.patterns.stepBack], [Weave.library.patterns.labels.next, Weave.library.patterns.stepForward]];
+Weave.library.patterns.carouselArrow = (spec, update) => ([label, step]) => ({ label, onAction: Weave.library.patterns.carouselStep(spec, update, step) });
+Weave.library.patterns.carouselDot = (spec, state, update) => (ignored, index) => ({ label: String(index + 1), size: Weave.library.patterns.smallSize(), aria: { selected: String(index === state.index) }, onAction: () => update(() => ({ index })) });
+Weave.library.patterns.carouselDots = (spec, state, update) => Weave.library.components.buttonGroup({ items: spec.slides.map(Weave.library.patterns.carouselDot(spec, state, update)) });
+Weave.library.patterns.carouselStage = (spec, state) => Weave.library.components.panel({ children: Weave.library.composition.listOf(spec.slide(spec.slides[state.index], state.index)) });
+Weave.library.patterns.carouselArrows = (spec, update) => Weave.library.components.buttonGroup({ items: Weave.library.patterns.carouselMoves.map(Weave.library.patterns.carouselArrow(spec, update)) });
+Weave.library.patterns.carouselBar = (spec, state, update) => Weave.library.components.spread({ children: [Weave.library.patterns.carouselArrows(spec, update), Weave.library.patterns.carouselDots(spec, state, update)] });
+Weave.library.patterns.carouselBody = spec => (state, update) => Weave.library.components.stack({ children: [Weave.library.patterns.carouselStage(spec, state), Weave.library.patterns.carouselBar(spec, state, update)] });
+Weave.library.patterns.carousel = spec => Weave.library.patterns.view(Weave.library.patterns.carouselBody(spec), { index: 0 });
+
+/* combobox: a search box over the caller's options, answering with the row the reader chose. */
+Weave.library.patterns.comboMatches = (spec, state) => Weave.library.patterns.search(state.query, spec.options);
+Weave.library.patterns.comboTaken = (spec, update, option) => () => (update(() => ({ query: option.label, value: option.value })), spec.onPick(option));
+Weave.library.patterns.comboRow = (spec, update) => option => ({ label: option.label, hint: option.hint, onAction: Weave.library.patterns.comboTaken(spec, update, option) });
+Weave.library.patterns.comboRows = (spec, state, update) => Weave.library.patterns.comboMatches(spec, state).map(Weave.library.patterns.comboRow(spec, update));
+Weave.library.patterns.comboList = (spec, state, update) => Weave.library.control.either(() => Weave.library.patterns.comboMatches(spec, state).length > 0, () => Weave.library.components.menu({ items: Weave.library.patterns.comboRows(spec, state, update) }), Weave.library.patterns.emptyNote)(state);
+Weave.library.patterns.comboBody = spec => (state, update) => Weave.library.components.stack({ children: [Weave.library.patterns.queryBox(state, update), Weave.library.patterns.comboList(spec, state, update)] });
+Weave.library.patterns.comboState = spec => ({ query: Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(spec.query), value: spec.value });
+Weave.library.patterns.combobox = spec => Weave.library.patterns.view(Weave.library.patterns.comboBody(spec), Weave.library.patterns.comboState(spec));
+
+/* inlineEdit: a value that becomes a field when the reader asks, and a value again once it is saved. */
+Weave.library.patterns.editOpen = update => () => update(() => ({ editing: true }));
+Weave.library.patterns.editTaken = (spec, update) => values => update(() => ({ editing: false, value: Weave.library.patterns.editSaved(spec, values[Weave.library.browser.keywords.value]) }));
+Weave.library.patterns.editSaved = (spec, value) => Weave.library.composition.tap(() => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onSave)(value))(value);
+Weave.library.patterns.editField = (spec, state) => Weave.library.components.field({ label: spec.label, name: Weave.library.browser.keywords.value, value: state.value });
+Weave.library.patterns.editForm = (spec, state, update) => Weave.library.components.form({ submit: Weave.library.patterns.labels.save, fields: [Weave.library.patterns.editField(spec, state)], onSubmit: Weave.library.patterns.editTaken(spec, update) });
+Weave.library.patterns.editShow = (spec, state, update) => Weave.library.components.rowButton({ children: [Weave.library.components.strong({ text: state.value }), Weave.library.components.hint({ text: Weave.library.patterns.labels.edit })], onAction: Weave.library.patterns.editOpen(update) });
+Weave.library.patterns.editBody = spec => (state, update) => Weave.library.control.either(() => state.editing, () => Weave.library.patterns.editForm(spec, state, update), () => Weave.library.patterns.editShow(spec, state, update))(state);
+Weave.library.patterns.inlineEdit = spec => Weave.library.patterns.view(Weave.library.patterns.editBody(spec), { editing: false, value: spec.value });
+
+/* chipFilter: the choices already made as chips, and the ones left in a popover behind one button. */
+Weave.library.patterns.chipChosen = (spec, state) => spec.items.filter(item => state.chosen.includes(Weave.library.patterns.keyOf(item)));
+Weave.library.patterns.chipRest = (spec, state) => spec.items.filter(item => !state.chosen.includes(Weave.library.patterns.keyOf(item)));
+Weave.library.patterns.chipTold = (spec, keys) => Weave.library.composition.tap(() => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onChange)(keys))(keys);
+Weave.library.patterns.chipDrop = (spec, update, item) => () => update(state => ({ chosen: Weave.library.patterns.chipTold(spec, state.chosen.filter(key => key !== Weave.library.patterns.keyOf(item))) }));
+Weave.library.patterns.chipTake = (spec, update, item) => () => update(state => ({ chosen: Weave.library.patterns.chipTold(spec, state.chosen.concat([Weave.library.patterns.keyOf(item)])) }));
+Weave.library.patterns.chipOne = (spec, update) => item => Weave.library.components.chip({ text: item.label, onRemove: Weave.library.patterns.chipDrop(spec, update, item) });
+Weave.library.patterns.chipOffer = (spec, update) => item => ({ label: item.label, onAction: Weave.library.patterns.chipTake(spec, update, item) });
+Weave.library.patterns.chipMenu = (spec, state, update) => Weave.library.patterns.menuAt({ items: Weave.library.patterns.chipRest(spec, state).map(Weave.library.patterns.chipOffer(spec, update)) });
+Weave.library.patterns.chipAdd = (spec, state, update) => Weave.library.components.actionButton({ label: Weave.library.patterns.labels.choose, size: Weave.library.patterns.smallSize(), onAction: Weave.library.patterns.chipMenu(spec, state, update) });
+Weave.library.patterns.chipParts = (spec, state, update) => Weave.library.patterns.chipChosen(spec, state).map(Weave.library.patterns.chipOne(spec, update)).concat([Weave.library.patterns.chipAdd(spec, state, update)]);
+Weave.library.patterns.chipBody = spec => (state, update) => Weave.library.components.row({ children: Weave.library.patterns.chipParts(spec, state, update) });
+Weave.library.patterns.chipFilter = spec => Weave.library.patterns.view(Weave.library.patterns.chipBody(spec), { chosen: Weave.library.control.defaultTo([])(spec.chosen) });
+
+/* passwordField: the one control that has to change what it is showing, so it is a pattern and not a component. */
+Weave.library.patterns.revealFlip = update => () => update(state => ({ shown: !state.shown }));
+Weave.library.patterns.passwordBody = spec => (state, update) => Weave.library.components.passwordField(Weave.library.composition.merge(spec, { shown: state.shown, onReveal: Weave.library.patterns.revealFlip(update) }));
+Weave.library.patterns.passwordField = spec => Weave.library.patterns.view(Weave.library.patterns.passwordBody(spec), { shown: false });

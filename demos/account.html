@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — accounts</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: the way in. The gate, the session it leaves behind, and the console it lets you at. */
+Weave.application = {};
+/* words: the only place this page writes a word of its own. */
+Weave.application.words = {};
+Weave.application.words.title = 'Northwind';
+Weave.application.words.blurb = 'One guarded console. Signed out you get the gate; signed in you get the desk, and the session survives a reload.';
+Weave.application.words.desk = 'Your desk';
+Weave.application.words.security = 'Security';
+Weave.application.words.sessions = 'Where you are signed in';
+Weave.application.words.twoStep = 'Two step codes';
+Weave.application.words.twoStepNote = 'A code is asked for on a machine we have not seen before.';
+Weave.application.words.change = 'Change your password';
+Weave.application.words.welcomeBack = 'Welcome back.';
+Weave.application.words.opened = 'Account opened. You are signed in.';
+Weave.application.words.sent = 'A code is on its way to that address.';
+Weave.application.words.changed = 'That password is now the one we hold.';
+Weave.application.words.leaving = 'Signed out. Nothing is kept on this machine.';
+Weave.application.words.profile = 'Profile';
+Weave.application.words.plan = 'Plan';
+Weave.application.words.since = 'Customer since';
+Weave.application.words.scale = 'Scale, billed yearly';
+Weave.application.words.march = 'March 2021';
+Weave.application.words.thisMachine = 'This machine — signed in just now';
+Weave.application.words.otherMachine = 'A phone in Lisbon — three days ago';
+
+/* the said so: one row per screen the gate can finish, so what is said is a lookup and never a branch. */
+Weave.application.saidOn = {};
+Weave.application.saidOn.signIn = Weave.application.words.welcomeBack;
+Weave.application.saidOn.signUp = Weave.application.words.opened;
+Weave.application.saidOn.forgot = Weave.application.words.sent;
+Weave.application.saidOn.verify = Weave.application.words.sent;
+Weave.application.saidOn.reset = Weave.application.words.changed;
+
+/* the session and what a finished screen does to it. Only two screens sign anybody in. */
+Weave.application.session = Weave.library.auth.session();
+Weave.application.entering = [Weave.library.auth.names.signIn, Weave.library.auth.names.signUp];
+Weave.application.enters = screen => Weave.application.entering.includes(screen);
+Weave.application.nameFor = values => Weave.library.control.defaultTo(values[Weave.library.auth.fields.email.name])(values[Weave.library.auth.fields.person.name]);
+Weave.application.admits = (screen, values) => Weave.library.control.when(() => Weave.application.enters(screen), () => Weave.library.auth.signIn(Weave.application.session)(Weave.application.nameFor(values)))(values);
+Weave.application.finished = (screen, values) => (Weave.kit.cheer(Weave.application.saidOn[screen]), Weave.application.admits(screen, values));
+Weave.application.gate = () => Weave.library.auth.gate({ onDone: Weave.application.finished }).element;
+Weave.application.leave = () => (Weave.library.auth.signOut(Weave.application.session)(), Weave.kit.say(Weave.application.words.leaving, Weave.library.components.toneNames.info));
+
+/* the desk: what a signed in person is shown, built from the same components as everything else. */
+Weave.application.facts = person => [{ label: Weave.library.auth.labels.email, value: person }, { label: Weave.application.words.plan, value: Weave.application.words.scale }, { label: Weave.application.words.since, value: Weave.application.words.march }];
+Weave.application.profile = person => Weave.kit.section({ title: Weave.application.words.profile, children: [Weave.library.components.descriptions({ rows: Weave.application.facts(person) })] });
+Weave.application.machines = [{ label: Weave.application.words.thisMachine }, { label: Weave.application.words.otherMachine }];
+Weave.application.where = () => Weave.kit.section({ title: Weave.application.words.sessions, children: [Weave.library.components.listGroup({ items: Weave.application.machines })] });
+Weave.application.twoStep = () => [Weave.library.components.switchField({ label: Weave.application.words.twoStep, checked: true }), Weave.library.components.hint({ text: Weave.application.words.twoStepNote })];
+Weave.application.security = () => Weave.kit.section({ title: Weave.application.words.security, children: Weave.application.twoStep().concat([Weave.application.changer()]) });
+Weave.application.changer = () => Weave.library.components.actionButton({ label: Weave.application.words.change, variant: Weave.library.components.markNames.variant.outline, onAction: Weave.application.openChange });
+Weave.application.openChange = () => Weave.library.patterns.dialog({ title: Weave.library.auth.labels.reset, body: [Weave.library.auth.gates.reset({ onDone: Weave.application.finished }).element] });
+Weave.application.profileTab = person => ({ key: 'profile', label: Weave.application.words.profile, body: [Weave.application.profile(person)] });
+Weave.application.securityTab = () => ({ key: 'security', label: Weave.application.words.security, body: () => [Weave.application.security(), Weave.application.where()] });
+Weave.application.deskTabs = person => [Weave.application.profileTab(person), Weave.application.securityTab()];
+Weave.application.account = person => Weave.library.auth.accountMenu({ person, onSignOut: Weave.application.leave });
+Weave.application.deskHead = person => Weave.library.components.spread({ children: [Weave.library.components.title({ text: Weave.application.words.desk }), Weave.application.account(person)] });
+Weave.application.deskBody = person => Weave.library.patterns.tabsView({ items: Weave.application.deskTabs(person) }).element;
+Weave.application.desk = person => Weave.library.components.stack({ children: [Weave.application.deskHead(person), Weave.library.auth.welcome({ person }), Weave.application.deskBody(person)] });
+
+/* the page: the guard decides which of the two it is, and nothing else on the page knows. */
+Weave.application.guard = () => Weave.library.auth.guard({ session: Weave.application.session, signedOut: Weave.application.gate, signedIn: Weave.application.desk });
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.guard().element] });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

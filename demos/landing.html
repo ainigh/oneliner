@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Weave demo — a marketing page</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script src="kit.js"></script>
+<script>
+/* application: a marketing page. The shape every product site takes, with nothing written by hand. */
+Weave.application = {};
+/* words: the only place this page writes a word of its own. */
+Weave.application.words = {};
+Weave.application.words.title = 'Loom';
+Weave.application.words.blurb = 'The page a product sells itself on: a hero, three columns of reasons, prices, what people said, and the questions everybody asks.';
+Weave.application.words.heroTitle = 'Ship the screen, not the stylesheet';
+Weave.application.words.heroNote = 'Loom turns a table of rows into a running application. No classes to learn, no design system to fork, nothing to name twice.';
+Weave.application.words.start = 'Start free';
+Weave.application.words.tour = 'Take the tour';
+Weave.application.words.reasons = 'Why teams move';
+Weave.application.words.prices = 'What it costs';
+Weave.application.words.said = 'What they said';
+Weave.application.words.asked = 'What everybody asks';
+Weave.application.words.month = ' a month';
+Weave.application.words.currency = 'GBP';
+Weave.application.words.pick = 'Choose this';
+Weave.application.words.popular = 'Most chosen';
+Weave.application.words.product = 'Product';
+Weave.application.words.pricing = 'Pricing';
+Weave.application.words.docs = 'Docs';
+Weave.application.words.rights = 'Loom is a demonstration. Nothing here is for sale.';
+Weave.application.words.picked = 'Noted. Nothing was charged, because nothing is for sale.';
+
+/* the rows the page is made of: reasons, plans, quotes and questions, one table each. */
+Weave.application.reasons = [{ glyph: '📐', label: 'One place per idea', note: 'Change a token and every screen moves with it. There is no second place holding the old look.' }, { glyph: '⚡', label: 'Nothing to compile', note: 'One script tag. The stylesheet is generated at runtime from the same tables the widgets come from.' }, { glyph: '🧪', label: 'Proved by deletion', note: 'The build deletes each table row in turn and asserts that exactly the feature it names disappears.' }];
+Weave.application.plans = [{ key: 'solo', label: 'Solo', price: 0, score: 4, lines: ['One project', 'Community help', 'Every component'] }, { key: 'team', label: 'Team', price: 24, score: 5, popular: true, lines: ['Ten projects', 'Answers in a day', 'Themes and presets'] }, { key: 'house', label: 'In house', price: 96, score: 5, lines: ['Everything in Team', 'Your palette, audited', 'A person who answers'] }];
+Weave.application.quotes = [{ text: 'We deleted four thousand lines of CSS and the screens got better.', who: 'Ana Ferreira, Head of Engineering' }, { text: 'The new starter shipped a screen on their first afternoon.', who: 'Dae-ho Lim, Product' }];
+Weave.application.questions = [{ title: 'Does it need a build step?', body: ['One script tag. There is nothing to compile and nothing to configure.'] }, { title: 'Can I use my own colours?', body: ['A palette is a row of token overrides. Spend it on the page, or on one panel, without writing a rule.'] }, { title: 'What about dark mode?', body: ['A theme is a row too, and the sheet carries a prefers-color-scheme block the page can override.'] }];
+
+/* the hero: a banner with the two things every hero has, over the navbar every page has. */
+Weave.application.links = [{ label: Weave.application.words.product, active: true }, { label: Weave.application.words.pricing }, { label: Weave.application.words.docs }];
+Weave.application.bar = () => Weave.library.components.navbar({ title: Weave.application.words.title, items: Weave.application.links, actions: [{ label: Weave.application.words.start, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.noted }] });
+Weave.application.heroActions = () => [{ label: Weave.application.words.start, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.noted }, { label: Weave.application.words.tour, variant: Weave.library.components.markNames.variant.outline }];
+Weave.application.hero = () => Weave.library.components.banner({ title: Weave.application.words.heroTitle, note: Weave.application.words.heroNote, tone: Weave.library.components.toneNames.info, actions: Weave.application.heroActions() });
+Weave.application.noted = () => Weave.kit.cheer(Weave.application.words.picked);
+
+/* the reasons: three columns, each a card with a glyph over it, from one row of the table above. */
+Weave.application.reasonCard = row => Weave.library.components.card({ children: [Weave.library.components.glyphMark({ text: row.glyph }), Weave.library.components.subtitle({ text: row.label }), Weave.library.components.note({ text: row.note })] });
+Weave.application.reasonColumn = row => Weave.library.components.column({ span: Weave.library.components.markNames.span.third, children: [Weave.application.reasonCard(row)] });
+Weave.application.reasonRow = () => Weave.library.components.columns({ children: Weave.application.reasons.map(Weave.application.reasonColumn) });
+
+/* the prices: one card per plan, the chosen one marked with a pill rather than a colour of its own. */
+Weave.application.money = amount => Weave.library.formatting.money(Weave.application.words.currency)(amount);
+Weave.application.planMark = plan => Weave.library.control.maybe(() => Weave.library.components.pill({ text: Weave.application.words.popular }))(plan.popular);
+Weave.application.planHead = plan => Weave.library.components.cardHead({ children: Weave.library.composition.compact([Weave.library.components.subtitle({ text: plan.label }), Weave.application.planMark(plan)]) });
+Weave.application.planPrice = plan => Weave.library.components.value({ text: Weave.application.money(plan.price) + Weave.application.words.month });
+Weave.application.planLine = words => Weave.library.components.item({ children: [Weave.library.components.note({ text: words })] });
+Weave.application.planLines = plan => Weave.library.components.itemList({ children: plan.lines.map(Weave.application.planLine) });
+Weave.application.planFoot = plan => Weave.library.components.cardFoot({ children: [Weave.library.components.rating({ value: plan.score }), Weave.application.planButton(plan)] });
+Weave.application.planButton = plan => Weave.library.components.actionButton({ label: Weave.application.words.pick, variant: Weave.application.planVariant(plan), onAction: Weave.application.noted });
+Weave.application.planVariant = plan => Weave.library.control.either(() => plan.popular, () => Weave.library.components.markNames.variant.primary, () => Weave.library.components.markNames.variant.outline)(plan);
+Weave.application.planParts = plan => [Weave.application.planHead(plan), Weave.application.planPrice(plan), Weave.application.planLines(plan), Weave.application.planFoot(plan)];
+Weave.application.planCard = plan => Weave.library.components.card({ data: { key: plan.key }, children: Weave.application.planParts(plan) });
+Weave.application.priceRow = () => Weave.library.components.tiles({ children: Weave.application.plans.map(Weave.application.planCard) });
+
+/* what they said, and what everybody asks: one quote each, one disclosure each. */
+Weave.application.quoteCard = row => Weave.library.components.quote({ text: row.text, who: row.who });
+Weave.application.quoteRow = () => Weave.library.components.tiles({ children: Weave.application.quotes.map(Weave.application.quoteCard) });
+Weave.application.faq = () => Weave.library.components.accordion({ sections: Weave.application.questions });
+
+/* the page: the sections in the order a reader meets them, under the bar and over the footer. */
+Weave.application.foot = () => Weave.library.components.pageFooter({ children: [Weave.library.components.note({ text: Weave.application.words.rights }), Weave.library.components.row({ children: Weave.application.links.map(Weave.library.components.navLink) })] });
+Weave.application.panels = [['reasons', 'reasonRow'], ['prices', 'priceRow'], ['said', 'quoteRow'], ['asked', 'faq']];
+Weave.application.panelFor = ([word, maker]) => Weave.kit.section({ title: Weave.application.words[word], children: [Weave.application[maker]()] });
+Weave.application.sections = () => [Weave.application.bar(), Weave.application.hero()].concat(Weave.application.panels.map(Weave.application.panelFor), [Weave.application.foot()]);
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: Weave.application.sections() });
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>
