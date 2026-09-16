@@ -132,7 +132,10 @@ Containers come from one table, so adding `blueprints.pill = parts.inline` adds
 `tooltip`, `switchField`, `sliderField`, `stepperField`, `kbd`, `badge`, `skeleton`, `avatarGroup`,
 `statusDot`, `navbar`, `listGroup`, `inputGroup`, `buttonGroup`, `segmented`, `spinner`,
 `descriptions`, `quote`, `banner`, `rating`, `chip`, `timeline`, `passwordField`, `codeField` — are
-built from those same containers and never reach past them.
+built from those same containers and never reach past them. The chart widgets — `chart`, `legend`,
+`sparkline`, `lineChart`, `axis`, `barChart`, `rankBars`, `donut`, `heatmap`, `heatScale` and
+`trend` — are the same idea again: a reading in, an element out, with no caller ever naming a
+colour.
 
 `demos/elements.html` draws every one of them, live, with the call that draws it underneath.
 
@@ -148,7 +151,7 @@ Weave.library.patterns.masterDetail({ items, detail: person => Weave.library.com
 
 The set is `todoList`, `board`, `dataGrid`, `masterDetail`, `wizard`, `commandPalette`, `chat`,
 `explorer`, `dashboard`, `calendar`, `virtualList`, `virtualGrid`, `resource`, `entryForm`,
-`notifications`, `tabsView`, `carousel`, `combobox`, `inlineEdit`, `chipFilter` and
+`notifications`, `tabsView`, `carousel`, `combobox`, `inlineEdit`, `chipFilter`, `chartBoard` and
 `passwordField` — `demos/patterns.html` runs all of them on one page. A pattern only ever composes components and other patterns, so a fix to
 `components.table` lands in `dataGrid`, in `virtualGrid`, in `calendar`, in every demo that uses
 one, and nowhere twice.
@@ -339,6 +342,40 @@ away.
 To restyle the whole system, change tokens. To restyle one widget, change its row. To restyle every
 widget at night, change one theme row. To restyle one subtree, set tokens on it.
 
+## Charts
+
+A chart is a component like any other: a spec in, an element out. No page picks a colour, a height
+or a scale — those are library tables, and a reading becomes a length in exactly one function.
+
+```js
+Weave.library.components.lineChart({ lines: [{ series: 'one', values: [8200, 8600, 9100] }], label: 'Requests a day' });
+Weave.library.components.barChart({ items: [{ label: 'Mon', value: 42, reading: '42', series: 'one' }] });
+Weave.library.components.donut({ items: regions, reading: '109,000', label: 'This week' });
+Weave.library.components.heatmap({ items: days, label: 'Latency by hour' });
+```
+
+The palette is two tables. `components.seriesInks` holds five categorical slots in a fixed order,
+and `components.heatSteps` holds one hue in five steps for the question that is only *how much*.
+Both are modifier tables, so a mark asks for a slot by name (`series: 'two'`) and the stylesheet
+carries the rule — there is no colour in any chart function, only `currentColor`, which each class
+spends its own way: a line strokes it, a bar and a swatch fill it, a ring segment strokes an arc of
+it.
+
+Both palettes were chosen, not picked: the five light steps and the five dark ones clear the
+colour-blind separation, chroma and lightness gates as an ordered set, and the **order itself** is
+the safety mechanism, which is why `components.seriesAt` holds at the last slot rather than cycling.
+Three of the light inks sit under 3:1 against white, so every chart that uses them ships visible
+labels — `demos/signal.html` writes the number above each bar and repeats the whole week as a table
+under the charts.
+
+Colour follows the entity, never its rank. `patterns.chartBoard` takes the slot from a series'
+position in the list it was *declared* in, so switching one series off in the legend never repaints
+the survivors:
+
+```js
+Weave.library.patterns.chartBoard({ spans, lines: services, draw: view => Weave.library.components.lineChart({ lines: view.lines }) });
+```
+
 ## Above the page
 
 `overlays` is the layer between `components` and `patterns`, and the only place the system positions
@@ -408,7 +445,7 @@ npm run check       # all of the above
 
 ## The demos
 
-`demos/index.html` links eighteen pages: two of them catalogues of the library itself, and the rest
+`demos/index.html` links nineteen pages: two of them catalogues of the library itself, and the rest
 applications that put the patterns under load in a different shape. Each is short because the
 patterns do the work:
 
@@ -430,6 +467,7 @@ patterns do the work:
 | `bank.html` | retail banking | accounts, a transfer that asks first, and a statement drawn twice from one set of rows |
 | `shop.html` | retail | a storefront on one store: a navbar counting the basket, an offer carousel, chips that filter, a basket in a sheet |
 | `landing.html` | marketing | the shape every product site takes: a hero, three reasons, prices, quotes and questions |
+| `signal.html` | service analytics | every chart the library draws: a line board whose legend switches a series off, bars with their own numbers, ranked bars, a ring, a heatmap, and the same week again as a table |
 | `travel.html` | booking | four steps and a summary over one store, priced by cabin and by how many are travelling |
 
 None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all of them, and holds the two catalogues to their own contract: an element with no call, a section naming an element that does not exist, or an element filed in no section all fail the build.

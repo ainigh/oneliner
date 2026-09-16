@@ -586,6 +586,61 @@ up and build a screen with it?* — and every gap the answer found is a row, nev
       had already duplicated, silently overriding the originals. The rules that existed — a literal
       repeated in a bucket, two structurally identical one-liners — could not see that.
 
+## The charts round: the one thing a component library still could not draw
+
+Every demo so far could say a number, and none of them could draw one. This round closes that, and
+`demos/signal.html` is the demo that forced each row.
+
+### The marks that were missing
+
+- [x] **Eleven chart widgets** — `chart`, `legend`, `sparkline`, `lineChart`, `axis`, `barChart`,
+      `rankBars`, `donut`, `heatmap`, `heatScale` and `trend` — each a spec in and an element out,
+      each filed in `demos/elements.html` under its own **Charts** section, with the call under it.
+- [x] **Three SVG parts** in `components.parts` (`plot`, `trace`, `arc`), so the three chart
+      classes that are drawn rather than laid out still never name a tag.
+- [x] **Two palettes, as modifier tables.** `components.seriesInks` is five categorical slots in a
+      fixed order; `components.heatSteps` is one hue in five steps. Both go through the existing
+      `modifiers` machinery, so a mark carries `series: 'two'` or `heat: 'four'` and the sheet
+      carries the rule. No chart function contains a colour.
+- [x] **Each class spends the ink its own way**, exactly as tones already did: `chartLine` strokes
+      `currentColor`, `chartBar`, `rankFill` and `legendSwatch` fill it, `ringSegment` strokes an
+      arc of it. One modifier table, five classes, no branch.
+- [x] **Ten tokens and a dark step for each.** `seriesOne`…`seriesFive` and `heatOne`…`heatFive`
+      have their own values in `themes.dark`, so dark mode is a chosen palette rather than a flip.
+      Both sets were run through the colour-blind separation, chroma, lightness and contrast gates
+      as an ordered set before they were written down; the light set warns on contrast, which is
+      why every chart that uses it ships visible labels and `signal.html` repeats the week as a
+      table.
+- [x] **A reading becomes a length in one place.** `components.chartShare` clamps the ratio and
+      `components.chartLength` writes the percentage. Every bar height, every bar width and every
+      point on a polyline comes through those two.
+- [x] **`components.seriesAt` holds at the last slot** rather than cycling, because the slot
+      *order* is what makes the palette colour-blind safe — a generated sixth hue would not be.
+- [x] **`states.unchosen`** — the first state rule that fires on a *false* attribute, so a legend
+      entry that has been switched off can be struck through and faded.
+
+### The pattern that was missing
+
+- [x] **`patterns.chartBoard`** holds a span and the set of series that are switched off, and hands
+      a caller only the lines it should draw. The slot comes from a series' place in the list it was
+      declared in, never its place in the filtered one, so switching a series off cannot repaint the
+      survivors — `check:demos` asserts exactly that, by name and by colour.
+
+### What building it found
+
+- [x] **A chart with no title drew an empty heading.** The frame now drops its head entirely when
+      it has been given neither a title nor a legend, which is what let `signal.html` put the span
+      control above the plot and the title above both.
+- [x] **The bar's own number is optional.** The catalogue card put seven four-digit readings in a
+      250px card and they collided. A bar with no `reading` now draws without one.
+- [x] **A tile read 100% uptime that was 99.94%.** Found by looking at the rendered page: the
+      headline tiles are now added up from the very arrays the charts draw, so a reading cannot
+      disagree with the chart under it.
+- [x] **The ring's middle overlapped its own arc**, at 148px with a 22px stroke. The ring is 168px
+      now and the stroke is one `spaceLoose`, and `signal.html` keeps the word in the hole short.
+- [x] **`Weave.kit.reading`** is the piece the tiles found twice: a label, the way it moved, the
+      number, and the week behind it.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

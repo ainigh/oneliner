@@ -563,3 +563,27 @@ Weave.library.patterns.chipFilter = spec => Weave.library.patterns.view(Weave.li
 Weave.library.patterns.revealFlip = update => () => update(state => ({ shown: !state.shown }));
 Weave.library.patterns.passwordBody = spec => (state, update) => Weave.library.components.passwordField(Weave.library.composition.merge(spec, { shown: state.shown, onReveal: Weave.library.patterns.revealFlip(update) }));
 Weave.library.patterns.passwordField = spec => Weave.library.patterns.view(Weave.library.patterns.passwordBody(spec), { shown: false });
+
+/* chartBoard: readings over a chosen span, with a legend that takes a series off the chart and back on. */
+Weave.library.patterns.chartSpans = spec => Weave.library.control.defaultTo([])(spec.spans);
+Weave.library.patterns.chartHidden = state => Weave.library.control.defaultTo([])(state.hidden);
+Weave.library.patterns.chartShown = (line, state) => !Weave.library.patterns.chartHidden(state).includes(Weave.library.patterns.keyOf(line));
+Weave.library.patterns.chartSlot = (spec, line) => Weave.library.components.seriesAt(Weave.library.components.linesIn(spec).indexOf(line));
+Weave.library.patterns.chartReading = (line, state) => Weave.library.control.defaultTo([])(line.readings[state.span]);
+Weave.library.patterns.chartWithout = (state, key) => Weave.library.patterns.chartHidden(state).filter(held => held !== key);
+Weave.library.patterns.chartFlipped = (state, key) => Weave.library.control.either(() => Weave.library.patterns.chartHidden(state).includes(key), () => Weave.library.patterns.chartWithout(state, key), () => Weave.library.patterns.chartHidden(state).concat([key]))(state);
+Weave.library.patterns.chartToggle = (update, key) => () => update(state => ({ hidden: Weave.library.patterns.chartFlipped(state, key) }));
+Weave.library.patterns.chartPick = update => key => update(() => ({ span: key }));
+Weave.library.patterns.chartStrip = (spec, state, update) => Weave.library.components.segmented({ items: Weave.library.patterns.chartSpans(spec), active: state.span, onPick: Weave.library.patterns.chartPick(update) });
+Weave.library.patterns.chartDraws = (spec, state) => line => ({ series: Weave.library.patterns.chartSlot(spec, line), shown: Weave.library.patterns.chartShown(line, state), values: Weave.library.patterns.chartReading(line, state) });
+Weave.library.patterns.chartMarks = (spec, state, update) => line => Weave.library.composition.merge(Weave.library.patterns.chartDraws(spec, state)(line), { onAction: Weave.library.patterns.chartToggle(update, Weave.library.patterns.keyOf(line)) });
+Weave.library.patterns.chartEntry = (spec, state, update) => line => Weave.library.composition.merge(line, Weave.library.patterns.chartMarks(spec, state, update)(line));
+Weave.library.patterns.chartEntries = (spec, state, update) => Weave.library.components.linesIn(spec).map(Weave.library.patterns.chartEntry(spec, state, update));
+Weave.library.patterns.chartLegend = (spec, state, update) => Weave.library.components.legend({ items: Weave.library.patterns.chartEntries(spec, state, update) });
+Weave.library.patterns.chartDrawn = (spec, state, update) => Weave.library.patterns.chartEntries(spec, state, update).filter(entry => entry.shown);
+Weave.library.patterns.chartView = (spec, state, update) => spec.draw({ span: state.span, lines: Weave.library.patterns.chartDrawn(spec, state, update) });
+Weave.library.patterns.chartParts = (spec, state, update) => [Weave.library.patterns.chartStrip(spec, state, update), Weave.library.patterns.chartLegend(spec, state, update), Weave.library.patterns.chartView(spec, state, update)];
+Weave.library.patterns.chartBody = spec => (state, update) => Weave.library.components.stack({ children: Weave.library.patterns.chartParts(spec, state, update) });
+Weave.library.patterns.chartFirst = spec => Weave.library.patterns.keyOf(Weave.library.composition.first(Weave.library.patterns.chartSpans(spec)));
+Weave.library.patterns.chartState = spec => ({ span: Weave.library.control.defaultTo(Weave.library.patterns.chartFirst(spec))(spec.span), hidden: [] });
+Weave.library.patterns.chartBoard = spec => Weave.library.patterns.view(Weave.library.patterns.chartBody(spec), Weave.library.patterns.chartState(spec));

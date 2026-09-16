@@ -32,6 +32,10 @@ Weave.kit.parts.pickRow = spec => item => ({ label: item.label, hint: item.hint,
 Weave.kit.parts.pickRows = spec => Weave.library.control.defaultTo([])(spec.items).map(Weave.kit.parts.pickRow(spec));
 Weave.kit.parts.chosenItem = spec => Weave.library.control.defaultTo([])(spec.items).find(item => item.key === spec.chosen);
 Weave.kit.parts.labelKey = 'label';
+Weave.kit.parts.readingTrend = spec => Weave.library.components.trend({ direction: spec.direction, tone: spec.tone, text: spec.text });
+Weave.kit.parts.readingHead = spec => Weave.library.components.spread({ children: [Weave.library.components.note({ text: spec.label }), Weave.kit.parts.readingTrend(spec)] });
+Weave.kit.parts.readingSpark = spec => Weave.library.components.sparkline({ values: spec.values, series: spec.series, label: spec.label });
+Weave.kit.parts.readingParts = spec => [Weave.kit.parts.readingHead(spec), Weave.library.components.value({ text: String(spec.value) }), Weave.kit.parts.readingSpark(spec)];
 Weave.kit.parts.answered = run => answer => Weave.library.control.when(() => answer, run)(answer);
 
 /* the theme switch: every demo offers one, so no demo has to build one. */
@@ -77,6 +81,9 @@ Weave.kit.askThen = (spec, run) => Weave.library.composition.then(Weave.kit.part
 /* picker: a button that drops every choice into a popover and marks the one in force. */
 Weave.kit.picker = spec => Weave.library.components.actionButton({ label: Weave.library.control.reach(Weave.kit.parts.chosenItem(spec), Weave.kit.parts.labelKey), onAction: Weave.library.patterns.menuAt({ items: Weave.kit.parts.pickRows(spec) }) });
 
+/* reading: a headline number with the way it moved and the week behind it, the shape every console opens with. */
+Weave.kit.reading = spec => Weave.library.components.panel({ children: Weave.kit.parts.readingParts(spec) });
+
 /* notes: one row per piece above. Nothing may sit on Weave.kit without a row here and a sample below. */
 Weave.kit.notes = {};
 Weave.kit.notes.themeSwitch = 'The small button every demo carries, wired to the library theme.';
@@ -94,6 +101,7 @@ Weave.kit.notes.section = 'A panel under a small uppercase label.';
 Weave.kit.notes.say = 'A toast on the one host the kit keeps for the page.';
 Weave.kit.notes.cheer = 'The same toast, already toned for good news.';
 Weave.kit.notes.askThen = 'A confirm dialog, and the work that only runs on yes.';
+Weave.kit.notes.reading = 'A headline number, the way it moved, and the week behind it.';
 Weave.kit.notes.picker = 'A button that drops every choice into a popover.';
 
 /* demoWords: the only place the samples below write a word, so a sample never carries a literal of its own. */
@@ -129,6 +137,10 @@ Weave.kit.demoWords.askDone = 'Branch deleted.';
 Weave.kit.demoWords.shellTitle = 'A whole page';
 Weave.kit.demoWords.shellNote = 'The blurb sits under the rule, where a demo explains itself.';
 Weave.kit.demoWords.shellLine = 'Then the demo begins.';
+Weave.kit.demoWords.readingLabel = 'Requests a day';
+Weave.kit.demoWords.readingValue = 16800;
+Weave.kit.demoWords.readingText = '+6.4%';
+Weave.kit.demoWords.readingSpark = [8200, 8600, 9100, 8800, 9400, 6100, 5400];
 Weave.kit.demoWords.regions = [{ key: 'eu', label: 'Europe' }, { key: 'us', label: 'North America' }, { key: 'apac', label: 'Asia Pacific' }];
 
 /* the gallery's own state and the two specs its samples need, kept out of the sample rows themselves. */
@@ -155,3 +167,6 @@ Weave.kit.samples.say = () => Weave.library.components.actionButton({ label: Wea
 Weave.kit.samples.cheer = () => Weave.library.components.actionButton({ label: Weave.kit.demoWords.cheerButton, onAction: () => Weave.kit.cheer(Weave.kit.demoWords.cheerMessage) });
 Weave.kit.samples.askThen = () => Weave.library.components.actionButton({ label: Weave.kit.demoWords.askButton, onAction: () => Weave.kit.askThen(Weave.kit.parts.askSpec(), () => Weave.kit.cheer(Weave.kit.demoWords.askDone)) });
 Weave.kit.samples.picker = () => Weave.kit.picker({ items: Weave.kit.demoWords.regions, chosen: Weave.kit.parts.picked.key, onPick: Weave.kit.parts.repick });
+Weave.kit.parts.readingWay = () => ({ direction: Weave.library.components.trendNames.up, tone: Weave.library.components.toneNames.success, series: Weave.library.components.seriesNames.one });
+Weave.kit.parts.readingSpec = () => Weave.library.composition.merge(Weave.kit.parts.readingWay(), { label: Weave.kit.demoWords.readingLabel, value: Weave.kit.whole(Weave.kit.demoWords.readingValue), text: Weave.kit.demoWords.readingText, values: Weave.kit.demoWords.readingSpark });
+Weave.kit.samples.reading = () => Weave.kit.reading(Weave.kit.parts.readingSpec());

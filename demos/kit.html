@@ -32,7 +32,7 @@ Weave.application.gallery = () => Weave.library.components.panels({ children: We
 Weave.application.countLabel = 'Pieces in the kit';
 Weave.application.countTile = () => Weave.library.components.statTile({ label: Weave.application.countLabel, value: Weave.kit.whole(Weave.application.rows().length) });
 Weave.application.sharedLabel = 'Demos drawing on it';
-Weave.application.users = ['Sales desk', 'Engineering board', 'Help desk', 'Conference programme', 'Tenants', 'This gallery'];
+Weave.application.users = ['Sales desk', 'Engineering board', 'Help desk', 'Conference programme', 'Tenants', 'Signal', 'This gallery'];
 Weave.application.sharedTile = () => Weave.library.components.statTile({ label: Weave.application.sharedLabel, value: Weave.kit.whole(Weave.application.users.length) });
 Weave.application.credits = () => Weave.kit.section({ title: Weave.application.sharedLabel, children: [Weave.kit.chips({ items: Weave.application.users })] });
 Weave.application.tiles = () => Weave.library.components.tiles({ children: [Weave.application.countTile(), Weave.application.sharedTile()] });
