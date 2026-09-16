@@ -182,7 +182,7 @@ Weave.tests.cases.componentsFieldNamesItsControl = () => Weave.library.attribute
 Weave.tests.cases.componentsStyleTextCoversEveryRule = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.rules).map(Weave.tests.selectorFor));
 Weave.tests.cases.componentsStyleTextCoversEveryToken = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.tokens).map(Weave.library.components.variableName));
 Weave.tests.cases.componentsRulesOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.rules).every(Weave.tests.usesTokens);
-Weave.tests.knownValues = () => Weave.library.composition.values(Weave.library.components.values).concat(Weave.library.composition.values(Weave.library.components.vars), [Weave.library.components.hairline, Weave.library.components.accentLine]);
+Weave.tests.knownValues = () => Weave.library.composition.values(Weave.library.components.values).concat(Weave.library.composition.values(Weave.library.components.vars), Weave.library.composition.values(Weave.library.components.borders));
 Weave.tests.usesTokens = style => Weave.library.composition.values(style).every(value => Weave.tests.knownValues().includes(value));
 Weave.tests.cases.componentsTreeNests = () => Weave.tests.countsTwoTrees(Weave.library.components.tree({ nodes: [{ label: 'a', children: [{ label: 'b' }] }] }));
 Weave.tests.countsTwoTrees = tree => Weave.library.query.allWithin(Weave.tests.selectorFor('tree'))(tree).length === 1;
@@ -678,3 +678,53 @@ Weave.tests.settled = test => Weave.library.control.recover(Weave.library.compos
 Weave.tests.runAsync = () => Weave.library.composition.all(Weave.library.composition.pairs(Weave.tests.asyncCases).map(Weave.tests.asyncCheck));
 Weave.tests.runAll = () => Weave.library.composition.then(Weave.tests.totalWith(Weave.tests.run().total))(Weave.tests.runAsync());
 Weave.tests.totalWith = base => list => Weave.tests.summary(base + list.length);
+
+/* the Bootstrap shaped widgets: one case per piece, each asserting the one thing that piece is for. */
+Weave.tests.navSample = () => Weave.library.components.navbar({ title: 'Acme', items: [{ label: 'Home', active: true }, { label: 'Pricing' }], actions: [{ label: 'Sign in' }] });
+Weave.tests.cases.componentsNavbarLinksAndActs = () => Weave.library.query.allWithin(Weave.tests.selectorFor('anchor'))(Weave.tests.navSample()).length === 2;
+Weave.tests.cases.componentsNavbarMarksTheCurrentLink = () => Weave.library.query.allWithin('[aria-current=true]')(Weave.tests.navSample()).length === 1;
+Weave.tests.cases.componentsNavbarCarriesItsActions = () => Weave.library.query.allWithin(Weave.tests.selectorFor('button'))(Weave.tests.navSample()).length === 1;
+Weave.tests.groupSample = () => Weave.library.components.listGroup({ items: [{ label: 'One', note: 'first', onAction: () => Weave.tests.clicks.push(1) }, { label: 'Two' }] });
+Weave.tests.cases.componentsListGroupRowsEveryItem = () => Weave.library.query.allWithin(Weave.tests.selectorFor('groupRow'))(Weave.tests.groupSample()).length === 2;
+Weave.tests.cases.componentsListGroupOnlyButtonsTheActionable = () => Weave.library.query.allWithin(Weave.tests.selectorFor('rowButton'))(Weave.tests.groupSample()).length === 1;
+Weave.tests.cases.componentsInputGroupWeldsItsAddons = () => Weave.library.elements.textOf(Weave.library.components.inputGroup({ label: 'Site', name: 'site', prefix: 'https://', suffix: '.test' })).includes('https://');
+Weave.tests.cases.componentsInputGroupKeepsOneControl = () => Weave.library.query.allWithin(Weave.tests.selectorFor('control'))(Weave.library.components.inputGroup({ label: 'Site', name: 'site', prefix: 'https://' })).length === 1;
+Weave.tests.segmentSample = () => Weave.library.components.segmented({ active: 'week', onPick: key => Weave.tests.clicks.push(key), items: [{ key: 'day', label: 'Day' }, { key: 'week', label: 'Week' }] });
+Weave.tests.cases.componentsSegmentedMarksTheActiveOne = () => Weave.library.query.allWithin('[aria-selected=true]')(Weave.tests.segmentSample()).length === 1;
+Weave.tests.cases.componentsSegmentedAnswersAPick = () => Weave.tests.countsOneClick(Weave.library.query.oneWithin(Weave.tests.selectorFor('button'))(Weave.tests.segmentSample()));
+Weave.tests.cases.componentsSpinnerSaysItIsBusy = () => Weave.library.attributes.attribute('aria-busy')(Weave.library.components.spinner({})) === 'true';
+Weave.tests.cases.componentsSpinnerNamesItself = () => Weave.library.attributes.attribute('aria-label')(Weave.library.components.spinner({})) === Weave.library.components.busyLabel;
+Weave.tests.descriptionSample = () => Weave.library.components.descriptions({ rows: [{ label: 'Plan', value: 'Scale' }, { label: 'Seats', value: 12 }] });
+Weave.tests.cases.componentsDescriptionsPairEveryRow = () => Weave.library.query.allWithin(Weave.tests.selectorFor('definition'))(Weave.tests.descriptionSample()).length === 2;
+Weave.tests.cases.componentsDescriptionsPrintAValue = () => Weave.library.elements.textOf(Weave.tests.descriptionSample()).includes('Scale');
+Weave.tests.cases.componentsQuoteCreditsItsAuthor = () => Weave.library.elements.textOf(Weave.library.components.quote({ text: 'It shipped.', who: 'Ana' })).includes('Ana');
+Weave.tests.cases.componentsBannerTakesATone = () => Weave.library.attributes.data(Weave.library.components.toneKey)(Weave.library.components.banner({ title: 'Down', tone: Weave.library.components.toneNames.danger })) === 'danger';
+Weave.tests.cases.componentsRatingDrawsEveryStar = () => Weave.library.query.allWithin(Weave.tests.selectorFor('icon'))(Weave.library.components.rating({ value: 3 })).length === Weave.library.components.starCount;
+Weave.tests.cases.componentsRatingSaysTheScore = () => Weave.library.attributes.attribute('aria-label')(Weave.library.components.rating({ value: 3 })).includes('3');
+Weave.tests.cases.componentsChipRemovesOnlyWhenAsked = () => Weave.library.query.allWithin(Weave.tests.selectorFor('button'))(Weave.library.components.chip({ text: 'billing' })).length === 0;
+Weave.tests.cases.componentsChipCarriesItsRemove = () => Weave.tests.countsOneClick(Weave.library.query.oneWithin(Weave.tests.selectorFor('button'))(Weave.library.components.chip({ text: 'billing', onRemove: () => Weave.tests.clicks.push(1) })));
+Weave.tests.cases.componentsTimelineRowsEveryMoment = () => Weave.library.query.allWithin(Weave.tests.selectorFor('timelineRow'))(Weave.library.components.timeline({ items: [{ when: 'Mon', label: 'Opened' }, { when: 'Tue', label: 'Closed' }] })).length === 2;
+Weave.tests.cases.componentsFieldCarriesItsHint = () => Weave.library.query.allWithin(Weave.tests.selectorFor('hint'))(Weave.library.components.field({ label: 'Email', name: 'email', hint: 'We never share it' })).length === 1;
+Weave.tests.cases.componentsFieldSkipsAnAbsentHint = () => Weave.library.query.allWithin(Weave.tests.selectorFor('hint'))(Weave.library.components.field({ label: 'Email', name: 'email' })).length === 0;
+Weave.tests.passwordControl = spec => Weave.library.query.oneWithin(Weave.tests.selectorFor('control'))(Weave.library.components.passwordField(spec));
+Weave.tests.cases.componentsPasswordHidesByDefault = () => Weave.library.attributes.attribute(Weave.library.browser.keywords.type)(Weave.tests.passwordControl({ label: 'Password', name: 'password' })) === 'password';
+Weave.tests.cases.componentsPasswordShowsWhenAsked = () => Weave.library.attributes.attribute(Weave.library.browser.keywords.type)(Weave.tests.passwordControl({ label: 'Password', name: 'password', shown: true })) === 'text';
+Weave.tests.cases.componentsPasswordOffersTheReveal = () => Weave.library.elements.textOf(Weave.library.components.passwordField({ label: 'Password', name: 'password', onReveal: Weave.library.composition.noop })).includes(Weave.library.components.revealLabels.hidden);
+Weave.tests.cases.componentsCodeFieldTakesOneTimeCodes = () => Weave.library.attributes.attribute('autocomplete')(Weave.library.query.oneWithin(Weave.tests.selectorFor('codeEntry'))(Weave.library.components.codeField({ label: 'Code', name: 'code' }))) === Weave.library.components.oneTimeCode;
+
+/* the customisation tables: a modifier, a density and a preset each change what the page shows without a rule. */
+Weave.tests.cases.componentsSpecTakesAModifier = () => Weave.library.attributes.data('gap')(Weave.library.components.stack({ gap: Weave.library.components.markNames.gap.tight })) === 'tight';
+Weave.tests.cases.componentsSpecTakesATone = () => Weave.library.attributes.data(Weave.library.components.toneKey)(Weave.library.components.tag({ text: 'late', tone: Weave.library.components.toneNames.warning })) === 'warning';
+Weave.tests.cases.componentsModifierCoversEveryClassItNames = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.components.spreadClasses.map(Weave.tests.selectorFor));
+Weave.tests.gridInside = () => Weave.tests.selectorFor(Weave.library.components.tableName) + Weave.library.query.dataSelector('grid', 'snug') + Weave.library.browser.keywords.space + Weave.tests.selectorFor(Weave.library.components.cellName);
+Weave.tests.cases.componentsModifierReachesInsideWhenAsked = () => Weave.library.components.styleText().includes(Weave.tests.gridInside());
+Weave.tests.cases.componentsSheetCarriesEveryDensity = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.densities).map(Weave.library.components.densitySelector));
+Weave.tests.cases.componentsSheetCarriesEveryTheme = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.keys(Weave.library.components.themes).map(Weave.library.components.themeSelector));
+Weave.tests.cases.componentsDensityNamesEveryRow = () => Weave.library.composition.keys(Weave.library.components.densityNames).length === Weave.library.composition.keys(Weave.library.components.densities).length;
+Weave.tests.accentVariable = element => Weave.library.style.cssVariable(Weave.library.components.variableName('accent'))(element);
+Weave.tests.presetCard = () => Weave.library.components.applyPreset(Weave.library.components.presetNames.ocean)(Weave.library.components.card({}));
+Weave.tests.cases.componentsPresetSetsTokensOnAnElement = () => Weave.tests.accentVariable(Weave.tests.presetCard()) === Weave.library.components.presets.ocean.accent;
+Weave.tests.cases.componentsConfigureMovesAToken = () => Weave.tests.movedToken() === Weave.tests.tokenProbe;
+Weave.tests.tokenProbe = '3px';
+Weave.tests.movedToken = () => Weave.tests.restoredToken(Weave.library.components.tokens.radius, Weave.library.components.configure({ radius: Weave.tests.tokenProbe }).radius);
+Weave.tests.restoredToken = (before, moved) => (Weave.library.components.configure({ radius: before }), moved);

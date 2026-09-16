@@ -156,6 +156,10 @@ Audit.rules.isCountedRow = entry => Audit.text.hasAssignment(entry.line) && Audi
 Audit.rules.countedLiterals = entries => Audit.rules.literalRows(entries).filter(row => !Audit.exemptions.literals.includes(Audit.rules.literalName(row.value)));
 Audit.rules.firstSeen = (row, position, all) => ({ value: row.value, index: row.index, first: all.find(other => other.value === row.value).index });
 Audit.rules.duplicateLiterals = entries => Audit.rules.countedLiterals(entries).map(Audit.rules.firstSeen).filter(row => row.first !== row.index);
+Audit.rules.assignedPaths = entries => entries.filter(entry => Audit.text.hasAssignment(entry.line)).map(entry => ({ path: Audit.text.pathOf(entry.line), index: entry.index }));
+Audit.rules.duplicatePaths = entries => Audit.rules.assignedPaths(entries).map((row, position, all) => ({ path: row.path, index: row.index, first: all.find(other => other.path === row.path).index })).filter(row => row.first !== row.index);
+Audit.rules.reportPath = file => found => Audit.report(file, found.index, 'R22', found.path + ' is already assigned on line ' + (found.first + 1));
+Audit.rules.uniquePaths = (file, entries) => Audit.rules.duplicatePaths(entries).forEach(Audit.rules.reportPath(file));
 Audit.rules.arrowLines = entries => entries.filter(entry => Audit.shapes.nameOf(entry.line) === Audit.shapes.arrowName);
 Audit.rules.reportStructure = file => found => Audit.report(file, found.index, 'R13', 'line is structurally identical to line ' + (found.first + 1));
 Audit.rules.structuralUniqueness = (file, entries) => Audit.when(!Audit.exemptions.uniqueFiles.includes(file), () => Audit.rules.duplicateStructures(Audit.rules.arrowLines(entries)).forEach(Audit.rules.reportStructure(file)));
@@ -183,7 +187,7 @@ Audit.rules.applicationRoots = ['Weave.application', 'Weave.tests', 'Weave.kit']
 Audit.rules.isApplicationLine = line => Audit.rules.applicationRoots.some(root => Audit.text.pathOf(line).startsWith(root));
 Audit.rules.checkIsolation = (file, entry) => name => Audit.reportWhen(Audit.text.hasToken(entry.line, name), file, entry.index, 'R20', 'application code names the global ' + name);
 Audit.rules.applicationIsolation = (file, entries) => entries.filter(entry => Audit.rules.isApplicationLine(entry.line)).forEach(entry => Audit.policy.globals.forEach(Audit.rules.checkIsolation(file, entry)));
-Audit.rules.order = ['oneStatement', 'applicationIsolation', 'qualified', 'shape', 'length', 'declarations', 'statements', 'branching', 'throwAndTry', 'globals', 'builtins', 'aliases', 'literalUniqueness', 'structuralUniqueness', 'dependencies', 'naming', 'predicateNames', 'groupComments', 'styleRows'];
+Audit.rules.order = ['oneStatement', 'applicationIsolation', 'qualified', 'shape', 'length', 'declarations', 'statements', 'branching', 'throwAndTry', 'globals', 'builtins', 'aliases', 'literalUniqueness', 'structuralUniqueness', 'dependencies', 'naming', 'predicateNames', 'groupComments', 'styleRows', 'uniquePaths'];
 
 /* tables: the tables section 13 of the spec requires, checked to exist and to have rows. */
 Audit.tables = {};
