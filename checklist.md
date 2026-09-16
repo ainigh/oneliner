@@ -466,6 +466,27 @@ layout faults no unit test could see. Each one is closed by a row, never by a `<
       gradient, and on a phone the menu is two columns rather than one full-bleed tile per screen.
 - [x] **The style guide listed colours as hex strings.** Each one is a swatch.
 
+## Tenants — the eighth demo, and the gaps it found
+
+A console one company runs for four customers. It was chosen because nothing else in the repository
+had a workspace switcher, a plan with limits, or a question asked before a destructive act — and
+because half the library had no demo at all. `patterns.menu`, `patterns.confirm`, `switchField`,
+`sliderField`, `progressBar`, `alert`, `accordion` and `actionBar` were all unspent until now.
+
+- [x] **`alert` read its second line from `text`, not `note`**, so a banner written the way every
+      other component in the library is written came out with a title and nothing under it. It
+      reads `noteOf` now, as `emptyState` and `confirm` already did.
+- [x] **`progressBar` had no rule at all.** It is a `<progress>` element, so it also needed the two
+      pseudo-elements a bar is actually drawn from — `states.track` and `states.filled` — and a
+      `toneRules` row, so a meter over its limit runs red rather than accent.
+- [x] **A switch did not look switched.** `switchControl` was a grey stadium with no knob and no
+      checked state. It now has `states.on`, `states.knob` and `states.knobOn`: three suffixes, one
+      knob that slides, and a label that sits at the far side of its row.
+- [x] **A table wider than its panel spilled onto the page** at phone width. `tableBox` wraps every
+      table in a sideways scroller, so a data grid clips at its panel edge instead.
+- [x] **`actionButton` dropped the `aria` a caller gave it**, so a tree node or a menu row could
+      never say it was the chosen one.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

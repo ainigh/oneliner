@@ -297,7 +297,7 @@ Weave.application.load = () => Weave.library.control.after(Weave.library.network
 | `apps.md` | What each flagship had to be able to do. |
 | `sample.html`, `todo.html`, `studio.html` | The reference applications, written against the library directly. |
 | `styleguide.html` | The live reference for the styling system, generated from its own tables. |
-| `demos/*.html` | Seven domain applications, written only against patterns. |
+| `demos/*.html` | Eight domain applications, written only against patterns. |
 | `scripts/` | The build and check harness — ordinary node scripts, deliberately outside the style. |
 
 ## Commands
@@ -308,14 +308,14 @@ npm run audit       # the style rules, plus catalog.json
 npm test            # both test tables, in node with jsdom
 npm run audit:rows  # remove each table row, assert exactly its feature disappears
 npm run check:apps  # drive sample.html, todo.html, studio.html, styleguide.html and tests.html in jsdom
-npm run check:demos # drive all seven demo applications in jsdom
+npm run check:demos # drive all eight demo applications in jsdom
 npm run check:flagships # drive Relay and Pantry the way a person would use them
 npm run check       # all of the above
 ```
 
 ## The demos
 
-`demos/index.html` links seven applications in seven domains. Each one exists to put the patterns
+`demos/index.html` links eight applications in eight domains. Each one exists to put the patterns
 under load in a different shape, and each is short because the patterns do the work:
 
 | Demo | Domain | What it exercises |
@@ -327,8 +327,9 @@ under load in a different shape, and each is short because the patterns do the w
 | `school.html` | education | a curriculum tree beside its reading, and a todo list |
 | `clinic.html` | healthcare | a day schedule and a three step intake form |
 | `agenda.html` | conferences | a calendar of sessions, with prices and a countdown |
+| `tenants.html` | multi-tenant SaaS | four customers in one console: a workspace switcher in a popover, per-plan limits, roles changed in place, and a confirm before a seat is taken back |
 
-None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all seven.
+None of them contains a tag name, a class, a colour or a dimension. `check:demos` drives all eight.
 
 ## Extending
 

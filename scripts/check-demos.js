@@ -39,7 +39,7 @@ function fire(dom, element, type) {
 }
 
 open('index.html').then(dom => {
-  expect('index lists every demo, both flagships and the style guide', count(dom, '.weave-card') === 10, `saw ${count(dom, '.weave-card')}`);
+  expect('index lists every demo, both flagships and the style guide', count(dom, '.weave-card') === 11, `saw ${count(dom, '.weave-card')}`);
   expect('index installs one stylesheet', count(dom, 'head style') === 1, `saw ${count(dom, 'head style')}`);
   expect('index uses no hand written class', dom.window.document.body.innerHTML.includes('class="weave-'), 'no weave class found');
   return open('crm.html');
@@ -126,4 +126,47 @@ open('index.html').then(dom => {
   const before = month();
   [...document.querySelectorAll('.weave-toolbar .weave-button')].find(button => button.textContent === 'Next month').click();
   expect('agenda steps to the next month', month() !== before, `${before} then ${month()}`);
+  return open('tenants.html');
+}).then(dom => {
+  const document = dom.window.document;
+  const tiles = () => [...document.querySelectorAll('.weave-stat-tile')].map(tile => tile.textContent);
+  const tabFor = name => [...document.querySelectorAll('.weave-tab')].find(tab => tab.textContent === name);
+  expect('tenants opens on a workspace', tiles()[0].includes('Team'), tiles()[0]);
+  expect('tenants pages a long roster', count(dom, '.weave-table tbody tr') === 8, `saw ${count(dom, '.weave-table tbody tr')}`);
+  expect('tenants warns when the seats run out', count(dom, '.weave-page .weave-alert') === 1 && document.querySelector('.weave-page .weave-alert').dataset.tone === 'danger', `saw ${count(dom, '.weave-page .weave-alert')} alerts`);
+  const role = document.querySelector('.weave-table tbody .weave-select-box');
+  role.value = 'guest';
+  fire(dom, role, 'change');
+  expect('tenants changes a role in place', document.querySelector('.weave-table tbody .weave-select-box').value === 'guest', document.querySelector('.weave-table tbody .weave-select-box').value);
+  tabFor('Usage').click();
+  expect('tenants meters every limit the plan sets', count(dom, '.weave-progress-bar') === 3, `saw ${count(dom, '.weave-progress-bar')}`);
+  expect('tenants logs the change it just took', count(dom, '.weave-disclosure') === 1, `saw ${count(dom, '.weave-disclosure')}`);
+  expect('tenants tones the meter that is over', document.querySelector('.weave-progress-bar').dataset.tone === 'danger', document.querySelector('.weave-progress-bar').dataset.tone);
+  document.querySelector('.weave-page .weave-alert .weave-button').click();
+  expect('tenants clears the warning by moving the plan up', count(dom, '.weave-page .weave-alert') === 0 && tiles()[0].includes('Scale'), tiles()[0]);
+  tabFor('Settings').click();
+  const flags = () => [...document.querySelectorAll('.weave-switch-control')];
+  expect('tenants draws a switch per feature', flags().length === 3, `saw ${flags().length}`);
+  expect('tenants starts with the export switched on', flags()[1].getAttribute('aria-checked') === 'true', flags()[1].getAttribute('aria-checked'));
+  flags()[0].click();
+  expect('tenants takes a switch', flags()[0].getAttribute('aria-checked') === 'true', flags()[0].getAttribute('aria-checked'));
+  document.querySelector('.weave-page .weave-page-header .weave-button').click();
+  expect('tenants offers every workspace in one popover', count(dom, '.weave-popover-box .weave-menu li') === 4, `saw ${count(dom, '.weave-popover-box .weave-menu li')}`);
+  [...document.querySelectorAll('.weave-popover-box .weave-menu .weave-button')][3].click();
+  expect('tenants switches the whole console over', tiles()[0].includes('Trial'), tiles()[0]);
+  expect('tenants keeps each workspace to its own roster', count(dom, '.weave-table tbody tr') === 3, `saw ${count(dom, '.weave-table tbody tr')}`);
+  const invite = document.querySelector('.weave-form');
+  fire(dom, invite, 'submit');
+  expect('tenants refuses an invitation with no address', count(dom, '.weave-field-error') === 2, `saw ${count(dom, '.weave-field-error')}`);
+  document.querySelector('input[name=who]').value = 'Wren Ashby';
+  document.querySelector('input[name=where]').value = 'wren@hooli.test';
+  fire(dom, invite, 'submit');
+  expect('tenants seats an invited teammate', count(dom, '.weave-table tbody tr') === 4, `saw ${count(dom, '.weave-table tbody tr')}`);
+  document.querySelectorAll('.weave-table tbody .weave-button')[0].click();
+  expect('tenants asks before it takes a seat back', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
+  [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Remove').click();
+  return new Promise(resolve => setTimeout(() => resolve(dom), 40));
+}).then(dom => {
+  expect('tenants frees the seat once you confirm', count(dom, '.weave-table tbody tr') === 3, `saw ${count(dom, '.weave-table tbody tr')}`);
+  expect('tenants leaves no overlay behind', count(dom, '.weave-dialog-box') === 0, `saw ${count(dom, '.weave-dialog-box')}`);
 }).then(() => process.exit(failures.length === 0 ? 0 : 1)).catch(error => { console.error(error); process.exit(1); });

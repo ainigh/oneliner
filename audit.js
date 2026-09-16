@@ -203,7 +203,7 @@ Audit.catalog.emit = (file, entries) => Audit.platform.write(file, JSON.stringif
 /* run: audit every file, print every finding, exit non-zero when anything failed. */
 Audit.run = {};
 Audit.run.files = ['dist/weave.js', 'audit.js', 'tests/tests.js'];
-Audit.run.applications = ['sample.html', 'todo.html', 'tests.html', 'studio.html', 'styleguide.html', 'apps/relay.html', 'apps/pantry.html', 'demos/index.html', 'demos/crm.html', 'demos/board.html', 'demos/helpdesk.html', 'demos/warehouse.html', 'demos/school.html', 'demos/clinic.html', 'demos/agenda.html'];
+Audit.run.applications = ['sample.html', 'todo.html', 'tests.html', 'studio.html', 'styleguide.html', 'apps/relay.html', 'apps/pantry.html', 'demos/index.html', 'demos/crm.html', 'demos/board.html', 'demos/helpdesk.html', 'demos/warehouse.html', 'demos/school.html', 'demos/clinic.html', 'demos/agenda.html', 'demos/tenants.html'];
 Audit.run.auditMarkup = file => Audit.run.withSource(file, Audit.text.scriptSource(Audit.platform.read(file)));
 Audit.run.auditFile = file => Audit.run.withSource(file, Audit.platform.read(file));
 Audit.run.withSource = (file, source) => Audit.run.applyRules(file, Audit.codeLines(source), Audit.rules.recordComments(file, source), Audit.rules.recordSource(file, source));

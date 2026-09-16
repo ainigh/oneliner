@@ -35,7 +35,7 @@ Weave.application.variantBar = () => Weave.library.components.toolbar({ items: [
 
 /* tones: one alert per row of the tone table, each spending the single colour that row names. */
 Weave.application.toneNote = 'The tone table holds the colour; the tone rules say how each class spends it.';
-Weave.application.toneAlert = tone => Weave.library.components.alert({ tone, title: tone, text: Weave.application.toneNote });
+Weave.application.toneAlert = tone => Weave.library.components.alert({ tone, title: tone, note: Weave.application.toneNote });
 Weave.application.toneStack = () => Weave.library.components.stack({ children: Weave.library.composition.keys(Weave.library.components.tones).map(Weave.application.toneAlert) });
 
 /* states: live controls, so a pointer and a keyboard can be pointed at the generated state rules. */

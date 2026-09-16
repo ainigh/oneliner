@@ -473,7 +473,7 @@ Weave.tests.cases.componentsToggleThemeFlipsDarkAndLight = () => Weave.tests.tog
 Weave.tests.cases.componentsSchemeNameMapsBothWays = () => Weave.tests.mapsBothSchemes();
 Weave.tests.mapsBothSchemes = () => Weave.library.control.and(Weave.library.components.schemeName(true) === Weave.library.components.themeNames.dark, Weave.library.components.schemeName(false) === Weave.library.components.themeNames.light);
 Weave.tests.toneOf = element => Weave.library.attributes.data(Weave.library.components.toneKey)(element);
-Weave.tests.alertSample = () => Weave.library.components.alert({ tone: Weave.tests.lastTone(), title: 'Gone', text: 'It went' });
+Weave.tests.alertSample = () => Weave.library.components.alert({ tone: Weave.tests.lastTone(), title: 'Gone', note: 'It went' });
 Weave.tests.cases.componentsAlertCarriesToneAndRole = () => Weave.tests.readsAlert(Weave.tests.alertSample());
 Weave.tests.lastTone = () => Weave.library.composition.last(Weave.library.composition.keys(Weave.library.components.tones));
 Weave.tests.roleOf = element => Weave.library.attributes.attribute(Weave.library.browser.keywords.role)(element);

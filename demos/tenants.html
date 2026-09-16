@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weave demo — tenants</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: a console one company runs for many customers. One store, four workspaces, three screens each. */
+Weave.application = {};
+
+/* roles: one row per role a member may hold. The first row is the one the founder keeps. */
+Weave.application.roles = {};
+Weave.application.roles.owner = 'Owner';
+Weave.application.roles.admin = 'Admin';
+Weave.application.roles.member = 'Member';
+Weave.application.roles.guest = 'Guest';
+Weave.application.roleKeys = Weave.library.composition.keys(Weave.application.roles);
+Weave.application.ownerRole = Weave.library.composition.first(Weave.application.roleKeys);
+Weave.application.otherRoles = Weave.library.composition.rest(Weave.application.roleKeys);
+
+/* plans: one row per plan, each holding the three limits every screen measures a workspace against. */
+Weave.application.plans = {};
+Weave.application.plans.trial = { label: 'Trial', seats: 3, storage: 5, calls: 10, price: 0 };
+Weave.application.plans.starter = { label: 'Starter', seats: 8, storage: 50, calls: 100, price: 2900 };
+Weave.application.plans.team = { label: 'Team', seats: 20, storage: 400, calls: 750, price: 9900 };
+Weave.application.plans.scale = { label: 'Scale', seats: 90, storage: 3000, calls: 6000, price: 29900 };
+Weave.application.planKeys = Weave.library.composition.keys(Weave.application.plans);
+Weave.application.planOf = state => Weave.application.plans[state.plans[state.tenant]];
+Weave.application.nextPlanKey = state => Weave.application.planKeys[Weave.library.composition.clamp(0, Weave.application.planKeys.length - 1)(Weave.application.planKeys.indexOf(state.plans[state.tenant]) + 1)];
+
+/* workspaces: one row per customer. Everything the console shows is derived from these six numbers. */
+Weave.application.workspaces = {};
+Weave.application.workspaces.northwind = { name: 'Northwind Traders', domain: 'northwind.test', plan: 'team', headcount: 22, storage: 311, calls: 604, offset: 0 };
+Weave.application.workspaces.initech = { name: 'Initech', domain: 'initech.test', plan: 'starter', headcount: 6, storage: 18, calls: 71, offset: 5 };
+Weave.application.workspaces.globex = { name: 'Globex Corporation', domain: 'globex.test', plan: 'scale', headcount: 14, storage: 940, calls: 2150, offset: 11 };
+Weave.application.workspaces.hooli = { name: 'Hooli', domain: 'hooli.test', plan: 'trial', headcount: 3, storage: 2, calls: 4, offset: 15 };
+Weave.application.workspaceKeys = Weave.library.composition.keys(Weave.application.workspaces);
+Weave.application.firstWorkspace = Weave.library.composition.first(Weave.application.workspaceKeys);
+Weave.application.workspaceOf = state => Weave.application.workspaces[state.tenant];
+
+/* staff: the names every roster is drawn from, walked from each workspace's offset so no two share a list. */
+Weave.application.staff = ['Amara Osei', 'Bo Lindgren', 'Cheng Wei', 'Dalia Haddad', 'Esben Krogh', 'Farrah Nazari', 'Gideon Aluko', 'Hanna Virtanen', 'Ilias Petrou', 'Jun Nakamura', 'Kaia Bergstrom', 'Lucas Ferreira', 'Mira Chaudhary', 'Noor Al-Sayed', 'Otto Brandt', 'Petra Novak', 'Quincy Bell', 'Rina Takeda', 'Samir Boulos', 'Tove Halvorsen', 'Ursula Mendes', 'Viktor Ilyin'];
+Weave.application.memberName = (key, index) => Weave.application.staff[(Weave.application.workspaces[key].offset + index) % Weave.application.staff.length];
+Weave.application.pickedRole = (key, index) => Weave.application.otherRoles[Weave.library.composition.noisyIndex(Weave.application.otherRoles.length, Weave.application.workspaces[key].offset + index)];
+Weave.application.memberRole = (key, index) => Weave.library.control.either(() => index === 0, () => Weave.application.ownerRole, () => Weave.application.pickedRole(key, index))(index);
+Weave.application.atMark = '@';
+Weave.application.handleOf = name => Weave.library.composition.first(Weave.library.composition.words(name)).toLowerCase();
+Weave.application.emailFor = (key, name) => Weave.application.handleOf(name) + Weave.application.atMark + Weave.application.workspaces[key].domain;
+Weave.application.seenDays = (key, index) => Weave.library.composition.noisyIndex(29, Weave.application.workspaces[key].offset + index + 7) + 1;
+Weave.application.seenOn = (key, index) => Weave.library.dates.add(Weave.library.dates.names.day, -Weave.application.seenDays(key, index))(Weave.library.dates.today());
+Weave.application.memberWords = (key, index) => ({ name: Weave.application.memberName(key, index), email: Weave.application.emailFor(key, Weave.application.memberName(key, index)) });
+Weave.application.memberFacts = (key, index) => ({ id: key + Weave.application.atMark + index, role: Weave.application.memberRole(key, index), seen: Weave.application.seenOn(key, index) });
+Weave.application.memberAt = key => index => Weave.library.composition.merge(Weave.application.memberWords(key, index), Weave.application.memberFacts(key, index));
+Weave.application.rosterFor = key => Weave.library.composition.range(Weave.application.workspaces[key].headcount).map(Weave.application.memberAt(key));
+Weave.application.byKey = make => Weave.library.composition.fromPairs(Weave.application.workspaceKeys.map(key => [key, make(key)]));
+
+/* flags: one row per feature a workspace may switch on for itself. The value is what a new workspace starts with. */
+Weave.application.flags = {};
+Weave.application.flags.sso = { label: 'Single sign-on', on: false };
+Weave.application.flags.exports = { label: 'Nightly audit export', on: true };
+Weave.application.flags.allowList = { label: 'Restrict to known addresses', on: false };
+Weave.application.flagKeys = Weave.library.composition.keys(Weave.application.flags);
+Weave.application.startingFlags = () => Weave.library.composition.mapValues(row => row.on)(Weave.application.flags);
+
+/* money: written once, in the minor unit, and formatted only where a reader sees it. */
+Weave.application.currency = 'USD';
+Weave.application.money = pence => Weave.library.formatting.money(Weave.application.currency)(pence / 100);
+Weave.application.whole = Weave.library.formatting.decimal(0);
+
+/* the store: one state for the console, so the switcher, the tiles and the three screens never disagree. */
+Weave.application.startingPlan = key => Weave.application.workspaces[key].plan;
+Weave.application.startingCap = key => Weave.application.plans[Weave.application.workspaces[key].plan].price * 3;
+Weave.application.startingTables = () => ({ rosters: Weave.application.byKey(Weave.application.rosterFor), plans: Weave.application.byKey(Weave.application.startingPlan), flags: Weave.application.byKey(Weave.application.startingFlags), caps: Weave.application.byKey(Weave.application.startingCap) });
+Weave.application.startingState = () => Weave.library.composition.merge({ tenant: Weave.application.firstWorkspace, screen: undefined, log: [] }, Weave.application.startingTables());
+Weave.application.store = Weave.library.patterns.store(Weave.application.startingState());
+Weave.application.rosterOf = state => state.rosters[state.tenant];
+Weave.application.capOf = state => state.caps[state.tenant];
+Weave.application.flagsOf = state => state.flags[state.tenant];
+Weave.application.forTenant = (state, table, value) => Weave.library.composition.merge(state[table], { [state.tenant]: value });
+
+/* the log: every change a reader makes writes one line, and the usage screen reads them back. */
+Weave.application.noteChange = (state, words) => ({ log: [{ at: Weave.library.dates.today(), words, who: state.tenant }].concat(state.log).slice(0, Weave.application.logLength) });
+Weave.application.logLength = 12;
+Weave.application.logOf = state => state.log.filter(entry => entry.who === state.tenant);
+Weave.application.record = words => Weave.application.store.update(state => Weave.application.noteChange(state, words));
+
+/* writing to the store: one named move per thing a reader can do, and nothing else calls update. */
+Weave.application.showTenant = key => Weave.application.store.update(() => ({ tenant: key, screen: undefined }));
+Weave.application.showScreen = key => () => Weave.application.store.update(() => ({ screen: key }));
+Weave.application.setRoster = (state, roster) => ({ rosters: Weave.application.forTenant(state, Weave.application.rostersTable, roster) });
+Weave.application.rostersTable = 'rosters';
+Weave.application.plansTable = 'plans';
+Weave.application.flagsTable = 'flags';
+Weave.application.capsTable = 'caps';
+Weave.application.reRoled = (member, role) => other => Weave.library.control.either(() => other === member, () => Weave.library.composition.merge(other, { role }), Weave.library.composition.identity)(other);
+Weave.application.setRole = (member, role) => Weave.application.store.update(state => Weave.application.setRoster(state, Weave.application.rosterOf(state).map(Weave.application.reRoled(member, role))));
+Weave.application.dropMember = member => Weave.application.store.update(state => Weave.application.setRoster(state, Weave.application.rosterOf(state).filter(other => other !== member)));
+Weave.application.addMember = member => Weave.application.store.update(state => Weave.application.setRoster(state, Weave.application.rosterOf(state).concat([member])));
+Weave.application.upgrade = () => Weave.application.store.update(state => ({ plans: Weave.application.forTenant(state, Weave.application.plansTable, Weave.application.nextPlanKey(state)) }));
+Weave.application.toggleFlag = key => () => Weave.application.store.update(state => ({ flags: Weave.application.forTenant(state, Weave.application.flagsTable, Weave.library.composition.merge(Weave.application.flagsOf(state), { [key]: !Weave.application.flagsOf(state)[key] })) }));
+Weave.application.setCap = value => Weave.application.store.update(state => ({ caps: Weave.application.forTenant(state, Weave.application.capsTable, value) }));
+
+/* the switcher: a popover of every workspace, hung off the button in the page header. */
+Weave.application.switchTo = key => () => (Weave.application.showTenant(key), Weave.application.toasts.push(Weave.application.nowInPrefix + Weave.application.workspaces[key].name, Weave.library.components.toneNames.info));
+Weave.application.nowInPrefix = 'Now looking at ';
+Weave.application.switcherRow = state => key => ({ label: Weave.application.workspaces[key].name, hint: Weave.application.workspaces[key].domain, aria: { selected: String(key === state.tenant) }, onAction: Weave.application.switchTo(key) });
+Weave.application.switcherRows = state => Weave.application.workspaceKeys.map(Weave.application.switcherRow(state));
+Weave.application.switcherButton = state => Weave.library.components.actionButton({ label: Weave.application.workspaceOf(state).name, onAction: Weave.library.patterns.menuAt({ items: Weave.application.switcherRows(state) }) });
+
+/* the header and the tiles: who you are looking at, and the four numbers that matter before you scroll. */
+Weave.application.title = 'Tenants';
+Weave.application.themeLabel = 'Theme';
+Weave.application.themeToggle = () => Weave.library.components.actionButton({ label: Weave.application.themeLabel, size: Weave.library.components.markNames.size.small, onAction: Weave.library.components.toggleTheme });
+Weave.application.headerTools = state => Weave.library.components.row({ children: [Weave.application.switcherButton(state), Weave.application.themeToggle()] });
+Weave.application.header = state => Weave.library.components.pageHeader({ children: [Weave.library.components.display({ text: Weave.application.title }), Weave.application.headerTools(state)] });
+Weave.application.seatsText = state => Weave.application.whole(Weave.application.rosterOf(state).length) + Weave.application.ofWord + Weave.application.whole(Weave.application.planOf(state).seats);
+Weave.application.ofWord = ' of ';
+Weave.application.gigabytes = value => Weave.application.whole(value) + Weave.application.gigaSuffix;
+Weave.application.gigaSuffix = ' GB';
+Weave.application.planTiles = state => [{ label: Weave.application.planLabel, value: Weave.application.planOf(state).label }, { label: Weave.application.billLabel, value: Weave.application.money(Weave.application.planOf(state).price) }];
+Weave.application.useTiles = state => [{ label: Weave.application.seatLabel, value: Weave.application.seatsText(state) }, { label: Weave.application.storeLabel, value: Weave.application.gigabytes(Weave.application.workspaceOf(state).storage) }];
+Weave.application.tileRows = state => Weave.application.planTiles(state).concat(Weave.application.useTiles(state));
+Weave.application.planLabel = 'Plan';
+Weave.application.seatLabel = 'Seats';
+Weave.application.billLabel = 'Billed monthly';
+Weave.application.storeLabel = 'Storage';
+Weave.application.tiles = state => Weave.library.components.tiles({ children: Weave.application.tileRows(state).map(Weave.library.components.statTile) });
+
+/* over the line: the one banner the console raises, and the upgrade that clears it. */
+Weave.application.overBy = state => Weave.application.rosterOf(state).length - Weave.application.planOf(state).seats;
+Weave.application.overText = state => Weave.application.overPrefix + Weave.application.whole(Weave.application.overBy(state)) + Weave.application.overSuffix;
+Weave.application.overPrefix = 'This workspace is using ';
+Weave.application.overSuffix = ' more seats than its plan allows. Members above the limit cannot sign in.';
+Weave.application.upgradeLabel = 'Move to the next plan up';
+Weave.application.takeUpgrade = () => (Weave.application.upgrade(), Weave.application.record(Weave.application.upgradeLabel), Weave.application.toasts.push(Weave.application.upgradedText, Weave.library.components.toneNames.success));
+Weave.application.upgradedText = 'Plan changed. The new limits apply at once.';
+Weave.application.overBanner = state => Weave.library.components.alert({ tone: Weave.library.components.toneNames.danger, title: Weave.application.overTitle, note: Weave.application.overText(state), action: { label: Weave.application.upgradeLabel, onAction: Weave.application.takeUpgrade } });
+Weave.application.overTitle = 'Over the seat limit';
+Weave.application.banner = state => Weave.library.control.either(() => Weave.application.overBy(state) > 0, () => Weave.application.overBanner(state), Weave.library.composition.noop)(state);
+
+/* the people screen: the roster as a table, a role you can change in place, and a seat you can take back. */
+Weave.application.roleOptions = () => Weave.application.roleKeys.map(key => ({ label: Weave.application.roles[key], value: key }));
+Weave.application.roleField = 'role';
+Weave.application.roleChosen = member => event => Weave.application.takeRole(member, Weave.library.events.valueOfTarget(event));
+Weave.application.takeRole = (member, role) => (Weave.application.setRole(member, role), Weave.application.record(Weave.application.roleNote(member, role)));
+Weave.application.roleNote = (member, role) => member.name + Weave.application.isNowWord + Weave.application.roles[role];
+Weave.application.isNowWord = ' is now ';
+Weave.application.roleCell = (value, member) => Weave.library.components.selectBox({ name: Weave.application.roleField, label: Weave.application.roleHeading, value, options: Weave.application.roleOptions(), onChoose: Weave.application.roleChosen(member) });
+Weave.application.roleHeading = 'Role';
+Weave.application.whoCell = (value, member) => Weave.library.components.listRow({ children: [Weave.library.components.portrait({ name: member.name }), Weave.library.components.strong({ text: member.name })] });
+Weave.application.seenCell = value => Weave.library.components.timestamp({ text: Weave.library.formatting.relative(value) });
+Weave.application.removeSpec = member => ({ label: Weave.library.patterns.labels.remove, size: Weave.library.components.markNames.size.small, onAction: () => Weave.application.askToRemove(member) });
+Weave.application.removeCell = (value, member) => Weave.library.components.actionButton(Weave.application.removeSpec(member));
+Weave.application.removeQuestion = member => Weave.application.removePrefix + member.name + Weave.application.questionMark;
+Weave.application.removePrefix = 'Remove ';
+Weave.application.questionMark = '?';
+Weave.application.removeNote = 'They lose access to every project in this workspace as soon as you confirm.';
+Weave.application.askToRemove = member => Weave.library.composition.then(answer => Weave.application.maybeRemove(member, answer))(Weave.library.patterns.confirm({ title: Weave.application.removeQuestion(member), note: Weave.application.removeNote, confirm: Weave.library.patterns.labels.remove }));
+Weave.application.maybeRemove = (member, answer) => Weave.library.control.when(() => answer, () => Weave.application.reallyRemove(member))(answer);
+Weave.application.reallyRemove = member => (Weave.application.dropMember(member), Weave.application.record(Weave.application.removeQuestion(member)), Weave.application.toasts.push(Weave.application.removedPrefix + member.name, Weave.library.components.toneNames.warning));
+Weave.application.removedPrefix = 'Seat freed: ';
+Weave.application.memberColumns = [{ key: 'name', label: 'Member', format: Weave.application.whoCell }, { key: 'email', label: 'Email' }, { key: Weave.application.roleField, label: Weave.application.roleHeading, format: Weave.application.roleCell }, { key: 'seen', label: 'Last seen', format: Weave.application.seenCell }, { key: 'id', label: Weave.application.actionsHeading, format: Weave.application.removeCell }];
+Weave.application.actionsHeading = '';
+Weave.application.pageSize = 8;
+Weave.application.roster = state => Weave.library.patterns.dataGrid({ title: Weave.application.rosterTitle, pageSize: Weave.application.pageSize, columns: Weave.application.memberColumns, rows: Weave.application.rosterOf(state) }).element;
+Weave.application.rosterTitle = 'Everybody here';
+
+/* inviting: the library's own validators guard the address, and the new member lands in the same roster. */
+Weave.application.inviteFields = {};
+Weave.application.inviteFields.who = { label: 'Full name', rules: { required: true } };
+Weave.application.inviteFields.where = { label: 'Work email', rules: { email: true } };
+Weave.application.inviteRows = () => Weave.library.composition.pairs(Weave.application.inviteFields).map(([name, row]) => Weave.library.composition.merge(row, { name }));
+Weave.application.inviteLabel = 'Send the invitation';
+Weave.application.invitedRole = Weave.library.composition.first(Weave.application.otherRoles);
+Weave.application.invitee = values => ({ id: values.where, name: values.who, email: values.where, role: Weave.application.invitedRole, seen: Weave.library.dates.today() });
+Weave.application.sayInvited = values => Weave.application.toasts.push(Weave.application.invitedPrefix + values.where, Weave.library.components.toneNames.success);
+Weave.application.takeInvite = values => (Weave.application.addMember(Weave.application.invitee(values)), Weave.application.record(Weave.application.invitedPrefix + values.who), Weave.application.sayInvited(values));
+Weave.application.invitedPrefix = 'Invited ';
+Weave.application.inviteForm = () => Weave.library.patterns.entryForm({ title: Weave.application.inviteTitle, fields: Weave.application.inviteRows(), submit: Weave.application.inviteLabel, onSubmit: Weave.application.takeInvite }).element;
+Weave.application.inviteTitle = 'Invite a teammate';
+Weave.application.peopleScreen = state => Weave.library.components.stack({ children: [Weave.application.roster(state), Weave.application.inviteForm()] });
+
+/* the usage screen: three meters against the plan's limits, and the log of what a reader changed. */
+Weave.application.seatMeter = state => ({ label: Weave.application.seatLabel, used: Weave.application.rosterOf(state).length, limit: Weave.application.planOf(state).seats, show: Weave.application.whole });
+Weave.application.storeMeter = state => ({ label: Weave.application.storeLabel, used: Weave.application.workspaceOf(state).storage, limit: Weave.application.planOf(state).storage, show: Weave.application.gigabytes });
+Weave.application.callMeter = state => ({ label: Weave.application.callLabel, used: Weave.application.workspaceOf(state).calls, limit: Weave.application.planOf(state).calls, show: Weave.application.thousands });
+Weave.application.meterRows = state => [Weave.application.seatMeter(state), Weave.application.storeMeter(state), Weave.application.callMeter(state)];
+Weave.application.callLabel = 'API calls';
+Weave.application.thousands = value => Weave.application.whole(value) + Weave.application.thousandSuffix;
+Weave.application.thousandSuffix = 'k';
+Weave.application.meterShare = row => Weave.library.formatting.percent(Weave.library.composition.clamp(0, 1)(row.used / row.limit));
+Weave.application.meterHead = row => Weave.library.components.spread({ children: [Weave.library.components.strong({ text: row.label }), Weave.library.components.note({ text: row.show(row.used) + Weave.application.ofWord + row.show(row.limit) })] });
+Weave.application.meterFoot = row => Weave.library.components.note({ text: Weave.application.meterShare(row) + Weave.application.usedSuffix });
+Weave.application.usedSuffix = ' of the allowance';
+Weave.application.meterTone = row => Weave.library.control.either(() => row.used > row.limit, () => Weave.library.components.toneNames.danger, () => Weave.library.components.toneNames.info)(row);
+Weave.application.meterBar = row => Weave.library.components.progressBar({ tone: Weave.application.meterTone(row), value: row.used, total: row.limit });
+Weave.application.meter = row => Weave.library.components.stack({ children: [Weave.application.meterHead(row), Weave.application.meterBar(row), Weave.application.meterFoot(row)] });
+Weave.application.meters = state => Weave.library.components.stack({ children: Weave.application.meterRows(state).map(Weave.application.meter) });
+Weave.application.logSection = entry => ({ title: entry.words, body: [Weave.library.components.note({ text: Weave.library.formatting.dateTime('medium')(entry.at) })] });
+Weave.application.logList = state => Weave.library.components.accordion({ sections: Weave.application.logOf(state).map(Weave.application.logSection) });
+Weave.application.logEmpty = () => Weave.library.components.emptyState({ glyph: Weave.application.logGlyph, title: Weave.application.logTitle, note: Weave.application.logNote });
+Weave.application.logGlyph = '📋';
+Weave.application.logTitle = 'Nothing changed yet';
+Weave.application.logNote = 'Change a role, invite somebody or move the plan, and it is written here.';
+Weave.application.logPane = state => Weave.library.control.either(() => Weave.application.logOf(state).length > 0, () => Weave.application.logList(state), Weave.application.logEmpty)(state);
+Weave.application.meterPanel = state => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: Weave.application.againstLabel }), Weave.application.meters(state)] });
+Weave.application.logPanel = state => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: Weave.application.recentLabel }), Weave.application.logPane(state)] });
+Weave.application.usageScreen = state => Weave.library.components.panels({ children: [Weave.application.meterPanel(state), Weave.application.logPanel(state)] });
+Weave.application.againstLabel = 'Against the plan';
+Weave.application.recentLabel = 'Recent changes';
+
+/* the settings screen: three switches, a spend cap on a slider, and the one door marked danger. */
+Weave.application.flagSwitch = state => key => Weave.library.components.switchField({ label: Weave.application.flags[key].label, checked: Weave.application.flagsOf(state)[key], onChoose: Weave.application.takeFlag(key) });
+Weave.application.takeFlag = key => () => (Weave.application.toggleFlag(key)(), Weave.application.record(Weave.application.flags[key].label));
+Weave.application.flagList = state => Weave.library.components.stack({ children: Weave.application.flagKeys.map(Weave.application.flagSwitch(state)) });
+Weave.application.capField = 'cap';
+Weave.application.capStep = 500;
+Weave.application.capCeiling = 120000;
+Weave.application.capTyped = event => Weave.application.setCap(Number(Weave.library.events.valueOfTarget(event)));
+Weave.application.capSlider = state => Weave.library.components.sliderField({ name: Weave.application.capField, label: Weave.application.capLabel, min: 0, max: Weave.application.capCeiling, step: Weave.application.capStep, value: Weave.application.capOf(state), onEdit: Weave.application.capTyped });
+Weave.application.capLabel = 'Monthly spend cap';
+Weave.application.capReading = state => Weave.library.components.spread({ children: [Weave.library.components.note({ text: Weave.application.capNote }), Weave.library.components.value({ text: Weave.application.money(Weave.application.capOf(state)) })] });
+Weave.application.capNote = 'Usage above this is refused rather than billed.';
+Weave.application.closeLabel = 'Close this workspace';
+Weave.application.closeNote = 'Every project, member and invitation goes with it. This demo only says so.';
+Weave.application.closeButton = () => Weave.library.components.actionBar({ actions: [{ label: Weave.application.closeLabel, variant: Weave.library.components.markNames.variant.grave, onAction: Weave.application.askToClose }] });
+Weave.application.askToClose = () => Weave.library.composition.then(Weave.application.maybeClose)(Weave.library.patterns.confirm({ title: Weave.application.closeLabel, note: Weave.application.closeNote, confirm: Weave.application.closeConfirm }));
+Weave.application.closeConfirm = 'Yes, close it';
+Weave.application.maybeClose = answer => Weave.library.control.when(() => answer, Weave.application.sayClosed)(answer);
+Weave.application.sayClosed = () => Weave.application.toasts.push(Weave.application.closedText, Weave.library.components.toneNames.danger);
+Weave.application.closedText = 'A real console would start a thirty day countdown here.';
+Weave.application.dangerPanel = () => Weave.library.components.panel({ children: [Weave.library.components.subtitle({ text: Weave.application.dangerLabel }), Weave.library.components.note({ text: Weave.application.closeNote }), Weave.application.closeButton()] });
+Weave.application.dangerLabel = 'Danger zone';
+Weave.application.featureParts = state => [Weave.library.components.subtitle({ text: Weave.application.featureLabel }), Weave.application.flagList(state), Weave.library.components.divider({}), Weave.application.capSlider(state), Weave.application.capReading(state)];
+Weave.application.featurePanel = state => Weave.library.components.panel({ children: Weave.application.featureParts(state) });
+Weave.application.settingsScreen = state => Weave.library.components.panels({ children: [Weave.application.featurePanel(state), Weave.application.dangerPanel()] });
+Weave.application.featureLabel = 'Features';
+
+/* screens: one row per tab, so which one is drawn is a lookup and never a branch. */
+Weave.application.screens = {};
+Weave.application.screens.people = { label: 'People', draw: Weave.application.peopleScreen };
+Weave.application.screens.usage = { label: 'Usage', draw: Weave.application.usageScreen };
+Weave.application.screens.settings = { label: 'Settings', draw: Weave.application.settingsScreen };
+Weave.application.screenKeys = Weave.library.composition.keys(Weave.application.screens);
+Weave.application.firstScreen = Weave.library.composition.first(Weave.application.screenKeys);
+Weave.application.screenNow = state => Weave.library.control.defaultTo(Weave.application.firstScreen)(state.screen);
+Weave.application.screenTab = key => ({ key, label: Weave.application.screens[key].label, onAction: Weave.application.showScreen(key) });
+Weave.application.screenTabs = state => Weave.library.components.tabs({ active: Weave.application.screenNow(state), items: Weave.application.screenKeys.map(Weave.application.screenTab) });
+Weave.application.screenBody = state => Weave.application.screens[Weave.application.screenNow(state)].draw(state);
+
+/* start: one connected view over the store, so every move above repaints the whole console once. */
+Weave.application.pageParts = state => Weave.library.composition.compact([Weave.application.header(state), Weave.application.banner(state), Weave.application.tiles(state), Weave.application.screenTabs(state), Weave.application.screenBody(state)]);
+Weave.application.pageBody = (state, ignored) => Weave.library.components.page({ children: Weave.application.pageParts(state) });
+Weave.application.console = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.pageBody);
+Weave.application.toasts = Weave.library.patterns.notifications({});
+Weave.application.start = () => Weave.library.patterns.mount(Weave.library.browser.body())(Weave.application.console());
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>
