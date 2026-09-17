@@ -698,6 +698,54 @@ state rule, and every one of them is a row somewhere rather than a rule written 
       being replaced. `check:demos` asserts the mark on `dragenter` and its absence after the drop,
       which is the behaviour a reader actually sees.
 
+## The look, gone over again
+
+Nothing new was built for this round. Every change below is a value in `components.tokens`, a
+keyword in `components.values`, or a property added to a row of `components.rules` — which is the
+point of the tables: the whole system moved without a single page being edited.
+
+### What was wrong
+
+- [x] **Headings were set at body leading.** A wrapped title at 28px and a line height of 1.5 read
+      as two separate sentences. `tokens.leadingTight` is the second measure the system now has, and
+      `title`, `subtitle`, `display` and `value` are set in it. `tokens.trackingTight` does the same
+      for the two display-sized rows, which need more negative tracking than a 14px line does.
+- [x] **Bold was the only weight above regular.** A link and a piece of emphasised prose were both
+      700, so nothing read as a control. `values.medium` is the weight a control is set in, and
+      `anchor`, `button`, `pageButton`, `tab`, `rowButton`, `dayButton` and `fieldLabel` now spend
+      it. `values.heavy` stays where emphasis is actually meant.
+- [x] **A column heading did not look like the labels beside it.** `tableHeader` now carries the
+      same uppercase, wide tracking and medium weight `sectionLabel` does, so a table reads as part
+      of the page rather than as a thing pasted into it.
+- [x] **Elevation was a single flat drop.** `shadow`, `shadowLifted` and `shadowOverlay` are each
+      two layers now — a tight contact shadow and a wide soft one — so a raised thing reads as
+      raised rather than as outlined twice.
+- [x] **In dark, the ground was lighter than the things standing on it.** `themes.dark` and
+      `themes.dusk` both had `sunken` brighter than `surface`, which inverts every elevation on the
+      page. Both rows were swapped, and `themes.dark` now carries its own `shadowOverlay`.
+- [x] **The accent was a saturated blue at any size.** Spent as a fill it was fine; spent as a
+      40px banner title it was not. `accent`, `accentSoft` and `accentSoftInk` are a deeper, calmer
+      family, and `danger`, `toneSuccess` and `toneWarning` were moved with them so a tone still
+      carries its own contrast on the surface it lands on.
+- [x] **Corners and controls were tight.** `radiusSmall` and `radius` are no longer the spacing
+      ladder wearing a second name — they are 6px and 10px in their own right, `radiusLarge` is one
+      loose step, and `controlHeight`, its two siblings and `padSnug` all grew enough to be hit.
+- [x] **A pinned thumb bar had four pixels of padding.** `pinnedToBottom` now carries a loose pad
+      and a lifted shadow, so the bar clears the edge of the glass and sits above what it covers.
+- [x] **A large control shouted.** `sizes.large` set its text at `fontSizeLarge`, so an `Order`
+      button was set larger than the page's own prose. It says large with its height now.
+- [x] **Motion stopped dead.** `tokens.ease` is a settling curve rather than a linear one.
+
+### What the one-place rule caught on the way
+
+- [x] **Three of the new numbers were already written.** The audit's literal rule refused `16px`,
+      `34px` and `44px` a second home: `radiusLarge` became a reference to `spaceLoose`, the switch
+      grew to `38 × 21` with a `15px` knob so it sits properly among taller controls, and the diff
+      gutter widened to `48px`.
+- [x] **The font stack cannot carry quotes.** A family name with a space is a valid CSS identifier
+      unquoted, and the token table is a JavaScript string — the audit masks strings, so only the
+      test run caught it.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).
