@@ -51,7 +51,8 @@ Weave.library.style.defaultDisplay = el => Weave.library.control.defaultTo(Weave
 Weave.library.style.recordedDisplay = el => Weave.library.control.guard(Weave.library.predicates.isDefined)(Weave.library.browser.datasetOf(el)[Weave.library.style.displayKey]);
 Weave.library.style.restoredDisplay = el => Weave.library.control.defaultTo(Weave.library.style.defaultDisplay(el))(Weave.library.style.recordedDisplay(el));
 Weave.library.style.isShown = el => Weave.library.style.inlineCss(Weave.library.browser.properties.display)(el) !== Weave.library.browser.keywords.none;
-Weave.library.style.rememberDisplay = el => Weave.library.browser.setDataset(el, [Weave.library.style.displayKey, Weave.library.style.inlineCss(Weave.library.browser.properties.display)(el)]);
+Weave.library.style.recordDisplay = el => Weave.library.browser.setDataset(el, [Weave.library.style.displayKey, Weave.library.style.inlineCss(Weave.library.browser.properties.display)(el)]);
+Weave.library.style.rememberDisplay = el => Weave.library.control.either(Weave.library.style.isShown, Weave.library.style.recordDisplay, Weave.library.composition.identity)(el);
 Weave.library.style.show = el => Weave.library.style.setCss(Weave.library.browser.properties.display, Weave.library.style.restoredDisplay(el))(el);
 Weave.library.style.hide = el => Weave.library.style.setCss(Weave.library.browser.properties.display, Weave.library.browser.keywords.none)(Weave.library.style.rememberDisplay(el));
 Weave.library.style.toggle = force => el => Weave.library.control.either(() => Weave.library.control.defaultTo(!Weave.library.style.isShown(el))(force), () => Weave.library.style.show(el), () => Weave.library.style.hide(el))(el);

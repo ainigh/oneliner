@@ -420,7 +420,7 @@ Weave.library.components.tokens.switchHeight = '21px';
 Weave.library.components.tokens.knobSize = '15px';
 Weave.library.components.tokens.markWidth = '2px';
 Weave.library.components.tokens.knobInset = Weave.library.components.tokens.markWidth;
-Weave.library.components.tokens.compactTrack = 'repeat(auto-fit, minmax(148px, 1fr))';
+Weave.library.components.tokens.compactTrack = 'repeat(auto-fit, minmax(200px, 1fr))';
 Weave.library.components.tokens.stampWidth = '84px';
 Weave.library.components.tokens.bubbleWidth = 'min(560px, 84%)';
 Weave.library.components.tokens.trackingWide = '0.08em';
@@ -879,11 +879,14 @@ Weave.library.components.breakpoints.compact = Weave.library.browser.upToWidth(W
 
 /* mediaRules: the only place a rule that applies under a query is written. One row per query, keyed by class. */
 Weave.library.components.mediaRules = {};
-Weave.library.components.mediaRules.compact = { query: Weave.library.components.breakpoints.compact, rules: { rail: { width: Weave.library.components.values.full, borderRight: Weave.library.components.values.none, paddingRight: Weave.library.components.values.zero }, tiles: { gridTemplateColumns: Weave.library.components.vars.compactTrack }, pageHeader: { flexWrap: Weave.library.components.values.wrap, alignItems: Weave.library.components.values.start }, panel: { padding: Weave.library.components.vars.space }, panels: { gridTemplateColumns: Weave.library.components.values.full }, split: { flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.stretch }, table: { fontSize: Weave.library.components.vars.fontSizeSmall }, modal: { padding: Weave.library.components.vars.spaceLoose }, page: { padding: Weave.library.components.vars.space }, display: { fontSize: Weave.library.components.vars.fontSizeLarge }, value: { fontSize: Weave.library.components.vars.fontSizeLarge } } };
-Weave.library.components.mediaRules.calm = { query: Weave.library.browser.mediaQueries.reducedMotion, rules: { skeletonLine: { animation: Weave.library.components.values.none } } };
-Weave.library.components.mediaRules.paper = { query: Weave.library.browser.mediaQueries.print, rules: { toolbar: { display: Weave.library.components.values.none }, pagination: { display: Weave.library.components.values.none }, card: { boxShadow: Weave.library.components.values.none } } };
+Weave.library.components.mediaRules.compact = { query: Weave.library.components.breakpoints.compact, rules: { rail: { width: Weave.library.components.values.full, borderRight: Weave.library.components.values.none, paddingRight: Weave.library.components.values.zero }, tiles: { gridTemplateColumns: Weave.library.components.vars.compactTrack }, pageHeader: { flexWrap: Weave.library.components.values.wrap, alignItems: Weave.library.components.values.start }, panel: { padding: Weave.library.components.vars.space }, panels: { gridTemplateColumns: Weave.library.components.values.full }, split: { flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.stretch }, table: { fontSize: Weave.library.components.vars.fontSizeSmall }, modal: { padding: Weave.library.components.vars.spaceLoose }, page: { padding: Weave.library.components.vars.space }, display: { fontSize: Weave.library.components.vars.fontSizeLarge }, value: { fontSize: Weave.library.components.vars.fontSizeLarge } }, marks: {} };
+Weave.library.components.mediaRules.calm = { query: Weave.library.browser.mediaQueries.reducedMotion, rules: { skeletonLine: { animation: Weave.library.components.values.none } }, marks: {} };
+Weave.library.components.mediaRules.paper = { query: Weave.library.browser.mediaQueries.print, rules: { toolbar: { display: Weave.library.components.values.none }, pagination: { display: Weave.library.components.values.none }, card: { boxShadow: Weave.library.components.values.none } }, marks: {} };
 Weave.library.components.mediaBody = rules => Weave.library.composition.pairs(rules).map(Weave.library.components.ruleText).join(Weave.library.browser.keywords.space);
-Weave.library.components.mediaRuleText = row => Weave.library.components.mediaText(row.query, Weave.library.components.mediaBody(row.rules));
+Weave.library.components.mediaMarkBlock = (key, style) => value => Weave.library.components.blockFor(Weave.library.components.markSelectorFor(Weave.library.components.modifiers[key], key, value), style);
+Weave.library.components.mediaMarkText = ([key, style]) => Weave.library.composition.keys(Weave.library.components.modifiers[key].styles).map(Weave.library.components.mediaMarkBlock(key, style)).join(Weave.library.browser.keywords.space);
+Weave.library.components.mediaMarksBody = row => Weave.library.composition.pairs(row.marks).map(Weave.library.components.mediaMarkText).join(Weave.library.browser.keywords.space);
+Weave.library.components.mediaRuleText = row => Weave.library.components.mediaText(row.query, Weave.library.components.mediaBody(row.rules) + Weave.library.components.mediaMarksBody(row));
 Weave.library.components.mediaTexts = () => Weave.library.composition.values(Weave.library.components.mediaRules).map(Weave.library.components.mediaRuleText);
 
 /* variants: one row per button intent, each an override of the neutral. A variant is a data attribute, never a class. */
@@ -1071,7 +1074,7 @@ Weave.library.components.lazyLoading = 'lazy';
 Weave.library.components.loadingAttribute = 'loading';
 Weave.library.components.altAttribute = 'alt';
 Weave.library.components.altText = spec => Weave.library.components.textOf(spec, Weave.library.components.altAttribute);
-Weave.library.components.imageAttributes = spec => ({ [Weave.library.browser.keywords.src]: spec.src, [Weave.library.components.altAttribute]: Weave.library.components.altText(spec), [Weave.library.components.loadingAttribute]: Weave.library.components.lazyLoading });
+Weave.library.components.imageAttributes = spec => ({ [Weave.library.browser.keywords.source]: spec.src, [Weave.library.components.altAttribute]: Weave.library.components.altText(spec), [Weave.library.components.loadingAttribute]: Weave.library.components.lazyLoading });
 Weave.library.components.image = spec => Weave.library.components.build(Weave.library.components.parts.picture, 'image', { attributes: Weave.library.components.imageAttributes(spec) });
 Weave.library.components.mediaPicture = spec => Weave.library.control.maybe(() => Weave.library.components.image(spec))(spec.src);
 Weave.library.components.mediaGlyph = spec => Weave.library.control.maybe(glyph => Weave.library.components.icon({ glyph }))(spec.glyph);
@@ -1319,8 +1322,9 @@ Weave.library.components.themes.dusk = { ink: '#f5e9d7', muted: '#b9a68c', edge:
 
 /* breakpoints, second wave: the wide viewport, and what the new pieces do on a narrow one. */
 Weave.library.components.breakpoints.wide = Weave.library.browser.fromWidth(Weave.library.components.tokens.pageWidth);
-Weave.library.components.mediaRules.roomier = { query: Weave.library.components.breakpoints.wide, rules: { page: { maxWidth: Weave.library.components.vars.wideWidth } } };
+Weave.library.components.mediaRules.roomier = { query: Weave.library.components.breakpoints.wide, rules: { page: { maxWidth: Weave.library.components.vars.wideWidth } }, marks: {} };
 Weave.library.components.mediaRules.compact.rules.column = { gridColumn: Weave.library.components.vars.spanFull };
+Weave.library.components.mediaRules.compact.marks.span = Weave.library.components.columnSpans.full;
 Weave.library.components.mediaRules.compact.rules.navbarBox = { flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.start };
 Weave.library.components.mediaRules.compact.rules.termsBox = { gridTemplateColumns: Weave.library.components.values.full };
 Weave.library.components.mediaRules.calm.rules.spinnerMark = { animation: Weave.library.components.values.none };

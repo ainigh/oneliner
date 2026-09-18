@@ -19,7 +19,7 @@ Weave.library.timing.idleFallbackMs = 1;
 Weave.library.timing.cancelIdle = id => () => Weave.library.browser.cancelIdle(id);
 Weave.library.timing.defer = f => Weave.library.composition.then(f)(Weave.library.composition.resolved(undefined));
 Weave.library.timing.debounce = (ms, f) => Weave.library.timing.debounceWith(ms, f, { cancel: Weave.library.composition.noop, args: [] });
-Weave.library.timing.debounceWith = (ms, f, state) => Object.assign((...args) => Weave.library.timing.restartTimer(ms, f, state, args), { cancel: () => state.cancel(), flush: () => f(...state.args) });
+Weave.library.timing.debounceWith = (ms, f, state) => Object.assign((...args) => Weave.library.timing.restartTimer(ms, f, state, args), { cancel: () => state.cancel(), flush: () => (state.cancel(), f(...state.args)) });
 Weave.library.timing.restartTimer = (ms, f, state, args) => (state.cancel(), Object.assign(state, { args, cancel: Weave.library.timing.after(ms, () => f(...args)) }), undefined);
 Weave.library.timing.debounceLeading = (ms, f) => Weave.library.timing.leadingWith(ms, f, { open: true });
 Weave.library.timing.leadingWith = (ms, f, state) => (...args) => Weave.library.control.when(() => state.open, () => Weave.library.timing.fireLeading(ms, f, state, args))(state);

@@ -43,7 +43,7 @@ Weave.library.patterns.idPrefix = 'weave-id-';
 Weave.library.patterns.identify = () => Weave.library.composition.randomId(Weave.library.patterns.idPrefix);
 Weave.library.patterns.withId = row => Weave.library.composition.merge({ [Weave.library.patterns.idKey]: Weave.library.patterns.identify() }, row);
 Weave.library.patterns.rowsOf = spec => Weave.library.control.defaultTo([])(spec.items).map(Weave.library.patterns.withId);
-Weave.library.patterns.wordsOf = row => Weave.library.composition.values(row).filter(Weave.library.predicates.isString).join(Weave.library.browser.keywords.space).toLowerCase();
+Weave.library.patterns.wordsOf = row => Weave.library.composition.values(Weave.library.composition.omit([Weave.library.patterns.idKey])(row)).filter(Weave.library.predicates.isString).join(Weave.library.browser.keywords.space).toLowerCase();
 Weave.library.patterns.matches = query => row => Weave.library.patterns.wordsOf(row).includes(query.toLowerCase());
 Weave.library.patterns.search = (query, rows) => Weave.library.control.either(Weave.library.predicates.isEmpty, () => rows, () => rows.filter(Weave.library.patterns.matches(query)))(query);
 Weave.library.patterns.emptyNote = () => Weave.library.components.emptyState({ title: Weave.library.patterns.labels.empty, note: Weave.library.patterns.labels.hint });
