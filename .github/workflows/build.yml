@@ -37,10 +37,14 @@ jobs:
       - name: Demo applications
         run: node scripts/check-demos.js
 
+      - name: Flagship applications
+        run: node scripts/check-flagships.js
+
       - name: Fail if dist is out of date with src
         run: git diff --exit-code -- dist catalog.json
 
       - name: Upload the bundle
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: weave-dist

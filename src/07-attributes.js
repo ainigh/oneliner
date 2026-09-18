@@ -71,7 +71,8 @@ Weave.library.attributes.valueReaders.selectMultiple = el => Weave.library.brows
 Weave.library.attributes.valueReaders.default = el => Weave.library.browser.getProperty(el, Weave.library.browser.keywords.value);
 Weave.library.attributes.valueWriters = {};
 Weave.library.attributes.valueWriters.checkbox = value => el => Weave.library.browser.setProperty(el, [Weave.library.attributes.booleanAttributes.checked, Boolean(value)]);
-Weave.library.attributes.valueWriters.radio = Weave.library.attributes.valueWriters.checkbox;
+Weave.library.attributes.wantsValue = (value, el) => Weave.library.composition.listOf(value).includes(Weave.library.browser.getProperty(el, Weave.library.browser.keywords.value));
+Weave.library.attributes.valueWriters.radio = value => el => Weave.library.browser.setProperty(el, [Weave.library.attributes.booleanAttributes.checked, Weave.library.attributes.wantsValue(value, el)]);
 Weave.library.attributes.valueWriters.file = value => el => el;
 Weave.library.attributes.valueWriters.selectMultiple = value => el => Weave.library.browser.optionsOf(el).reduce((node, option) => Weave.library.attributes.selectOption(node, option, Weave.library.composition.listOf(value)), el);
 Weave.library.attributes.valueWriters.default = value => el => Weave.library.browser.setProperty(el, [Weave.library.browser.keywords.value, value]);

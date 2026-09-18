@@ -5,6 +5,15 @@ project's own terms. Severity: **High** breaks a visible feature, **Medium** wro
 will hit, **Low** cosmetic, surprising, or a maintainability trap. "UI" entries are micro
 improvements to the feel of the widgets rather than defects.
 
+## Status
+
+Because this list was written from reading alone, nothing in it was trusted until it was
+reproduced. Entries 10, 19, 31, 49, 53, 59, 62, 71 and 72 were each reproduced — the library ones against the
+built bundle, the two relay ones by driving the real page in a browser — then fixed, then
+re-run to show the failure gone; 76 and 80 were confirmed by inspection. Those rows are
+marked **Fixed** below. Everything else in this file is still an unverified reading of the
+source and should be reproduced before it is acted on.
+
 ## Library: composition, control, predicates
 
 | # | Sev | Where | What |
@@ -23,7 +32,7 @@ improvements to the feel of the widgets rather than defects.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 10 | **High** | `style.hide` | Calling `hide` on an element that is already hidden records `weaveDisplay = "none"`. The next `show` restores `"none"`, so the element can never be shown again. `rememberDisplay` must skip when the inline display is already `none`. Every `toggle`, `fadeToggle`, `slideToggle` and the patterns that hide on repaint can hit this. |
+| 10 | **High** | `style.hide` | Calling `hide` on an element that is already hidden records `weaveDisplay = "none"`. The next `show` restores `"none"`, so the element can never be shown again. `rememberDisplay` must skip when the inline display is already `none`. Every `toggle`, `fadeToggle`, `slideToggle` and the patterns that hide on repaint can hit this. | **Fixed:** `style.rememberDisplay` records only when the element is shown.
 | 11 | Medium | `style.isShown` | Reads only the inline `display`. An element hidden by a stylesheet class reports as shown, so `toggle` hides it again instead of showing it. jQuery uses the computed value plus `offsetParent`. |
 | 12 | Medium | `elements.morphProperties` | Copies `value` from the fresh element onto the live one on every repaint. A fresh spec has `value=""`, so anything the user is typing in a pattern's input is wiped by the next repaint unless the pattern threads the value back through the spec. Skip `value` when the live element is focused. |
 | 13 | Medium | `elements.positionalCandidate` | An unkeyed child at index N is morphed into whatever node currently sits at N, including a keyed node that belongs later in the list. Mixed keyed/unkeyed lists steal each other's nodes and lose state. Only accept a positional candidate that is itself unkeyed. |
@@ -32,7 +41,7 @@ improvements to the feel of the widgets rather than defects.
 | 16 | Low | `elements.nodeRules.fromAnything` | A plain object with one unknown key (e.g. a typo `clases`) is not a spec, falls through to `identity`, and `appendChild` throws "parameter 1 is not of type Node". The `invalidSpec` error row exists but is never reached here. |
 | 17 | Low | `attributes.booleanAttributes` | Table is labelled "attribute names" but `readonly = 'readOnly'` and `novalidate = 'noValidate'` are property names. `isBooleanAttribute('readonly')` is false; `setBooleanAttribute` happens to work only because HTML lowercases attribute names. |
 | 18 | Low | `attributes.data` | Auto-parses JSON, so `data-zip="10001"` comes back as the number 10001 and `data-code="1e3"` as 1000. Leading-zero codes stay strings only because they fail to parse. Surprising for ids and postcodes. |
-| 19 | Medium | `timing.debounce` | `flush` calls `f` with the last args but does not cancel the pending timer, so `f` runs twice. `cancel` should be called inside `flush`. |
+| 19 | Medium | `timing.debounce` | `flush` calls `f` with the last args but does not cancel the pending timer, so `f` runs twice. `cancel` should be called inside `flush`. | **Fixed:** `flush` cancels the pending timer first.
 | 20 | Low | `timing.throttle` | Leading-edge only. A scroll or resize handler never sees the final position. Most callers want a trailing call too. |
 | 21 | Low | `events.once` | The recorded handler is the wrapper, so `events.off(type, originalHandler)` cannot remove a once listener. Record the original as `handler` and the wrapper as `listener`. |
 | 22 | Low | `events.trigger` | Every custom event is `cancelable: true` and bubbles. Fine, but `dispatchEvent`'s boolean return (was it cancelled) is discarded, so callers cannot tell. |
@@ -49,7 +58,7 @@ improvements to the feel of the widgets rather than defects.
 | 28 | Medium | `network.timeout` | On timeout the promise rejects but the underlying fetch is not aborted; the request keeps running and its `afterReceive` hooks still fire. Pass the abort signal to `armTimeout`. |
 | 29 | Medium | `network.submitForm` | A form with `method="get"` gets a `FormData` body, and `fetch` throws "Request with GET/HEAD method cannot have body". GET forms should serialise into the query. A form with no `action` fetches the literal URL `null`. |
 | 30 | Low | `network.getJson` and friends | Bypass `parseByContentType` and call `response.json()` directly, so a 200 with an HTML body (login redirect) rejects with a bare `SyntaxError` instead of a typed error. |
-| 31 | **High** | `forms.fill` for radio groups | `valueWriters.radio` sets `checked = Boolean(value)` on every radio of that name, ignoring each radio's own `value`. `fill({ colour: 'blue' })` checks whichever radio is last in the DOM. Compare `value` to the radio's value attribute. Checkboxes with a `value` attribute have the same problem. |
+| 31 | **High** | `forms.fill` for radio groups | `valueWriters.radio` sets `checked = Boolean(value)` on every radio of that name, ignoring each radio's own `value`. `fill({ colour: 'blue' })` checks whichever radio is last in the DOM. Compare `value` to the radio's value attribute. Checkboxes with a `value` attribute have the same problem. | **Fixed:** `valueWriters.radio` compares the value against the radio's own.
 | 32 | Low | `forms.whileDisabled` | Disabling every control drops focus to `body`. After the promise settles the user has lost their place. Remember and restore `activeElement`. |
 | 33 | Medium | `dates.adders` (day / week) | Day and week are added as milliseconds. Across a DST change a "day" is 23 or 25 hours, so `add('day', 1)` lands at 23:00 or 01:00 and `endOf('day')` on a fall-back day returns the *previous* day's last moment. Use `dayAfter` (calendar arithmetic) for day and week. |
 | 34 | Low | `formatting.relative` | `Intl.RelativeTimeFormat` is built without `numeric: 'auto'`, so you get "in 0 seconds" and "1 day ago" instead of "now" and "yesterday". |
@@ -72,11 +81,11 @@ improvements to the feel of the widgets rather than defects.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 49 | **High** | `components.imageAttributes` | Reads `browser.keywords.src`, which does not exist. The table spells it `keywords.source`. The computed key is the string `"undefined"`, so every `components.image` renders `<img undefined="…">` with no `src` and nothing ever loads. One-word fix, and `grep 'keywords.src'` finds no other caller. |
+| 49 | **High** | `components.imageAttributes` | Reads `browser.keywords.src`, which does not exist. The table spells it `keywords.source`. The computed key is the string `"undefined"`, so every `components.image` renders `<img undefined="…">` with no `src` and nothing ever loads. One-word fix, and `grep 'keywords.src'` finds no other caller. | **Fixed:** The keyword is spelled `source`; `imageAttributes` spends it.
 | 50 | Medium | `components.pagination` | Renders one button per page with no windowing. A grid of 5000 rows at 10 a page draws 500 buttons on every repaint. `pagerGap` exists but nothing uses it for an ellipsis. |
 | 51 | Medium | `components.tabs` | Follows the `tablist` / `tab` roles but wires no keyboard behaviour: no roving tabindex, no arrow keys, no `aria-controls` to the pane. `accessibility.roving` exists and is never used by the widget that most needs it. Same for `components.menu` and `components.steps`. |
 | 52 | Medium | `components.chartShare` | Divides by `chartTop`, and `chartTop([])` is `Math.max()` which is `-Infinity`. A chart with no readings yields `NaN%` widths; a chart whose readings are all zero divides zero by zero. Guard the top before dividing. |
-| 53 | Low | `components.dialogHeader` | Always draws a Close button, but `closeButton` passes `onAction: spec.onClose`. With no `onClose` the handler table skips the key, so the modal shows a Close button that does nothing. |
+| 53 | Low | `components.dialogHeader` | Always draws a Close button, but `closeButton` passes `onAction: spec.onClose`. With no `onClose` the handler table skips the key, so the modal shows a Close button that does nothing. | **Fixed:** `dialogHeader` reuses `alertClose`, which already drew the button only when there was something to close.
 | 54 | Low | `components.ringShares` | Recomputes `chartSum` over every item inside a `map` over every item, so a donut is quadratic in its slice count. Same shape in `ringBefore`. |
 | 55 | Low | `components.configure` | Assigns onto `tokens`, but `installStyles` is `control.once` and the sheet is a snapshot. Calling `configure` after the first widget renders silently does nothing. The comment says "before the sheet is written" — the code should enforce it or the call should re-emit. |
 | 56 | Low | `components.optionValue` / `optionLabel` | `defaultTo(String(value))(value.label)` evaluates `String(value)` on every call even when a label exists, and reads `.label` off whatever it is given. A `null` option throws rather than falling back. |
@@ -87,10 +96,10 @@ improvements to the feel of the widgets rather than defects.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 59 | **High** | `overlays.watchScroll` | Closes the popover on any scroll event captured at the document, including scrolling *inside* the popover itself. Any popover with a scrollable list closes the moment the reader scrolls it. Ignore scrolls whose target is inside `state.box`. |
+| 59 | **High** | `overlays.watchScroll` | Closes the popover on any scroll event captured at the document, including scrolling *inside* the popover itself. Any popover with a scrollable list closes the moment the reader scrolls it. Ignore scrolls whose target is inside `state.box`. | **Fixed:** `watchScroll` reuses `outsideStep`, the containment guard `watchOutside` already had.
 | 60 | Medium | `overlays.placeAt` | Position is computed once at open. Resizing the window, or the anchor moving, leaves the popover stranded. There is no reposition on resize and no `onResize` subscription. |
 | 61 | Medium | `patterns.restoreFocus` | Restores focus to a matching element but not the caret. `browser.focus` puts the cursor at the end of a text input, so a repaint while the reader is typing mid-string jumps the caret to the end. Save and restore `selectionStart`/`selectionEnd`. |
-| 62 | **High** | `patterns.wordsOf` | Joins every string value of a row, which includes the `weave-id-…` that `withId` just added. So the query "weave" matches every row, and any query that happens to hit a base-36 id matches a row at random. Search over the caller's fields, not over the internal id. |
+| 62 | **High** | `patterns.wordsOf` | Joins every string value of a row, which includes the `weave-id-…` that `withId` just added. So the query "weave" matches every row, and any query that happens to hit a base-36 id matches a row at random. Search over the caller's fields, not over the internal id. | **Fixed:** `wordsOf` omits the row id.
 | 63 | Medium | `patterns.gridOrder` | Sorts ascending only. Pressing the same column header again re-sorts identically, so there is no way to reverse a grid. Keep a direction in state and flip it when the active column is pressed again. |
 | 64 | Medium | `patterns.persistIn` | Round-trips state through JSON. A `Date` in state (which `patterns.calendar` keeps in `state.month`) comes back as a string and every date call on it then throws. Persisting a calendar is broken as written. |
 | 65 | Medium | `patterns.linkTo` | Writes the hash on every update, which fires `hashchange`, which merges the same value back and repaints again. Every state change costs two repaints. Skip the write when the value is unchanged. |
@@ -104,12 +113,12 @@ improvements to the feel of the widgets rather than defects.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 71 | **High** | `apps/relay.html:107` | `listHandle` is built once with `row: threadRow(store.state)`, capturing the *initial* state. The row renderer therefore reads a frozen `chosen` and `checked` forever: selecting a thread never highlights its row, and ticking a checkbox never marks it. The renderer must read the live state at paint time. |
-| 72 | **High** | `apps/relay.html:73` | `undoMove` builds a list of `{thread, folder}` and hands it to `restoreAll`, whose parameter is literally named `ignored` and which only clears `checked`. The Undo button on the "Archived 12 threads" toast does nothing. The threads stay moved. |
+| 71 | **High** | `apps/relay.html:107` | `listHandle` is built once with `row: threadRow(store.state)`, capturing the *initial* state. The row renderer therefore reads a frozen `chosen` and `checked` forever: selecting a thread never highlights its row, and ticking a checkbox never marks it. The renderer must read the live state at paint time. | **Fixed:** The row renderers read the live store state.
+| 72 | **High** | `apps/relay.html:73` | `undoMove` builds a list of `{thread, folder}` and hands it to `restoreAll`, whose parameter is literally named `ignored` and which only clears `checked`. The Undo button on the "Archived 12 threads" toast does nothing. The threads stay moved. | **Fixed:** The move records each thread's folder before it changes, and `restoreAll` puts them back.
 | 73 | Medium | `apps/pantry.html` | `basketBody` calls `checkoutForm()` on every store update, so a fresh `entryForm` pattern is built each time the basket changes. Anything typed into the checkout is wiped whenever a line is added or removed, and each discarded pattern is never `stop()`ped. |
 | 74 | Medium | `apps/pantry.html` | `placeOrder = ignored => …` throws away the validated name, phone and address. The form validates, then the values go nowhere. |
 | 75 | Medium | `apps/pantry.html` | `choiceView(draft)` mounts a pattern into the dialog body and nothing stops it when the dialog closes. Every dish opened leaks a live pattern. |
-| 76 | Medium | 16 of 23 pages | No `<meta name="viewport">`. Only `pantry`, `relay`, `handbook`, `kit`, `review`, `signal` and `tenants` have one. Every other demo renders at a 980px viewport on a phone and the library's own `compact` breakpoint never fires, so the responsive rules the system is built around are invisible on the devices they exist for. |
+| 76 | Medium | 16 of 23 pages | No `<meta name="viewport">`. Only `pantry`, `relay`, `handbook`, `kit`, `review`, `signal` and `tenants` have one. Every other demo renders at a 980px viewport on a phone and the library's own `compact` breakpoint never fires, so the responsive rules the system is built around are invisible on the devices they exist for. | **Fixed:** Every page carries a viewport tag now.
 | 77 | Low | `demos/shop.html` | The combobox labelled "Jump to a shelf" has `onPick: take`, so choosing a search result silently adds the item to the basket instead of scrolling to it. |
 | 78 | Low | `demos/bank.html` | The transfer form's three fields are never read. `askFirst` confirms and `paid` only cheers, so "Send it" sends nothing and reports success. |
 | 79 | Low | `apps/relay.html` | `markRead` mutates the thread object directly rather than going through the store, so the change is invisible to watchers until some other update repaints. |
@@ -118,7 +127,7 @@ improvements to the feel of the widgets rather than defects.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 80 | Medium | `.github/workflows/build.yml` | Runs build, audit, tests, row audit, `check-apps` and `check-demos`, but never `check-flagships`, which `package.json`'s own `check` script includes. The two flagship applications are the least covered code in the repository and the only checks they have do not run in CI. |
+| 80 | Medium | `.github/workflows/build.yml` | Runs build, audit, tests, row audit, `check-apps` and `check-demos`, but never `check-flagships`, which `package.json`'s own `check` script includes. The two flagship applications are the least covered code in the repository and the only checks they have do not run in CI. | **Fixed:** CI runs `check-flagships`.
 | 81 | Low | `scripts/build.js` | The module build is `bundle.replace('const Weave = {};', 'export const Weave = {};')`, a first-occurrence string replace over the whole bundle. Today `00-root.js` sorts first so it lands correctly, but any earlier occurrence in a comment or string silently exports the wrong line. Anchor it to the start of the file instead. |
 | 82 | Low | `scripts/build.js` | Reports raw and gzipped size against a 600 KB raw budget, but the budget only fails on raw. Gzipped size is what ships and is unbudgeted. |
 
