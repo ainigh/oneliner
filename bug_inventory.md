@@ -8,8 +8,9 @@ improvements to the feel of the widgets rather than defects.
 ## Status
 
 Because this list was written from reading alone, nothing in it was trusted until it was
-reproduced. Entries 10, 19, 31, 49 and 62 were each reproduced against the built bundle, fixed,
-and re-run to show the failure gone; 76 and 80 were confirmed by inspection. Those rows are
+reproduced. Entries 10, 19, 31, 49, 62, 71 and 72 were each reproduced — the library ones against the
+built bundle, the two relay ones by driving the real page in a browser — then fixed, then
+re-run to show the failure gone; 76 and 80 were confirmed by inspection. Those rows are
 marked **Fixed** below. Everything else in this file is still an unverified reading of the
 source and should be reproduced before it is acted on.
 
@@ -112,8 +113,8 @@ source and should be reproduced before it is acted on.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 71 | **High** | `apps/relay.html:107` | `listHandle` is built once with `row: threadRow(store.state)`, capturing the *initial* state. The row renderer therefore reads a frozen `chosen` and `checked` forever: selecting a thread never highlights its row, and ticking a checkbox never marks it. The renderer must read the live state at paint time. |
-| 72 | **High** | `apps/relay.html:73` | `undoMove` builds a list of `{thread, folder}` and hands it to `restoreAll`, whose parameter is literally named `ignored` and which only clears `checked`. The Undo button on the "Archived 12 threads" toast does nothing. The threads stay moved. |
+| 71 | **High** | `apps/relay.html:107` | `listHandle` is built once with `row: threadRow(store.state)`, capturing the *initial* state. The row renderer therefore reads a frozen `chosen` and `checked` forever: selecting a thread never highlights its row, and ticking a checkbox never marks it. The renderer must read the live state at paint time. | **Fixed:** The row renderers read the live store state.
+| 72 | **High** | `apps/relay.html:73` | `undoMove` builds a list of `{thread, folder}` and hands it to `restoreAll`, whose parameter is literally named `ignored` and which only clears `checked`. The Undo button on the "Archived 12 threads" toast does nothing. The threads stay moved. | **Fixed:** The move records each thread's folder before it changes, and `restoreAll` puts them back.
 | 73 | Medium | `apps/pantry.html` | `basketBody` calls `checkoutForm()` on every store update, so a fresh `entryForm` pattern is built each time the basket changes. Anything typed into the checkout is wiped whenever a line is added or removed, and each discarded pattern is never `stop()`ped. |
 | 74 | Medium | `apps/pantry.html` | `placeOrder = ignored => …` throws away the validated name, phone and address. The form validates, then the values go nowhere. |
 | 75 | Medium | `apps/pantry.html` | `choiceView(draft)` mounts a pattern into the dialog body and nothing stops it when the dialog closes. Every dish opened leaks a live pattern. |

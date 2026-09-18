@@ -67,11 +67,13 @@ Weave.application.toggleCheck = thread => () => Weave.application.store.update(s
 Weave.application.nextChecked = (state, thread) => Weave.library.control.either(() => Weave.application.isChecked(state, thread), () => state.checked.filter(id => id !== thread.id), () => state.checked.concat([thread.id]))(state);
 Weave.application.checkAll = state => () => Weave.application.store.update(() => ({ checked: Weave.application.allOrNone(state) }));
 Weave.application.allOrNone = state => Weave.library.control.either(() => state.checked.length > 0, () => [], () => Weave.application.visible(state).map(thread => thread.id))(state);
-Weave.application.moveChecked = (state, folder) => Weave.application.applyMove(Weave.application.checkedThreads(state), folder);
+Weave.application.moveChecked = (state, folder) => Weave.application.applyMove(Weave.application.placesOf(Weave.application.checkedThreads(state)), folder);
 Weave.application.checkedThreads = state => state.checked.map(Weave.application.threadById);
-Weave.application.applyMove = (moved, folder) => (moved.forEach(thread => Object.assign(thread, { folder })), moved);
-Weave.application.undoMove = moved => () => Weave.application.restoreAll(moved.map(thread => ({ thread, folder: thread.folder })));
-Weave.application.restoreAll = ignored => Weave.application.store.update(() => ({ checked: [] }));
+Weave.application.placesOf = threads => threads.map(thread => ({ thread, folder: thread.folder }));
+Weave.application.applyMove = (places, folder) => (places.forEach(place => Object.assign(place.thread, { folder })), places);
+Weave.application.undoMove = places => () => Weave.application.restoreAll(places);
+Weave.application.restorePlace = place => Object.assign(place.thread, { folder: place.folder });
+Weave.application.restoreAll = places => (places.forEach(Weave.application.restorePlace), Weave.application.store.update(() => ({ checked: [] })));
 
 /* the rail: one row per folder, with the unread count as a badge and the current one marked. */
 Weave.application.folderLabel = key => Weave.library.components.truncate({ text: Weave.application.folders[key] });
@@ -104,7 +106,9 @@ Weave.application.rowWhat = thread => [Weave.application.rowSubject(thread), Wea
 Weave.application.rowParts = (state, thread) => Weave.library.composition.compact(Weave.application.rowWho(state, thread).concat(Weave.application.rowWhat(thread)));
 Weave.application.threadRow = state => thread => Weave.library.components.rowButton({ children: Weave.application.rowParts(state, thread), aria: { selected: String(state.chosen === thread.id) }, onAction: () => Weave.application.openThread(thread.id) });
 Weave.application.rowMarks = state => thread => ({ aria: { selected: String(state.chosen === thread.id) } });
-Weave.application.listHandle = Weave.library.patterns.virtualList({ items: [], fill: true, row: Weave.application.threadRow(Weave.application.store.state), rowSpec: Weave.application.rowMarks(Weave.application.store.state) });
+Weave.application.liveRow = thread => Weave.application.threadRow(Weave.application.store.state)(thread);
+Weave.application.liveRowSpec = thread => Weave.application.rowMarks(Weave.application.store.state)(thread);
+Weave.application.listHandle = Weave.library.patterns.virtualList({ items: [], fill: true, row: Weave.application.liveRow, rowSpec: Weave.application.liveRowSpec });
 
 /* the toolbar above the list: select all, two moves and the search box, all driven by what is checked. */
 Weave.application.selectAll = state => Weave.library.components.checkMark({ checked: Weave.application.everyChecked(state), partial: Weave.application.someChecked(state), label: Weave.application.selectLabel, onChoose: Weave.application.checkAll(state) });
