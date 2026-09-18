@@ -332,7 +332,7 @@ Weave.library.components.fieldsKey = 'fields';
 Weave.library.components.form = spec => Weave.library.components.build(Weave.library.components.parts.form, 'form', { children: Weave.library.components.formBody(spec), onSend: Weave.library.components.submitHandler(spec) });
 Weave.library.components.submitHandler = spec => event => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onSubmit)(Weave.library.forms.values(Weave.library.browser.currentTargetOf(event)), Weave.library.browser.preventDefault(event));
 Weave.library.components.closeButton = spec => Weave.library.components.actionButton({ label: Weave.library.components.closeLabel, onAction: spec.onClose });
-Weave.library.components.dialogHeader = spec => Weave.library.components.spread({ children: [Weave.library.components.title({ text: Weave.library.components.titleOf(spec) }), Weave.library.components.closeButton(spec)] });
+Weave.library.components.dialogHeader = spec => Weave.library.components.spread({ children: Weave.library.composition.compact([Weave.library.components.title({ text: Weave.library.components.titleOf(spec) }), Weave.library.components.alertClose(spec)]) });
 Weave.library.components.closeLabel = 'Close';
 Weave.library.components.modalAttributes = spec => Weave.library.composition.merge(Weave.library.components.openAttribute(spec), Weave.library.components.roleAttribute(Weave.library.accessibility.roles.dialog));
 Weave.library.components.modalSpec = spec => ({ children: [Weave.library.components.dialogHeader(spec), Weave.library.components.disclosureBody(spec)], attributes: Weave.library.components.modalAttributes(spec) });

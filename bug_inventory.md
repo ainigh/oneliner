@@ -8,7 +8,7 @@ improvements to the feel of the widgets rather than defects.
 ## Status
 
 Because this list was written from reading alone, nothing in it was trusted until it was
-reproduced. Entries 10, 19, 31, 49, 59, 62, 71 and 72 were each reproduced — the library ones against the
+reproduced. Entries 10, 19, 31, 49, 53, 59, 62, 71 and 72 were each reproduced — the library ones against the
 built bundle, the two relay ones by driving the real page in a browser — then fixed, then
 re-run to show the failure gone; 76 and 80 were confirmed by inspection. Those rows are
 marked **Fixed** below. Everything else in this file is still an unverified reading of the
@@ -85,7 +85,7 @@ source and should be reproduced before it is acted on.
 | 50 | Medium | `components.pagination` | Renders one button per page with no windowing. A grid of 5000 rows at 10 a page draws 500 buttons on every repaint. `pagerGap` exists but nothing uses it for an ellipsis. |
 | 51 | Medium | `components.tabs` | Follows the `tablist` / `tab` roles but wires no keyboard behaviour: no roving tabindex, no arrow keys, no `aria-controls` to the pane. `accessibility.roving` exists and is never used by the widget that most needs it. Same for `components.menu` and `components.steps`. |
 | 52 | Medium | `components.chartShare` | Divides by `chartTop`, and `chartTop([])` is `Math.max()` which is `-Infinity`. A chart with no readings yields `NaN%` widths; a chart whose readings are all zero divides zero by zero. Guard the top before dividing. |
-| 53 | Low | `components.dialogHeader` | Always draws a Close button, but `closeButton` passes `onAction: spec.onClose`. With no `onClose` the handler table skips the key, so the modal shows a Close button that does nothing. |
+| 53 | Low | `components.dialogHeader` | Always draws a Close button, but `closeButton` passes `onAction: spec.onClose`. With no `onClose` the handler table skips the key, so the modal shows a Close button that does nothing. | **Fixed:** `dialogHeader` reuses `alertClose`, which already drew the button only when there was something to close.
 | 54 | Low | `components.ringShares` | Recomputes `chartSum` over every item inside a `map` over every item, so a donut is quadratic in its slice count. Same shape in `ringBefore`. |
 | 55 | Low | `components.configure` | Assigns onto `tokens`, but `installStyles` is `control.once` and the sheet is a snapshot. Calling `configure` after the first widget renders silently does nothing. The comment says "before the sheet is written" — the code should enforce it or the call should re-emit. |
 | 56 | Low | `components.optionValue` / `optionLabel` | `defaultTo(String(value))(value.label)` evaluates `String(value)` on every call even when a label exists, and reads `.label` off whatever it is given. A `null` option throws rather than falling back. |
