@@ -750,6 +750,7 @@ Weave.library.browser.formatNumber = (value, locale, options) => new Intl.Number
 Weave.library.browser.formatDate = (date, locale, options) => new Intl.DateTimeFormat(locale, options).format(date);
 Weave.library.browser.formatRelative = (value, unit, locale) => new Intl.RelativeTimeFormat(locale).format(value, unit);
 Weave.library.browser.formatList = (items, locale) => new Intl.ListFormat(locale).format(items);
+Weave.library.browser.canonicalLocale = name => Weave.library.composition.first(Intl.getCanonicalLocales(name));
 
 /* elements: builders, spec appliers, insertion, removal, cloning and wrapping. All table driven. */
 Weave.library.elements = {};
@@ -1653,10 +1654,11 @@ Weave.library.dates.monthGrid = date => Weave.library.composition.chunk(Weave.li
 /* formatting: locale aware text for numbers, money, dates and lists. Nothing here spells a word. */
 Weave.library.formatting = {};
 
-/* locale: the one place a language tag is chosen. Set formatting.locale.name to override the browser. */
+/* locale: the one place a language tag is chosen. Set formatting.locale.name to override the browser. A tag Intl rejects (a posix or C locale reports one) falls back to the engine default rather than throwing from every formatter. */
 Weave.library.formatting.locale = {};
 Weave.library.formatting.locale.name = null;
-Weave.library.formatting.localeName = () => Weave.library.control.defaultTo(Weave.library.browser.language())(Weave.library.formatting.locale.name);
+Weave.library.formatting.localeName = () => Weave.library.formatting.validLocale(Weave.library.control.defaultTo(Weave.library.browser.language())(Weave.library.formatting.locale.name));
+Weave.library.formatting.validLocale = name => Weave.library.control.attemptOr(Weave.library.browser.canonicalLocale, undefined)(name);
 
 /* numberStyles, notations, unitNames: the Intl option words, each written exactly once. */
 Weave.library.formatting.numberStyles = {};
@@ -3803,7 +3805,7 @@ Weave.library.components.mediaRules.compact.rules.termsBox = { gridTemplateColum
 Weave.library.components.mediaRules.calm.rules.spinnerMark = { animation: Weave.library.components.values.none };
 
 /* charts, the arithmetic: a reading becomes a length exactly here, as a share of the box it is drawn in. */
-Weave.library.components.chartShare = (value, top) => Weave.library.composition.clamp(0, 1)(value / top);
+Weave.library.components.chartShare = (value, top) => Weave.library.control.either(() => top > 0, () => Weave.library.composition.clamp(0, 1)(value / top), Weave.library.composition.zero)(top);
 Weave.library.components.chartTop = values => Math.max(...values);
 Weave.library.components.chartSum = values => values.reduce((carried, value) => carried + value, 0);
 Weave.library.components.chartRound = share => Math.round(share * 1000) / 10;

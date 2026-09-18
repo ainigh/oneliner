@@ -13,7 +13,8 @@
     "check:apps": "node scripts/check-apps.js",
     "check:demos": "node scripts/check-demos.js",
     "check:flagships": "node scripts/check-flagships.js",
-    "check": "npm run build && npm run audit && npm test && npm run audit:rows && npm run check:apps && npm run check:demos && npm run check:flagships"
+    "check": "npm run build && npm run audit && npm test && npm run audit:rows && npm run check:apps && npm run check:demos && npm run check:flagships",
+    "test:browser": "node scripts/test-browser.js"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"
