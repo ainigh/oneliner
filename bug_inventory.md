@@ -67,3 +67,72 @@ improvements to the feel of the widgets rather than defects.
 | 46 | Low | `accessibility.trapFocus` | Only cycles when focus is already at an edge. If focus is on `body` (e.g. after the trigger was removed), Tab leaves the dialog. |
 | 47 | Low | `accessibility.audit` | `query.walk(root)` excludes `root` itself, so auditing a single `<img>` finds nothing. |
 | 48 | Low | `observers.onResize` | Built on `startIntersection`; works, but the name is wrong and `disconnect` drops every element on the same observer. |
+
+## Components: widgets, tokens and the stylesheet
+
+| # | Sev | Where | What |
+|---|---|---|---|
+| 49 | **High** | `components.imageAttributes` | Reads `browser.keywords.src`, which does not exist. The table spells it `keywords.source`. The computed key is the string `"undefined"`, so every `components.image` renders `<img undefined="…">` with no `src` and nothing ever loads. One-word fix, and `grep 'keywords.src'` finds no other caller. |
+| 50 | Medium | `components.pagination` | Renders one button per page with no windowing. A grid of 5000 rows at 10 a page draws 500 buttons on every repaint. `pagerGap` exists but nothing uses it for an ellipsis. |
+| 51 | Medium | `components.tabs` | Follows the `tablist` / `tab` roles but wires no keyboard behaviour: no roving tabindex, no arrow keys, no `aria-controls` to the pane. `accessibility.roving` exists and is never used by the widget that most needs it. Same for `components.menu` and `components.steps`. |
+| 52 | Medium | `components.chartShare` | Divides by `chartTop`, and `chartTop([])` is `Math.max()` which is `-Infinity`. A chart with no readings yields `NaN%` widths; a chart whose readings are all zero divides zero by zero. Guard the top before dividing. |
+| 53 | Low | `components.dialogHeader` | Always draws a Close button, but `closeButton` passes `onAction: spec.onClose`. With no `onClose` the handler table skips the key, so the modal shows a Close button that does nothing. |
+| 54 | Low | `components.ringShares` | Recomputes `chartSum` over every item inside a `map` over every item, so a donut is quadratic in its slice count. Same shape in `ringBefore`. |
+| 55 | Low | `components.configure` | Assigns onto `tokens`, but `installStyles` is `control.once` and the sheet is a snapshot. Calling `configure` after the first widget renders silently does nothing. The comment says "before the sheet is written" — the code should enforce it or the call should re-emit. |
+| 56 | Low | `components.optionValue` / `optionLabel` | `defaultTo(String(value))(value.label)` evaluates `String(value)` on every call even when a label exists, and reads `.label` off whatever it is given. A `null` option throws rather than falling back. |
+| 57 | Low | `components.heatAt`, `seriesAt` | Both clamp with `Math.min` against the last index but neither guards a negative or `NaN` index, which reads back `undefined` and emits a `data-heat="undefined"` attribute that matches no rule. |
+| 58 | Low | `components.tooltip` | Builds a fresh random id on every call, so a repaint gives the same tooltip a new id each time and any external `aria-describedby` pointing at it breaks. |
+
+## Overlays and patterns
+
+| # | Sev | Where | What |
+|---|---|---|---|
+| 59 | **High** | `overlays.watchScroll` | Closes the popover on any scroll event captured at the document, including scrolling *inside* the popover itself. Any popover with a scrollable list closes the moment the reader scrolls it. Ignore scrolls whose target is inside `state.box`. |
+| 60 | Medium | `overlays.placeAt` | Position is computed once at open. Resizing the window, or the anchor moving, leaves the popover stranded. There is no reposition on resize and no `onResize` subscription. |
+| 61 | Medium | `patterns.restoreFocus` | Restores focus to a matching element but not the caret. `browser.focus` puts the cursor at the end of a text input, so a repaint while the reader is typing mid-string jumps the caret to the end. Save and restore `selectionStart`/`selectionEnd`. |
+| 62 | **High** | `patterns.wordsOf` | Joins every string value of a row, which includes the `weave-id-…` that `withId` just added. So the query "weave" matches every row, and any query that happens to hit a base-36 id matches a row at random. Search over the caller's fields, not over the internal id. |
+| 63 | Medium | `patterns.gridOrder` | Sorts ascending only. Pressing the same column header again re-sorts identically, so there is no way to reverse a grid. Keep a direction in state and flip it when the active column is pressed again. |
+| 64 | Medium | `patterns.persistIn` | Round-trips state through JSON. A `Date` in state (which `patterns.calendar` keeps in `state.month`) comes back as a string and every date call on it then throws. Persisting a calendar is broken as written. |
+| 65 | Medium | `patterns.linkTo` | Writes the hash on every update, which fires `hashchange`, which merges the same value back and repaints again. Every state change costs two repaints. Skip the write when the value is unchanged. |
+| 66 | Low | `patterns.record` | The undo log grows without a cap. A long session in a pattern with history holds every state it ever had. |
+| 67 | Low | `patterns.dashboard` | Uses `wizardState()` for its own state, so a dashboard carries a meaningless `step: 0`. Copy-paste, harmless, confusing. |
+| 68 | Low | `patterns.virtualRestore` | Writes `scrollTop` on every repaint, and a repaint is what a scroll causes. On touch this fights momentum scrolling. Only restore when the element's scroll position actually differs. |
+| 69 | Low | `patterns.confirm` | Resolves the promise twice on the accept path: once with `true`, then again with `false` through `onClose`. The second is ignored, but the intent is unclear and one change to `deferred` would make it a bug. |
+| 70 | Low | `auth.gate` | The password fields carry no `autocomplete` attribute, so password managers neither fill nor offer to save. `components.codeField` sets `autocomplete: one-time-code` and shows the pattern is available. |
+
+## Demo and application pages
+
+| # | Sev | Where | What |
+|---|---|---|---|
+| 71 | **High** | `apps/relay.html:107` | `listHandle` is built once with `row: threadRow(store.state)`, capturing the *initial* state. The row renderer therefore reads a frozen `chosen` and `checked` forever: selecting a thread never highlights its row, and ticking a checkbox never marks it. The renderer must read the live state at paint time. |
+| 72 | **High** | `apps/relay.html:73` | `undoMove` builds a list of `{thread, folder}` and hands it to `restoreAll`, whose parameter is literally named `ignored` and which only clears `checked`. The Undo button on the "Archived 12 threads" toast does nothing. The threads stay moved. |
+| 73 | Medium | `apps/pantry.html` | `basketBody` calls `checkoutForm()` on every store update, so a fresh `entryForm` pattern is built each time the basket changes. Anything typed into the checkout is wiped whenever a line is added or removed, and each discarded pattern is never `stop()`ped. |
+| 74 | Medium | `apps/pantry.html` | `placeOrder = ignored => …` throws away the validated name, phone and address. The form validates, then the values go nowhere. |
+| 75 | Medium | `apps/pantry.html` | `choiceView(draft)` mounts a pattern into the dialog body and nothing stops it when the dialog closes. Every dish opened leaks a live pattern. |
+| 76 | Medium | 16 of 23 pages | No `<meta name="viewport">`. Only `pantry`, `relay`, `handbook`, `kit`, `review`, `signal` and `tenants` have one. Every other demo renders at a 980px viewport on a phone and the library's own `compact` breakpoint never fires, so the responsive rules the system is built around are invisible on the devices they exist for. |
+| 77 | Low | `demos/shop.html` | The combobox labelled "Jump to a shelf" has `onPick: take`, so choosing a search result silently adds the item to the basket instead of scrolling to it. |
+| 78 | Low | `demos/bank.html` | The transfer form's three fields are never read. `askFirst` confirms and `paid` only cheers, so "Send it" sends nothing and reports success. |
+| 79 | Low | `apps/relay.html` | `markRead` mutates the thread object directly rather than going through the store, so the change is invisible to watchers until some other update repaints. |
+
+## Build and CI
+
+| # | Sev | Where | What |
+|---|---|---|---|
+| 80 | Medium | `.github/workflows/build.yml` | Runs build, audit, tests, row audit, `check-apps` and `check-demos`, but never `check-flagships`, which `package.json`'s own `check` script includes. The two flagship applications are the least covered code in the repository and the only checks they have do not run in CI. |
+| 81 | Low | `scripts/build.js` | The module build is `bundle.replace('const Weave = {};', 'export const Weave = {};')`, a first-occurrence string replace over the whole bundle. Today `00-root.js` sorts first so it lands correctly, but any earlier occurrence in a comment or string silently exports the wrong line. Anchor it to the start of the file instead. |
+| 82 | Low | `scripts/build.js` | Reports raw and gzipped size against a 600 KB raw budget, but the budget only fails on raw. Gzipped size is what ships and is unbudgeted. |
+
+## Micro UI improvements
+
+These are not defects. They are the small things that would make the widget set feel finished.
+
+1. **Focus ring on the scrim.** Opening a dialog traps focus and calls `interaction.focusFirst`, which lands on the Close button. Focusing the dialog container instead means a screen reader announces the title before the first control.
+2. **Toast stacking cap.** `patterns.notifications` appends without limit. Six toasts fill a phone screen. Cap the visible stack and collapse the rest into a count.
+3. **Disabled submit while sending.** `forms.whileDisabled` disables every control, including the submit button, but nothing shows *why*. A `components.spinner` inside the submit button during the promise would say it.
+4. **Empty state in the data grid.** `patterns.dataGrid` renders a headed table with zero rows when a search matches nothing. `patterns.emptyNote` already exists and every other pattern uses it.
+5. **Table column alignment.** `components.tableCell` is always left aligned. A numeric column wants right alignment; a `align` key on the column row would spend the `aligns` table that already exists.
+6. **`aria-live` on the search result count.** Typing in `patterns.queryBox` silently changes the row count. `accessibility.announce` exists and would say "12 of 300" without any new machinery.
+7. **Hover on rows, not just buttons.** `hoverRule` is generated over `pressable`, which excludes `groupRow` and `listRow`. A list row that responds to the pointer reads as clickable; one that does not reads as dead.
+8. **A visible required mark.** `forms.validators.required` exists and `auth.fields` uses it, but `components.fieldLabel` never shows which fields are required until submission fails.
+9. **`prefers-reduced-motion` on the ease block.** Already handled through `mediaRules.calm` and the `steadyMotion` query — but `tokens.press` (the 1px button nudge) still applies. Fold it into the same guard.
+10. **Dark scheme for the media wash.** `themes.dark` overrides `mediaWash`, but the `@media (prefers-color-scheme: dark)` block applies the whole dark theme to `:root:not([data-theme="light"])`, so a page that explicitly asks for `data-theme="dusk"` gets dusk tokens plus the dark wash where dusk did not override one. Worth an explicit dusk value for every token dark sets.
