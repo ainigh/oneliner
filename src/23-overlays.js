@@ -54,7 +54,7 @@ Weave.library.overlays.outsideStep = state => event => Weave.library.control.whe
 Weave.library.overlays.watchOutside = state => Weave.library.events.on(Weave.library.events.types.pointerdown, Weave.library.overlays.outsideStep(state))(Weave.library.browser.document());
 Weave.library.overlays.watchEscape = state => Weave.library.interaction.onEscape(() => Weave.library.overlays.escapeTop(state))(Weave.library.browser.document());
 Weave.library.overlays.scrollOptions = { capture: true, passive: true };
-Weave.library.overlays.watchScroll = state => Weave.library.events.onWithOptions(Weave.library.events.types.scroll, () => state.close(), Weave.library.overlays.scrollOptions)(Weave.library.browser.document());
+Weave.library.overlays.watchScroll = state => Weave.library.events.onWithOptions(Weave.library.events.types.scroll, Weave.library.overlays.outsideStep(state), Weave.library.overlays.scrollOptions)(Weave.library.browser.document());
 Weave.library.overlays.popoverState = (anchor, box) => ({ anchor, box, close: Weave.library.composition.noop, releases: [] });
 Weave.library.overlays.popoverWatchers = state => [Weave.library.overlays.watchOutside(state), Weave.library.overlays.watchEscape(state), Weave.library.overlays.watchScroll(state)];
 Weave.library.overlays.popoverHold = state => Weave.library.overlays.push(Object.assign(state, { close: Weave.library.control.once(() => Weave.library.overlays.popoverEnd(state)), releases: Weave.library.overlays.popoverWatchers(state) }));

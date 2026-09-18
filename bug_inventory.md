@@ -8,7 +8,7 @@ improvements to the feel of the widgets rather than defects.
 ## Status
 
 Because this list was written from reading alone, nothing in it was trusted until it was
-reproduced. Entries 10, 19, 31, 49, 62, 71 and 72 were each reproduced — the library ones against the
+reproduced. Entries 10, 19, 31, 49, 59, 62, 71 and 72 were each reproduced — the library ones against the
 built bundle, the two relay ones by driving the real page in a browser — then fixed, then
 re-run to show the failure gone; 76 and 80 were confirmed by inspection. Those rows are
 marked **Fixed** below. Everything else in this file is still an unverified reading of the
@@ -96,7 +96,7 @@ source and should be reproduced before it is acted on.
 
 | # | Sev | Where | What |
 |---|---|---|---|
-| 59 | **High** | `overlays.watchScroll` | Closes the popover on any scroll event captured at the document, including scrolling *inside* the popover itself. Any popover with a scrollable list closes the moment the reader scrolls it. Ignore scrolls whose target is inside `state.box`. |
+| 59 | **High** | `overlays.watchScroll` | Closes the popover on any scroll event captured at the document, including scrolling *inside* the popover itself. Any popover with a scrollable list closes the moment the reader scrolls it. Ignore scrolls whose target is inside `state.box`. | **Fixed:** `watchScroll` reuses `outsideStep`, the containment guard `watchOutside` already had.
 | 60 | Medium | `overlays.placeAt` | Position is computed once at open. Resizing the window, or the anchor moving, leaves the popover stranded. There is no reposition on resize and no `onResize` subscription. |
 | 61 | Medium | `patterns.restoreFocus` | Restores focus to a matching element but not the caret. `browser.focus` puts the cursor at the end of a text input, so a repaint while the reader is typing mid-string jumps the caret to the end. Save and restore `selectionStart`/`selectionEnd`. |
 | 62 | **High** | `patterns.wordsOf` | Joins every string value of a row, which includes the `weave-id-…` that `withId` just added. So the query "weave" matches every row, and any query that happens to hit a base-36 id matches a row at random. Search over the caller's fields, not over the internal id. | **Fixed:** `wordsOf` omits the row id.
