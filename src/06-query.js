@@ -29,8 +29,8 @@ Weave.library.query.firstChild = el => Weave.library.control.nullable(Weave.libr
 Weave.library.query.lastChild = el => Weave.library.control.nullable(Weave.library.browser.lastChildOf(el));
 Weave.library.query.next = el => Weave.library.control.nullable(Weave.library.browser.nextSiblingOf(el));
 Weave.library.query.previous = el => Weave.library.control.nullable(Weave.library.browser.previousSiblingOf(el));
-Weave.library.query.nextAll = el => Weave.library.control.unfold(Weave.library.query.next)(el);
-Weave.library.query.previousAll = el => Weave.library.control.unfold(Weave.library.query.previous)(el);
+Weave.library.query.nextAll = el => Weave.library.query.parentChildren(el).slice(Weave.library.query.indexOf(el) + 1);
+Weave.library.query.previousAll = el => Weave.library.query.parentChildren(el).slice(0, Math.max(0, Weave.library.query.indexOf(el))).reverse();
 Weave.library.query.nextUntil = selector => el => Weave.library.query.takeUntil(selector)(Weave.library.query.nextAll(el));
 Weave.library.query.previousUntil = selector => el => Weave.library.query.takeUntil(selector)(Weave.library.query.previousAll(el));
 Weave.library.query.nextMatching = selector => el => Weave.library.control.nullable(Weave.library.query.nextAll(el).find(Weave.library.predicates.matches(selector)));

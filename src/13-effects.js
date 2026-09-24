@@ -23,7 +23,7 @@ Weave.library.effects.currentValue = (property, el) => Weave.library.browser.com
 Weave.library.effects.toKeyframes = styles => el => [Weave.library.composition.mapValues((value, property) => Weave.library.effects.currentValue(property, el))(styles), styles];
 Weave.library.effects.transition = (styles, options) => el => Weave.library.effects.animate(Weave.library.effects.toKeyframes(styles)(el), options)(el);
 Weave.library.effects.transitionPart = options => property => [property, Weave.library.effects.durationOf(options) + Weave.library.effects.msSuffix, Weave.library.control.defaultTo(Weave.library.effects.defaults.easing)(options.easing)].join(Weave.library.browser.keywords.space);
-Weave.library.effects.cssTransition = (properties, options) => properties.map(Weave.library.effects.transitionPart(options)).join(', ');
+Weave.library.effects.cssTransition = (properties, options = {}) => properties.map(Weave.library.effects.transitionPart(options)).join(', ');
 Weave.library.effects.msSuffix = 'ms';
 Weave.library.effects.opacityFrames = (from, to) => ({ [Weave.library.browser.properties.opacity]: [from, to] });
 Weave.library.effects.opaque = 1;
