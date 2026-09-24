@@ -1,7 +1,10 @@
 /* storage: json encoded local and session storage, cookies, and a memory stand-in for tests. */
 Weave.library.storage = {};
 Weave.library.storage.encode = value => Weave.library.composition.json(value);
-Weave.library.storage.decode = text => Weave.library.control.maybe(Weave.library.composition.parseJson)(Weave.library.control.nullable(text));
+Weave.library.storage.decode = text => Weave.library.control.maybe(Weave.library.composition.parseJsonWith(Weave.library.storage.revive))(Weave.library.control.nullable(text));
+Weave.library.storage.isoMoment = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+Weave.library.storage.isMoment = value => Weave.library.control.and(Weave.library.predicates.isString(value), Weave.library.storage.isoMoment.test(value));
+Weave.library.storage.revive = (key, value) => Weave.library.control.either(Weave.library.storage.isMoment, Weave.library.browser.createDate, Weave.library.composition.identity)(value);
 Weave.library.storage.backends = {};
 Weave.library.storage.backends.local = { get: Weave.library.browser.localStorageGet, set: Weave.library.browser.localStorageSet, remove: Weave.library.browser.localStorageRemove, clear: Weave.library.browser.localStorageClear, keys: Weave.library.browser.localStorageKeys };
 Weave.library.storage.backends.session = { get: Weave.library.browser.sessionStorageGet, set: Weave.library.browser.sessionStorageSet, remove: Weave.library.browser.sessionStorageRemove, clear: Weave.library.browser.sessionStorageClear, keys: Weave.library.browser.sessionStorageKeys };

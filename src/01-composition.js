@@ -61,6 +61,7 @@ Weave.library.composition.noisyIndex = (count, seed) => Math.floor(Weave.library
 Weave.library.composition.randomId = prefix => prefix + Weave.library.composition.random(Number.MAX_SAFE_INTEGER).toString(36);
 Weave.library.composition.json = value => JSON.stringify(value);
 Weave.library.composition.parseJson = text => Weave.library.control.attemptOr(JSON.parse, undefined)(text);
+Weave.library.composition.parseJsonWith = reviver => text => Weave.library.control.attemptOr(found => JSON.parse(found, reviver), undefined)(text);
 Weave.library.composition.encode = text => encodeURIComponent(text);
 Weave.library.composition.decode = text => decodeURIComponent(text);
 Weave.library.composition.closeParen = ')';

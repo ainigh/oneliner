@@ -66,6 +66,7 @@ Weave.library.composition.noisyIndex = (count, seed) => Math.floor(Weave.library
 Weave.library.composition.randomId = prefix => prefix + Weave.library.composition.random(Number.MAX_SAFE_INTEGER).toString(36);
 Weave.library.composition.json = value => JSON.stringify(value);
 Weave.library.composition.parseJson = text => Weave.library.control.attemptOr(JSON.parse, undefined)(text);
+Weave.library.composition.parseJsonWith = reviver => text => Weave.library.control.attemptOr(found => JSON.parse(found, reviver), undefined)(text);
 Weave.library.composition.encode = text => encodeURIComponent(text);
 Weave.library.composition.decode = text => decodeURIComponent(text);
 Weave.library.composition.closeParen = ')';
@@ -2013,7 +2014,10 @@ Weave.library.observers.onFocusChange = handler => Weave.library.events.onTypes(
 /* storage: json encoded local and session storage, cookies, and a memory stand-in for tests. */
 Weave.library.storage = {};
 Weave.library.storage.encode = value => Weave.library.composition.json(value);
-Weave.library.storage.decode = text => Weave.library.control.maybe(Weave.library.composition.parseJson)(Weave.library.control.nullable(text));
+Weave.library.storage.decode = text => Weave.library.control.maybe(Weave.library.composition.parseJsonWith(Weave.library.storage.revive))(Weave.library.control.nullable(text));
+Weave.library.storage.isoMoment = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+Weave.library.storage.isMoment = value => Weave.library.control.and(Weave.library.predicates.isString(value), Weave.library.storage.isoMoment.test(value));
+Weave.library.storage.revive = (key, value) => Weave.library.control.either(Weave.library.storage.isMoment, Weave.library.browser.createDate, Weave.library.composition.identity)(value);
 Weave.library.storage.backends = {};
 Weave.library.storage.backends.local = { get: Weave.library.browser.localStorageGet, set: Weave.library.browser.localStorageSet, remove: Weave.library.browser.localStorageRemove, clear: Weave.library.browser.localStorageClear, keys: Weave.library.browser.localStorageKeys };
 Weave.library.storage.backends.session = { get: Weave.library.browser.sessionStorageGet, set: Weave.library.browser.sessionStorageSet, remove: Weave.library.browser.sessionStorageRemove, clear: Weave.library.browser.sessionStorageClear, keys: Weave.library.browser.sessionStorageKeys };
@@ -4290,12 +4294,14 @@ Weave.library.patterns.board = spec => Weave.library.patterns.view(Weave.library
 
 /* dataGrid: search, sort and page over the caller's rows, using the one table component. */
 Weave.library.patterns.gridFound = (spec, state) => Weave.library.patterns.search(state.query, spec.rows);
-Weave.library.patterns.gridOrder = (spec, state) => Weave.library.composition.sortBy(row => row[state.sort])(Weave.library.patterns.gridFound(spec, state));
+Weave.library.patterns.gridOrder = (spec, state) => Weave.library.patterns.gridDirected(state, Weave.library.composition.sortBy(row => row[state.sort])(Weave.library.patterns.gridFound(spec, state)));
+Weave.library.patterns.gridDirected = (state, rows) => Weave.library.control.either(() => state.descending, () => rows.reverse(), Weave.library.composition.identity)(rows);
+Weave.library.patterns.gridSortBy = (state, key) => ({ sort: key, descending: Weave.library.control.and(state.sort === key, !state.descending), page: 0 });
 Weave.library.patterns.gridSorted = (spec, state) => Weave.library.control.either(() => Weave.library.predicates.isDefined(state.sort), () => Weave.library.patterns.gridOrder(spec, state), () => Weave.library.patterns.gridFound(spec, state))(state);
 Weave.library.patterns.gridStart = (spec, state) => state.page * spec.pageSize;
 Weave.library.patterns.gridRows = (spec, state) => Weave.library.patterns.gridSorted(spec, state).slice(Weave.library.patterns.gridStart(spec, state), Weave.library.patterns.gridStart(spec, state) + spec.pageSize);
 Weave.library.patterns.gridPages = (spec, state) => Math.max(1, Math.ceil(Weave.library.patterns.gridFound(spec, state).length / spec.pageSize));
-Weave.library.patterns.gridColumn = update => column => Weave.library.composition.merge(column, { onAction: () => update(() => ({ sort: column.key, page: 0 })) });
+Weave.library.patterns.gridColumn = update => column => Weave.library.composition.merge(column, { onAction: () => update(state => Weave.library.patterns.gridSortBy(state, column.key)) });
 Weave.library.patterns.gridTable = (spec, state, update) => Weave.library.components.table({ columns: spec.columns.map(Weave.library.patterns.gridColumn(update)), rows: Weave.library.patterns.gridRows(spec, state) });
 Weave.library.patterns.gridPager = (spec, state, update) => Weave.library.components.pagination({ pages: Weave.library.patterns.gridPages(spec, state), page: state.page + 1, label: Weave.library.components.titleOf(spec), onGo: page => update(() => ({ page: page - 1 })) });
 Weave.library.patterns.gridParts = (spec, state, update) => [Weave.library.patterns.titleOf(spec), Weave.library.patterns.queryBox(state, update), Weave.library.patterns.gridTable(spec, state, update), Weave.library.patterns.gridPager(spec, state, update)];
@@ -4585,7 +4591,8 @@ Weave.library.patterns.addressQuery = () => Weave.library.composition.parseQuery
 Weave.library.patterns.addressValue = name => Weave.library.patterns.addressQuery()[name];
 Weave.library.patterns.writeAddress = (name, value) => Weave.library.navigation.setHash(Weave.library.composition.queryString(Weave.library.composition.merge(Weave.library.patterns.addressQuery(), { [name]: value })));
 Weave.library.patterns.addressed = (name, holder) => (Weave.library.patterns.writeAddress(name, holder.state[name]), holder);
-Weave.library.patterns.showFromAddress = (name, holder) => Weave.library.control.maybe(value => Weave.library.patterns.mergeState(holder, { [name]: value }))(Weave.library.patterns.addressValue(name));
+Weave.library.patterns.showFromAddress = (name, holder) => Weave.library.control.maybe(value => Weave.library.patterns.mergeState(holder, { [name]: value }))(Weave.library.patterns.changedAddress(name, holder));
+Weave.library.patterns.changedAddress = (name, holder) => Weave.library.control.guard(value => value !== String(holder.state[name]))(Weave.library.patterns.addressValue(name));
 Weave.library.patterns.addressChanges = (name, holder) => Weave.library.navigation.onHashChange(() => Weave.library.patterns.showFromAddress(name, holder));
 Weave.library.patterns.addressSaving = (name, update) => change => Weave.library.patterns.addressed(name, update(change));
 Weave.library.patterns.addressWired = (name, holder, update) => Object.assign(holder, { update: Weave.library.patterns.addressSaving(name, update) });

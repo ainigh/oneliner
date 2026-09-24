@@ -885,3 +885,10 @@ Weave.tests.cases.navigationRoutesAnOwnLink = () => Weave.library.navigation.isR
 Weave.tests.cases.navigationLeavesANewTabLinkToTheBrowser = () => Weave.library.navigation.isRoutableLink(Weave.tests.linkWith({ href: '/inbox', target: '_blank' })) === false;
 Weave.tests.cases.navigationLeavesADownloadToTheBrowser = () => Weave.library.navigation.isRoutableLink(Weave.tests.linkWith({ href: '/file', download: '' })) === false;
 Weave.tests.cases.navigationLeavesAHashLinkToTheBrowser = () => Weave.library.navigation.isRoutableLink(Weave.tests.linkWith({ href: '#part' })) === false;
+Weave.tests.cases.patternsGridSortFlipsOnTheSameColumn = () => Weave.library.patterns.gridSortBy({ sort: 'name', descending: false }, 'name').descending === true;
+Weave.tests.cases.patternsGridSortStartsAscendingOnANewColumn = () => Weave.library.patterns.gridSortBy({ sort: 'name', descending: true }, 'age').descending === false;
+Weave.tests.cases.patternsGridDescendingReversesTheRows = () => Weave.library.patterns.gridOrder({ rows: [{ n: 'a' }, { n: 'c' }, { n: 'b' }] }, { query: '', sort: 'n', descending: true }).map(row => row.n).join() === 'c,b,a';
+Weave.tests.cases.storageBringsADateBack = () => Weave.library.dates.iso(Weave.library.storage.decode(Weave.library.storage.encode({ when: Weave.library.browser.dateFromParts(2026, 0, 15, 12) })).when) === '2026-01-15';
+Weave.tests.cases.storageLeavesOrdinaryStringsAlone = () => Weave.library.storage.decode(Weave.library.storage.encode({ code: '2026-01-15' })).code === '2026-01-15';
+Weave.tests.addressAgrees = () => (Weave.library.navigation.setHash('tab=b'), Weave.library.patterns.changedAddress('tab', { state: { tab: 'b' } }));
+Weave.tests.cases.patternsLinkIgnoresItsOwnWrite = () => Weave.library.predicates.isDefined(Weave.tests.addressAgrees()) === false;
