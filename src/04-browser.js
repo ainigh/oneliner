@@ -83,6 +83,7 @@ Weave.library.browser.properties.width = 'width';
 Weave.library.browser.properties.overflow = 'overflow';
 Weave.library.browser.properties.transition = 'transition';
 Weave.library.browser.properties.transform = 'transform';
+Weave.library.browser.properties.touchAction = 'touchAction';
 Weave.library.browser.properties.position = 'position';
 
 Weave.library.browser.selectors = {};
@@ -366,6 +367,7 @@ Weave.library.browser.hasAnimate = el => typeof el.animate === Weave.library.pre
 Weave.library.browser.animationsOf = el => el.getAnimations();
 Weave.library.browser.finished = animation => animation.finished;
 Weave.library.browser.cancelAnimation = animation => (animation.cancel(), animation);
+Weave.library.browser.capturePointer = (el, event) => (el.setPointerCapture(event.pointerId), el);
 Weave.library.browser.finishAnimation = animation => (animation.finish(), animation);
 Weave.library.browser.commitAnimation = animation => (animation.commitStyles(), animation);
 Weave.library.browser.pauseAnimation = animation => (animation.pause(), animation);

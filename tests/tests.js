@@ -908,3 +908,5 @@ Weave.tests.settleLog = [];
 Weave.tests.settleFake = { cancel: () => Weave.tests.settleLog.push('cancel'), commitStyles: () => Weave.tests.settleLog.push('commit') };
 Weave.tests.cases.effectsCancelAFinishedAnimation = () => (Weave.library.effects.settle(Weave.tests.settleFake, {}), Weave.tests.settleLog.splice(0).join() === 'cancel');
 Weave.tests.cases.effectsCommitWhatTheyKeep = () => (Weave.library.effects.settle(Weave.tests.settleFake, { keep: true }), Weave.tests.settleLog.splice(0).join() === 'commit,cancel');
+Weave.tests.dragged = el => (Weave.library.interaction.draggable()(el)(), el);
+Weave.tests.cases.interactionDraggableClaimsTouch = () => Weave.library.style.inlineCss('touchAction')(Weave.tests.dragged(Weave.library.elements.div())) === 'none';

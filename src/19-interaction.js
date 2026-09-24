@@ -75,10 +75,13 @@ Weave.library.interaction.moveElement = (state, el) => Weave.library.style.setCs
 Weave.library.interaction.maybeMove = (options, state, el) => Weave.library.control.unless(() => options.move === false, () => Weave.library.interaction.moveElement(state, el))(state);
 Weave.library.interaction.applyDrag = (options, state, el, event) => (Weave.library.interaction.maybeMove(options, Weave.library.interaction.updateDrag(state, event), el), Weave.library.control.maybe(f => f(state, event))(options.onMove));
 Weave.library.interaction.startSize = el => ({ width: Weave.library.style.outerWidth(el), height: Weave.library.style.outerHeight(el) });
-Weave.library.interaction.dragStart = (options, state, el) => event => (Object.assign(state, Weave.library.interaction.pointerPosition(event), Weave.library.interaction.startSize(el), { dragging: true }), Weave.library.control.maybe(f => f(state, event))(options.onStart));
+Weave.library.interaction.holdPointer = (el, event) => Weave.library.control.attemptOr(() => Weave.library.browser.capturePointer(el, event), el)(event);
+Weave.library.interaction.dragStart = (options, state, el) => event => (Weave.library.interaction.holdPointer(el, event), Weave.library.interaction.beginDrag(state, el, event), Weave.library.control.maybe(f => f(state, event))(options.onStart));
+Weave.library.interaction.beginDrag = (state, el, event) => Object.assign(state, Weave.library.interaction.pointerPosition(event), Weave.library.interaction.startSize(el), { dragging: true });
 Weave.library.interaction.dragEnd = (options, state) => event => (Object.assign(state, { dragging: false }), Weave.library.control.maybe(f => f(state, event))(options.onEnd), Weave.library.interaction.settleDrag(state));
 Weave.library.interaction.settleDrag = state => Object.assign(state, { offsetX: state.offsetX + state.dx, offsetY: state.offsetY + state.dy, dx: 0, dy: 0 });
-Weave.library.interaction.draggable = (options = {}) => el => Weave.library.interaction.dragWith(options, el, { x: 0, y: 0, dx: 0, dy: 0, offsetX: 0, offsetY: 0, dragging: false });
+Weave.library.interaction.draggable = (options = {}) => el => Weave.library.interaction.dragWith(options, Weave.library.interaction.claimTouch(el), { x: 0, y: 0, dx: 0, dy: 0, offsetX: 0, offsetY: 0, dragging: false });
+Weave.library.interaction.claimTouch = el => Weave.library.style.setCss(Weave.library.browser.properties.touchAction, Weave.library.browser.keywords.none)(el);
 Weave.library.interaction.onDocument = (type, handler) => Weave.library.events.on(type, handler)(Weave.library.browser.document());
 Weave.library.interaction.whileDragging = (options, state, el) => Weave.library.interaction.onDocument(Weave.library.events.types.pointermove, Weave.library.interaction.dragMove(options, state, el));
 Weave.library.interaction.afterDragging = (options, state) => Weave.library.interaction.onDocument(Weave.library.events.types.pointerup, Weave.library.interaction.dragEnd(options, state));
