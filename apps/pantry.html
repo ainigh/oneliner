@@ -79,7 +79,8 @@ Weave.application.choiceBody = (draft, repaint) => Weave.application.groupKeys.m
 Weave.application.choiceView = draft => Weave.library.patterns.view((state, update) => Weave.library.components.stack({ children: Weave.application.choiceBody(draft, () => update(() => ({}))) }), {});
 Weave.application.chooseDish = dish => Weave.application.openChoice(dish, Weave.application.choiceState(dish));
 Weave.application.addAction = draft => close => [{ label: Weave.application.addLabel, variant: Weave.library.components.markNames.variant.primary, onAction: () => Weave.application.takeDraft(draft, close) }];
-Weave.application.openChoice = (dish, draft) => Weave.library.patterns.dialog({ title: dish.name, body: [Weave.application.choiceView(draft).element], actions: Weave.application.addAction(draft) });
+Weave.application.openChoice = (dish, draft) => Weave.application.choiceDialog(dish, draft, Weave.application.choiceView(draft));
+Weave.application.choiceDialog = (dish, draft, view) => Weave.library.patterns.dialog({ title: dish.name, body: [view.element], actions: Weave.application.addAction(draft), onClose: view.stop });
 Weave.application.addLabel = 'Add to order';
 Weave.application.takeDraft = (draft, close) => (Weave.application.addLine(Weave.library.composition.merge(draft, {})), close(), Weave.application.toasts.push(Weave.application.addedText, Weave.library.components.toneNames.success));
 Weave.application.addedText = 'Added to your order';
@@ -101,9 +102,10 @@ Weave.application.emptyNote = 'Choose something from the menu and it will appear
 Weave.application.basketParts = state => Weave.library.control.either(() => state.lines.length > 0, () => Weave.application.basketLines(state), Weave.application.basketEmpty)(state);
 Weave.application.basketTotal = state => Weave.library.components.spread({ children: [Weave.library.components.subtitle({ text: Weave.application.dueLabel }), Weave.library.components.value({ text: Weave.application.price(Weave.application.orderTotal(state)) })] });
 Weave.application.dueLabel = 'To pay';
-Weave.application.basketBody = (state, ignored) => Weave.library.components.stack({ children: Weave.application.basketParts(state).concat([Weave.application.basketTotal(state), Weave.application.checkoutForm().element]) });
+Weave.application.basketBody = (state, ignored) => Weave.library.components.stack({ children: Weave.application.basketParts(state).concat([Weave.application.basketTotal(state)]) });
 Weave.application.basketView = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.basketBody);
-Weave.application.openBasket = () => Weave.application.basketOpener()({ title: Weave.application.basketTitle, body: [Weave.application.basketView().element] });
+Weave.application.openBasket = () => Weave.application.basketWith(Weave.application.basketView(), Weave.application.checkoutForm());
+Weave.application.basketWith = (view, checkout) => Weave.application.basketOpener()({ title: Weave.application.basketTitle, body: [view.element, checkout.element], onClose: () => (view.stop(), checkout.stop()) });
 Weave.application.basketTitle = 'Your order';
 
 /* checkout: three fields the library's own validators guard, and the failing one takes the focus. */
@@ -114,9 +116,9 @@ Weave.application.checkoutFields.address = { label: 'Where to', rules: { minLeng
 Weave.application.checkoutRows = () => Weave.library.composition.pairs(Weave.application.checkoutFields).map(([name, row]) => Weave.library.composition.merge(row, { name }));
 Weave.application.checkoutForm = () => Weave.library.patterns.entryForm({ fields: Weave.application.checkoutRows(), submit: Weave.application.payLabel, onSubmit: Weave.application.placeOrder });
 Weave.application.payLabel = 'Place the order';
-Weave.application.placeOrder = ignored => Weave.application.startCooking(Weave.application.store.state.lines.length);
-Weave.application.startCooking = count => Weave.library.control.when(() => count > 0, Weave.application.beginOrder)(count);
-Weave.application.beginOrder = () => (Weave.application.store.update(() => ({ stage: 0 })), Weave.application.advanceLater());
+Weave.application.placeOrder = order => Weave.application.startCooking(Weave.application.store.state.lines.length, order);
+Weave.application.startCooking = (count, order) => Weave.library.control.when(() => count > 0, () => Weave.application.beginOrder(order))(count);
+Weave.application.beginOrder = order => (Weave.application.store.update(() => ({ stage: 0, order })), Weave.application.advanceLater());
 Weave.application.stageDelay = 60;
 Weave.application.advanceLater = () => Weave.library.timing.after(Weave.application.stageDelay, Weave.application.advance);
 Weave.application.advance = () => Weave.application.stepOn(Weave.application.store.state.stage + 1);
@@ -134,7 +136,9 @@ Weave.application.categoryTab = key => ({ key, label: Weave.application.categori
 Weave.application.categoryTabs = state => Weave.library.components.tabs({ active: state.category, items: Weave.application.categoryKeys.map(Weave.application.categoryTab) });
 Weave.application.progress = state => Weave.library.components.steps({ label: Weave.application.progressLabel, active: state.stage, items: Weave.application.stages });
 Weave.application.progressLabel = 'Where your order is';
-Weave.application.progressPanel = state => Weave.library.control.either(() => state.stage >= 0, () => Weave.library.components.panel({ children: [Weave.application.progress(state)] }), Weave.library.composition.noop)(state);
+Weave.application.progressPanel = state => Weave.library.control.either(() => state.stage >= 0, () => Weave.library.components.panel({ children: [Weave.application.progress(state), Weave.application.deliveryNote(state)] }), Weave.library.composition.noop)(state);
+Weave.application.deliveryNote = state => Weave.library.components.note({ text: Weave.application.deliveryWords + state.order.diner + Weave.application.separator + state.order.address });
+Weave.application.deliveryWords = 'For ';
 Weave.application.barTotal = state => Weave.library.components.stack({ children: [Weave.library.components.note({ text: Weave.application.dueLabel }), Weave.library.components.strong({ text: Weave.application.price(Weave.application.orderTotal(state)) })] });
 Weave.application.barItems = state => [Weave.application.barTotal(state), Weave.application.basketButton(state)];
 Weave.application.tabBar = state => Weave.library.components.tabBar({ children: Weave.application.barItems(state), aria: { label: Weave.application.basketTitle } });

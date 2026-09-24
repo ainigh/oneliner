@@ -121,6 +121,7 @@ open('apps/relay.html').then(settle).then(dom => {
   expect('pantry counts the order in the header', it.text('.weave-badge') === '1', it.text('.weave-badge'));
   expect('pantry says so in a pinned toast', it.text('.weave-toast-host').includes('Added'), it.text('.weave-toast-host'));
 
+  const watchers = it.Weave.application.store.watchers.length;
   it.click(it.all('.weave-page-header .weave-button')[0]);
   expect('pantry opens the basket over the page', it.count('.weave-drawer-box, .weave-sheet-box') === 1, `${it.count('.weave-drawer-box')} drawers`);
   expect('pantry totals the basket', it.text('.weave-drawer-box .weave-value').startsWith('\u00a3'), it.text('.weave-drawer-box .weave-value'));
@@ -132,15 +133,19 @@ open('apps/relay.html').then(settle).then(dom => {
   it.type('.weave-drawer-box input[name=address]', '12 Rosewood Terrace');
   it.click(it.one('.weave-drawer-box .weave-button[type=submit]'));
   expect('pantry accepts a complete order', it.Weave.application.store.state.stage === 0, String(it.Weave.application.store.state.stage));
+  expect('pantry keeps who and where the order is for', it.text('.weave-page').includes('12 Rosewood Terrace'), JSON.stringify(it.Weave.application.store.state.order));
+  dom.watchers = watchers;
   return settle(dom, 400);
 }).then(dom => {
   const it = driver(dom);
   expect('pantry walks the order through its stages', it.Weave.application.store.state.stage > 0, String(it.Weave.application.store.state.stage));
   expect('pantry marks exactly one step as current', it.count('.weave-step[aria-current=true]') === 1, `${it.count('.weave-step[aria-current=true]')} current steps`);
   it.click(it.all('.weave-drawer-box .weave-button').find(button => button.textContent === 'Remove'));
+  expect('pantry keeps what the diner typed while the basket changes', it.one('.weave-drawer-box input[name=diner]').value === 'Ada Okonkwo', JSON.stringify(it.one('.weave-drawer-box input[name=diner]').value));
   expect('pantry empties the basket back to an empty state', it.count('.weave-drawer-box .weave-empty-state') === 1, `${it.count('.weave-empty-state')} empty states`);
   it.press('Escape');
   expect('pantry closes the basket on escape', it.count('.weave-drawer-box') === 0 && it.Weave.library.interaction.scrollLocks.depth === 0, `depth ${it.Weave.library.interaction.scrollLocks.depth}`);
+  expect('pantry stops watching the store once the basket closes', it.Weave.application.store.watchers.length === dom.watchers, `${it.Weave.application.store.watchers.length} watchers, ${dom.watchers} before`);
   expect('pantry passes its own accessibility audit', it.audit().length === 0, JSON.stringify(it.audit()));
   return null;
 }).then(() => process.exit(failures.length === 0 ? 0 : 1)).catch(error => { console.error(error); process.exit(1); });

@@ -88,7 +88,7 @@ because the audit refused the alternative.
 most of it exists. They are as unlike each other as two applications can be, so that a capability
 which only works by accident in one is caught by the other. Both are written only against
 `Weave.library.*`, both are audited under the same rules as the library with no new exemptions, and
-`scripts/check-flagships.js` drives both through forty-eight assertions.
+`scripts/check-flagships.js` drives both through fifty-one assertions.
 
 | | Relay | Pantry |
 |---|---|---|
