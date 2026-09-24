@@ -56,6 +56,8 @@ Weave.library.browser.keywords.tabindex = 'tabindex';
 Weave.library.browser.keywords.name = 'name';
 Weave.library.browser.keywords.id = 'id';
 Weave.library.browser.keywords.href = 'href';
+Weave.library.browser.keywords.target = 'target';
+Weave.library.browser.keywords.download = 'download';
 Weave.library.browser.keywords.rel = 'rel';
 Weave.library.browser.keywords.source = 'src';
 Weave.library.browser.keywords.stylesheet = 'stylesheet';
@@ -81,6 +83,7 @@ Weave.library.browser.properties.width = 'width';
 Weave.library.browser.properties.overflow = 'overflow';
 Weave.library.browser.properties.transition = 'transition';
 Weave.library.browser.properties.transform = 'transform';
+Weave.library.browser.properties.touchAction = 'touchAction';
 Weave.library.browser.properties.position = 'position';
 
 Weave.library.browser.selectors = {};
@@ -364,7 +367,9 @@ Weave.library.browser.hasAnimate = el => typeof el.animate === Weave.library.pre
 Weave.library.browser.animationsOf = el => el.getAnimations();
 Weave.library.browser.finished = animation => animation.finished;
 Weave.library.browser.cancelAnimation = animation => (animation.cancel(), animation);
+Weave.library.browser.capturePointer = (el, event) => (el.setPointerCapture(event.pointerId), el);
 Weave.library.browser.finishAnimation = animation => (animation.finish(), animation);
+Weave.library.browser.commitAnimation = animation => (animation.commitStyles(), animation);
 Weave.library.browser.pauseAnimation = animation => (animation.pause(), animation);
 Weave.library.browser.playAnimation = animation => (animation.play(), animation);
 
@@ -440,7 +445,7 @@ Weave.library.browser.deepClone = value => structuredClone(value);
 Weave.library.browser.timestamp = () => Date.now();
 Weave.library.browser.currentDate = () => new Date();
 Weave.library.browser.createDate = value => new Date(value);
-Weave.library.browser.dateFromParts = (year, month, day, hours = 0, minutes = 0) => new Date(year, month, day, hours, minutes);
+Weave.library.browser.dateFromParts = (year, month, day, hours = 0, minutes = 0, seconds = 0, milliseconds = 0) => new Date(year, month, day, hours, minutes, seconds, milliseconds);
 Weave.library.browser.dateTimeValue = date => date.getTime();
 Weave.library.browser.isoOf = date => date.toISOString();
 Weave.library.browser.isValidDate = date => Number.isFinite(date.getTime());
