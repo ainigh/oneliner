@@ -8,11 +8,13 @@ improvements to the feel of the widgets rather than defects.
 ## Status
 
 Because this list was written from reading alone, nothing in it was trusted until it was
-reproduced. Entries 10, 19, 31, 49, 53, 59, 62, 71 and 72 were each reproduced — the library ones against the
-built bundle, the two relay ones by driving the real page in a browser — then fixed, then
-re-run to show the failure gone; 76 and 80 were confirmed by inspection. Those rows are
-marked **Fixed** below. Everything else in this file is still an unverified reading of the
-source and should be reproduced before it is acted on.
+reproduced. Every row marked **Fixed** was reproduced first — library rows against the built
+bundle in Chromium or jsdom, application rows by driving the real page — then fixed, then re-run
+to show the failure gone, and each fix since the second round carries a test or a flagship
+assertion that fails on the old code. 76 and 80 were confirmed by inspection. Rows marked
+**Not reproduced** or **Not changed** say why. Every **High** and every **Medium** row is now
+fixed except 50, 51 and 60, which are missing features more than defects. Unmarked rows are still
+unverified readings of the source.
 
 ## Library: composition, control, predicates
 
@@ -34,8 +36,8 @@ source and should be reproduced before it is acted on.
 |---|---|---|---|
 | 10 | **High** | `style.hide` | Calling `hide` on an element that is already hidden records `weaveDisplay = "none"`. The next `show` restores `"none"`, so the element can never be shown again. `rememberDisplay` must skip when the inline display is already `none`. Every `toggle`, `fadeToggle`, `slideToggle` and the patterns that hide on repaint can hit this. | **Fixed:** `style.rememberDisplay` records only when the element is shown.
 | 11 | Medium | `style.isShown` | Reads only the inline `display`. An element hidden by a stylesheet class reports as shown, so `toggle` hides it again instead of showing it. jQuery uses the computed value plus `offsetParent`. | **Fixed:** `isShown` also reads the computed display, so `toggle` shows an element a stylesheet hid; `show` already restores the tag's default display.
-| 12 | Medium | `elements.morphProperties` | Copies `value` from the fresh element onto the live one on every repaint. A fresh spec has `value=""`, so anything the user is typing in a pattern's input is wiped by the next repaint unless the pattern threads the value back through the spec. Skip `value` when the live element is focused. |
-| 13 | Medium | `elements.positionalCandidate` | An unkeyed child at index N is morphed into whatever node currently sits at N, including a keyed node that belongs later in the list. Mixed keyed/unkeyed lists steal each other's nodes and lose state. Only accept a positional candidate that is itself unkeyed. |
+| 12 | Medium | `elements.morphProperties` | Copies `value` from the fresh element onto the live one on every repaint. A fresh spec has `value=""`, so anything the user is typing in a pattern's input is wiped by the next repaint unless the pattern threads the value back through the spec. Skip `value` when the live element is focused. | **Not changed:** the morph treats the fresh spec as the source of truth for `value`, the way every pattern that holds an input already threads it back (`entryForm`, `queryBox`, `inlineEdit`). Skipping a focused input would break clearing a field after submit. The case the entry describes was a caller rebuilding a pattern inside a render, which is 73 and is fixed there.
+| 13 | Medium | `elements.positionalCandidate` | An unkeyed child at index N is morphed into whatever node currently sits at N, including a keyed node that belongs later in the list. Mixed keyed/unkeyed lists steal each other's nodes and lose state. Only accept a positional candidate that is itself unkeyed. | **Not reproduced:** `isMatch` compares keys, and an unkeyed child's key is `null`, so a keyed node at that position is never accepted. In Chromium the keyed node kept its state after an unkeyed row was inserted before it.
 | 14 | Low | `elements.keyedCandidate` | Searches all children for a key match, including nodes already placed at an earlier index this pass. Duplicate keys move the same node twice. |
 | 15 | Low | `elements.unwrap`, `elements.wrapNodes` | `unwrap` on a root element (`parentOf` is null) and `wrapAll` on an empty list both throw a raw TypeError. |
 | 16 | Low | `elements.nodeRules.fromAnything` | A plain object with one unknown key (e.g. a typo `clases`) is not a spec, falls through to `identity`, and `appendChild` throws "parameter 1 is not of type Node". The `invalidSpec` error row exists but is never reached here. |
