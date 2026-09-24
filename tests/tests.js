@@ -544,9 +544,11 @@ Weave.tests.cases.componentsActionButtonCarriesItsVariant = () => Weave.tests.va
 Weave.tests.lastVariant = () => Weave.library.composition.last(Weave.library.composition.keys(Weave.library.components.variants));
 Weave.tests.cases.componentsActionButtonTakesNoVariantUnasked = () => Weave.library.predicates.isDefined(Weave.tests.variantOf(Weave.library.components.actionButton({ label: 'Go' }))) === false;
 Weave.tests.cases.componentsSubmitButtonIsThePrimaryOne = () => Weave.tests.variantOf(Weave.library.components.submitButton({})) === Weave.library.components.defaultVariant();
+Weave.tests.attach = element => Weave.library.elements.appendTo(Weave.library.browser.body())(element);
+Weave.tests.withAttached = (element, f) => Weave.tests.runWithFixture(f, Weave.tests.attach(element));
 Weave.tests.brandedView = () => Weave.library.components.applyTokens({ accent: Weave.tests.brandColour })(Weave.library.components.view({}));
 Weave.tests.brandColour = 'rebeccapurple';
-Weave.tests.cases.componentsApplyTokensScopesAToken = () => Weave.library.style.cssVariable(Weave.library.components.variableName('accent'))(Weave.tests.brandedView()) === Weave.tests.brandColour;
+Weave.tests.cases.componentsApplyTokensScopesAToken = () => Weave.tests.withAttached(Weave.tests.brandedView(), view => Weave.library.style.cssVariable(Weave.library.components.variableName('accent'))(view) === Weave.tests.brandColour);
 Weave.tests.cases.componentsSheetExtrasEachMakeBlocks = () => Weave.library.composition.values(Weave.library.components.sheetExtras).every(make => make().length > 0);
 Weave.tests.cases.componentsStyleTextCarriesEveryHost = () => Weave.tests.containsAll(Weave.library.components.styleText(), Weave.library.composition.values(Weave.library.components.hostSelectors));
 Weave.tests.cases.componentsHostRulesOnlyUseTokens = () => Weave.library.composition.values(Weave.library.components.hostRules).every(Weave.tests.usesTokens);
@@ -723,7 +725,7 @@ Weave.tests.cases.componentsSheetCarriesEveryTheme = () => Weave.tests.containsA
 Weave.tests.cases.componentsDensityNamesEveryRow = () => Weave.library.composition.keys(Weave.library.components.densityNames).length === Weave.library.composition.keys(Weave.library.components.densities).length;
 Weave.tests.accentVariable = element => Weave.library.style.cssVariable(Weave.library.components.variableName('accent'))(element);
 Weave.tests.presetCard = () => Weave.library.components.applyPreset(Weave.library.components.presetNames.ocean)(Weave.library.components.card({}));
-Weave.tests.cases.componentsPresetSetsTokensOnAnElement = () => Weave.tests.accentVariable(Weave.tests.presetCard()) === Weave.library.components.presets.ocean.accent;
+Weave.tests.cases.componentsPresetSetsTokensOnAnElement = () => Weave.tests.withAttached(Weave.tests.presetCard(), card => Weave.tests.accentVariable(card) === Weave.library.components.presets.ocean.accent);
 Weave.tests.cases.componentsConfigureMovesAToken = () => Weave.tests.movedToken() === Weave.tests.tokenProbe;
 Weave.tests.tokenProbe = '3px';
 Weave.tests.movedToken = () => Weave.tests.restoredToken(Weave.library.components.tokens.radius, Weave.library.components.configure({ radius: Weave.tests.tokenProbe }).radius);
@@ -802,8 +804,10 @@ Weave.tests.chartLines = [{ series: Weave.library.components.seriesNames.one, va
 Weave.tests.cases.lineChartDrawsOneTracePerSeries = () => Weave.library.query.allWithin(Weave.tests.selectorFor('chartLine'))(Weave.library.components.lineChart({ lines: Weave.tests.chartLines })).length === 2;
 Weave.tests.cases.lineChartHoldsEverySeriesToOneAxis = () => Weave.library.components.chartCeiling({ lines: Weave.tests.chartLines }) === 2;
 Weave.tests.barItems = [{ label: 'a', value: 5, reading: '5', series: Weave.library.components.seriesNames.one }, { label: 'b', value: 10 }];
-Weave.tests.barHeights = () => Weave.library.query.allWithin(Weave.tests.selectorFor('chartBar'))(Weave.library.components.barChart({ items: Weave.tests.barItems })).map(Weave.library.style.css('height'));
+Weave.tests.barHeights = () => Weave.tests.withAttached(Weave.library.components.barChart({ items: Weave.tests.barItems }), chart => Weave.library.query.allWithin(Weave.tests.selectorFor('chartBar'))(chart).map(Weave.library.style.inlineCss('height')));
 Weave.tests.cases.barChartMeasuresEveryBarAgainstTheTallest = () => Weave.tests.barHeights().join(Weave.library.composition.closeParen) === '50%)100%';
+Weave.tests.cases.barChartOfNothingDrawsNoNaN = () => Weave.library.components.chartLength(Weave.library.components.chartShare(0, Weave.library.components.chartTop([0, 0]))) === Weave.library.components.chartLength(0);
+Weave.tests.cases.barChartOfNoReadingsHasAShareOfNothing = () => Weave.library.components.chartShare(0, Weave.library.components.chartTop([])) === 0;
 Weave.tests.cases.barChartLeavesOutANumberItWasNotGiven = () => Weave.library.query.allWithin(Weave.tests.selectorFor('barValue'))(Weave.library.components.barChart({ items: Weave.tests.barItems })).length === 1;
 Weave.tests.hiddenLegend = () => Weave.library.components.legend({ items: [{ key: 'a', label: 'A', shown: false, onAction: Weave.library.composition.noop }] });
 Weave.tests.legendButtonIn = element => Weave.library.query.oneWithin(Weave.tests.selectorFor('legendButton'))(element);

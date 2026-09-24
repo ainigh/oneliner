@@ -464,3 +464,4 @@ Weave.library.browser.formatNumber = (value, locale, options) => new Intl.Number
 Weave.library.browser.formatDate = (date, locale, options) => new Intl.DateTimeFormat(locale, options).format(date);
 Weave.library.browser.formatRelative = (value, unit, locale) => new Intl.RelativeTimeFormat(locale).format(value, unit);
 Weave.library.browser.formatList = (items, locale) => new Intl.ListFormat(locale).format(items);
+Weave.library.browser.canonicalLocale = name => Weave.library.composition.first(Intl.getCanonicalLocales(name));

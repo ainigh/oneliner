@@ -1330,7 +1330,7 @@ Weave.library.components.mediaRules.compact.rules.termsBox = { gridTemplateColum
 Weave.library.components.mediaRules.calm.rules.spinnerMark = { animation: Weave.library.components.values.none };
 
 /* charts, the arithmetic: a reading becomes a length exactly here, as a share of the box it is drawn in. */
-Weave.library.components.chartShare = (value, top) => Weave.library.composition.clamp(0, 1)(value / top);
+Weave.library.components.chartShare = (value, top) => Weave.library.control.either(() => top > 0, () => Weave.library.composition.clamp(0, 1)(value / top), Weave.library.composition.zero)(top);
 Weave.library.components.chartTop = values => Math.max(...values);
 Weave.library.components.chartSum = values => values.reduce((carried, value) => carried + value, 0);
 Weave.library.components.chartRound = share => Math.round(share * 1000) / 10;
