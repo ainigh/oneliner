@@ -900,3 +900,11 @@ Weave.tests.cases.accessibilityAnnounceKeepsARegionPerPoliteness = () => Weave.l
 Weave.tests.goneSheet = () => Weave.library.elements.appendTo(Weave.library.browser.head())(Weave.library.elements.fromHtml('<style>.weave-test-gone { display: none; }</style>')[0]);
 Weave.tests.hiddenByClass = el => (Weave.tests.goneSheet(), Weave.library.style.isShown(Weave.library.attributes.addClass('weave-test-gone')(el)));
 Weave.tests.cases.styleSeesAClassThatHides = () => Weave.tests.withFixture(Weave.tests.hiddenByClass) === false;
+Weave.tests.animationLog = [];
+Weave.tests.fakeAnimation = { finished: Weave.library.composition.resolved(undefined), cancel: () => Weave.tests.animationLog.push('cancel'), commitStyles: () => Weave.tests.animationLog.push('commit') };
+Weave.tests.fakeAnimated = { animate: keyframes => (Weave.tests.animationLog.push(keyframes), Weave.tests.fakeAnimation) };
+Weave.tests.asyncCases.effectsHandPropertyFramesOverUnwrapped = () => Weave.library.composition.then(() => Weave.library.predicates.isPlainObject(Weave.tests.animationLog[0]))(Weave.library.effects.animate({ opacity: [1, 0] }, {})(Weave.tests.fakeAnimated));
+Weave.tests.settleLog = [];
+Weave.tests.settleFake = { cancel: () => Weave.tests.settleLog.push('cancel'), commitStyles: () => Weave.tests.settleLog.push('commit') };
+Weave.tests.cases.effectsCancelAFinishedAnimation = () => (Weave.library.effects.settle(Weave.tests.settleFake, {}), Weave.tests.settleLog.splice(0).join() === 'cancel');
+Weave.tests.cases.effectsCommitWhatTheyKeep = () => (Weave.library.effects.settle(Weave.tests.settleFake, { keep: true }), Weave.tests.settleLog.splice(0).join() === 'commit,cancel');

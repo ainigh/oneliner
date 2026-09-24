@@ -367,6 +367,7 @@ Weave.library.browser.animationsOf = el => el.getAnimations();
 Weave.library.browser.finished = animation => animation.finished;
 Weave.library.browser.cancelAnimation = animation => (animation.cancel(), animation);
 Weave.library.browser.finishAnimation = animation => (animation.finish(), animation);
+Weave.library.browser.commitAnimation = animation => (animation.commitStyles(), animation);
 Weave.library.browser.pauseAnimation = animation => (animation.pause(), animation);
 Weave.library.browser.playAnimation = animation => (animation.play(), animation);
 
