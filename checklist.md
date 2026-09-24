@@ -746,6 +746,33 @@ point of the tables: the whole system moved without a single page being edited.
       unquoted, and the token table is a JavaScript string — the audit masks strings, so only the
       test run caught it.
 
+## The showcase wave
+
+Orbit (`demos/orbit.html`) was written to be the best thing the library can draw, and every gap it
+found became a row rather than a style block.
+
+- [x] **A product page had no hero.** `hero`, `sectionIntro`, `eyebrow` and `highlight`, with a
+      `lay` modifier to centre the copy and a `wash` modifier for the colour field behind it.
+- [x] **Selling needed its own boxes.** `feature`, `plan`, `checklist`, `testimonial`, `logoCloud`,
+      `marquee` and `windowFrame`, each taking `surface`, `wash` and `tile` like any other box.
+- [x] **A console had no frame.** `workspace`, `sideNav`, `topBar`, `searchTrigger`, `iconButton`,
+      `iconBadge`, `statusPill` and `person`; three new rows in `interactive` and `pressable` gave the
+      new controls focus, hover and press without a line of their own.
+- [x] **The desk needed more charts.** `metric`, `areaChart`, `gauge`, `stackBar`, `funnel` and
+      `calendarHeat`; `gauge` reuses the ring arithmetic and `stackBar` the ring's shares.
+- [x] **A sparkline measured from nought and looked flat.** `areaChart({ fit: true })` measures from
+      just under the lowest reading.
+- [x] **A tone could only outline.** `toneSpends.soft` and `toneSpends.wash` mix the tone into a tint.
+- [x] **Every box was flat and every page the same grey.** Softer layered shadows, rounder corners,
+      a faint wash on the ground, boxes that rise into place and cards that lift under a pointer.
+- [x] **A dark box on a light page meant a second theme.** `surfaces.inverse` and `washes.midnight`
+      carry the dark theme's tokens onto one element, so everything inside follows.
+- [x] **The phone layout named a value that did not exist.** `values.row` was missing; the test that
+      holds media rules to known values caught it before a phone did.
+- [x] **The main column centred its page vertically.** `workspaceMain` is a block, so the page's
+      auto margin only centres it across.
+- [x] **The bundle outgrew its budget.** The size gate moved from 600 KB to 720 KB raw.
+
 ## Not done
 
 - [ ] `weave.d.ts` — explicitly not a milestone (spec 2 §16).

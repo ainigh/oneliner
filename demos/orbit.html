@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orbit — a product command centre</title>
+</head>
+<body>
+<script src="../dist/weave.js"></script>
+<script>
+/* application: Orbit, a product command centre. One store holds where the reader is and what is live, and one render draws the whole desk from it. */
+Weave.application = {};
+
+/* words: the only place this page writes something a reader will see. */
+Weave.application.words = {};
+Weave.application.words.brand = 'Orbit';
+Weave.application.words.planet = '🪐';
+Weave.application.words.search = 'Search or jump to…';
+Weave.application.words.paletteTitle = 'Jump to';
+Weave.application.words.themeLabel = 'Switch between light and dark';
+Weave.application.words.halfMoon = '🌗';
+Weave.application.words.bell = '🔔';
+Weave.application.words.bellLabel = 'Notifications';
+Weave.application.words.unread = ' unread';
+Weave.application.words.owner = 'Noor Al-Sayed';
+Weave.application.words.ownerRole = 'Owner, Orbit Labs';
+Weave.application.words.systems = 'All systems normal';
+Weave.application.words.live = 'Live';
+Weave.application.words.paused = 'Paused';
+Weave.application.words.greeting = 'Good morning, Noor.';
+Weave.application.words.greetingAccent = 'Revenue is climbing.';
+Weave.application.words.greetingNote = 'Three launches shipped this week, trials are converting at a quarter high, and nobody has been paged since Tuesday.';
+Weave.application.words.liveNow = 'Live, updating every few seconds';
+Weave.application.words.openPalette = 'Open the palette';
+Weave.application.words.seeCustomers = 'See customers';
+Weave.application.words.goal = 'Quarter goal';
+Weave.application.words.onTrack = 'On track';
+Weave.application.words.revenue = 'Revenue by channel';
+Weave.application.words.revenueNote = 'Each channel keeps its colour when you switch the others off.';
+Weave.application.words.mrr = 'Monthly recurring revenue';
+Weave.application.words.users = 'Active users';
+Weave.application.words.conversion = 'Trial to paid';
+Weave.application.words.churn = 'Monthly churn';
+Weave.application.words.mix = 'Plan mix';
+Weave.application.words.mixNote = 'Share of paying accounts by plan.';
+Weave.application.words.funnel = 'Sign up funnel';
+Weave.application.words.funnelNote = 'This month, from first visit to first invoice.';
+Weave.application.words.deploys = 'Deploys';
+Weave.application.words.deploysNote = 'One square a day for eighteen weeks. Weekends stay quiet.';
+Weave.application.words.fewer = 'Fewer';
+Weave.application.words.more = 'More';
+Weave.application.words.activity = 'What just happened';
+Weave.application.words.team = 'On call this week';
+Weave.application.words.teamNote = 'Who picks up when something breaks.';
+Weave.application.words.activityNote = 'The last few things the desk noticed, newest first.';
+Weave.application.words.sessions = 'Sessions by source';
+Weave.application.words.sessionsNote = 'Where readers arrive from, day by day.';
+Weave.application.words.signups = 'Sign ups by weekday';
+Weave.application.words.pages = 'Most read pages';
+Weave.application.words.regions = 'Revenue by region';
+Weave.application.words.regionTotal = 'This quarter';
+Weave.application.words.latency = 'Latency by hour';
+Weave.application.words.latencyNote = 'Darker is slower. Rest on a cell for its reading.';
+Weave.application.words.quick = 'Quick';
+Weave.application.words.slow = 'Slow';
+Weave.application.words.findCustomer = 'Find a customer';
+Weave.application.words.accounts = ' accounts';
+Weave.application.words.nobody = 'Nobody matches';
+Weave.application.words.nobodyNote = 'Try another name, or widen the health filter.';
+Weave.application.words.customer = 'Customer';
+Weave.application.words.plan = 'Plan';
+Weave.application.words.mrrShort = 'MRR';
+Weave.application.words.seats = 'Seats';
+Weave.application.words.health = 'Health';
+Weave.application.words.seen = 'Last seen';
+Weave.application.words.sorted = ' ↓';
+Weave.application.words.currency = 'USD';
+Weave.application.words.site = 'orbit.dev';
+Weave.application.words.siteEyebrow = 'Orbit 3 is here';
+Weave.application.words.sparkle = '✨';
+Weave.application.words.siteTitle = 'The command centre';
+Weave.application.words.siteAccent = 'your product deserves';
+Weave.application.words.siteNote = 'Revenue, customers, launches and incidents on one live desk. Set up in an afternoon, trusted for years.';
+Weave.application.words.startTrial = 'Start a free trial';
+Weave.application.words.bookDemo = 'Book a demo';
+Weave.application.words.trusted = 'Trusted by product teams at';
+Weave.application.words.whyEyebrow = 'Why teams switch';
+Weave.application.words.whyTitle = 'Everything live, nothing to wire';
+Weave.application.words.whyNote = 'Orbit reads from the tools you already run and draws the desk for you.';
+Weave.application.words.priceEyebrow = 'Pricing';
+Weave.application.words.priceTitle = 'Plans that grow with you';
+Weave.application.words.priceNote = 'Every plan carries every chart, dark mode and unlimited viewers.';
+Weave.application.words.perSeat = 'a seat a month';
+Weave.application.words.choose = 'Choose this plan';
+Weave.application.words.lovedEyebrow = 'Loved by operators';
+Weave.application.words.lovedTitle = 'What the people running it say';
+Weave.application.words.ctaTitle = 'Ready when';
+Weave.application.words.ctaAccent = 'you are.';
+Weave.application.words.ctaNote = 'Bring your team, your data and your hardest question. We will bring the coffee.';
+Weave.application.words.orWord = 'or keep reading';
+Weave.application.words.appearance = 'Appearance';
+Weave.application.words.appearanceNote = 'Every choice below is one row of a library table, applied to the page you are reading.';
+Weave.application.words.themeWord = 'Theme';
+Weave.application.words.paletteWord = 'Palette';
+Weave.application.words.densityWord = 'Density';
+Weave.application.words.liveDesk = 'Live desk';
+Weave.application.words.liveDeskNote = 'What the desk does while you are not looking.';
+Weave.application.words.streamLabel = 'Stream live readings';
+Weave.application.words.digestLabel = 'Send a weekly digest';
+Weave.application.words.workspace = 'Workspace';
+Weave.application.words.workspaceNote = 'The name and address your team signs in at.';
+Weave.application.words.workspaceName = 'Workspace name';
+Weave.application.words.workspaceValue = 'Orbit Labs';
+Weave.application.words.addressLabel = 'Address';
+Weave.application.words.addressPrefix = 'orbit.dev/';
+Weave.application.words.addressValue = 'labs';
+Weave.application.words.save = 'Save changes';
+Weave.application.words.saved = 'Saved. Everyone sees the new name now.';
+Weave.application.words.themeChanged = 'Theme switched';
+Weave.application.words.liveOn = 'Live readings resumed';
+Weave.application.words.liveOff = 'Live readings paused';
+Weave.application.words.pausedNote = 'Readings are paused. Resume them from the palette or press l.';
+Weave.application.words.resume = 'Resume';
+Weave.application.words.goPrefix = 'Go to ';
+Weave.application.words.flipTheme = 'Switch theme';
+Weave.application.words.flipLive = 'Pause or resume live readings';
+Weave.application.words.openBell = 'Open notifications';
+Weave.application.words.caughtUp = 'All caught up';
+
+/* views: one row per place the rail can take the reader, in the order the rail lists them. */
+Weave.application.views = {};
+Weave.application.views.overview = { glyph: '🛰️', label: 'Overview', note: 'Everything moving right now, at a glance.' };
+Weave.application.views.analytics = { glyph: '📊', label: 'Analytics', note: 'Where the traffic comes from and how fast it is served.' };
+Weave.application.views.customers = { glyph: '👥', label: 'Customers', note: 'Every account, its plan, and how healthy it looks.' };
+Weave.application.views.launch = { glyph: '🚀', label: 'Launch page', note: 'The public site, previewed inside the product.' };
+Weave.application.views.settings = { glyph: '⚙️', label: 'Settings', note: 'Theme, palette, density and what the desk does live.' };
+Weave.application.viewNames = Weave.library.components.nameTable(Weave.application.views);
+Weave.application.railGroups = [{ label: 'Workspace', keys: [Weave.application.viewNames.overview, Weave.application.viewNames.analytics, Weave.application.viewNames.customers] }, { label: 'Grow', keys: [Weave.application.viewNames.launch] }, { label: 'Account', keys: [Weave.application.viewNames.settings] }];
+
+/* tile and tone: the library names this page spends most, gathered once so the lines below stay short. */
+Weave.application.tile = {};
+Weave.application.tile.big = Weave.library.components.markNames.tile.big;
+Weave.application.tile.wide = Weave.library.components.markNames.tile.wide;
+Weave.application.tile.tall = Weave.library.components.markNames.tile.tall;
+Weave.application.tile.full = Weave.library.components.markNames.tile.full;
+/* tone: the four tones the desk speaks in, and the quiet one. */
+Weave.application.tone = {};
+Weave.application.tone.good = Weave.library.components.toneNames.success;
+Weave.application.tone.warn = Weave.library.components.toneNames.warning;
+Weave.application.tone.bad = Weave.library.components.toneNames.danger;
+Weave.application.tone.info = Weave.library.components.toneNames.info;
+Weave.application.tone.quiet = Weave.library.components.toneNames.quiet;
+
+/* charts: the heading, the note and the room each card on the desk asks for. */
+Weave.application.charts = {};
+Weave.application.charts.revenue = { title: Weave.application.words.revenue, note: Weave.application.words.revenueNote, tile: Weave.application.tile.big };
+Weave.application.charts.funnel = { title: Weave.application.words.funnel, note: Weave.application.words.funnelNote, tile: Weave.application.tile.tall };
+Weave.application.charts.team = { title: Weave.application.words.team, note: Weave.application.words.teamNote, tile: Weave.application.tile.tall };
+Weave.application.charts.mix = { title: Weave.application.words.mix, note: Weave.application.words.mixNote, tile: Weave.application.tile.wide };
+Weave.application.charts.deploys = { title: Weave.application.words.deploys, note: Weave.application.words.deploysNote, tile: Weave.application.tile.wide };
+Weave.application.charts.activity = { title: Weave.application.words.activity, note: Weave.application.words.activityNote, tile: Weave.application.tile.full };
+Weave.application.charts.sessions = { title: Weave.application.words.sessions, note: Weave.application.words.sessionsNote, tile: Weave.application.tile.big };
+Weave.application.charts.signups = { title: Weave.application.words.signups, tile: Weave.application.tile.wide };
+Weave.application.charts.pages = { title: Weave.application.words.pages, tile: Weave.application.tile.tall };
+Weave.application.charts.regions = { title: Weave.application.words.regions, tile: Weave.application.tile.tall };
+Weave.application.charts.latency = { title: Weave.application.words.latency, note: Weave.application.words.latencyNote, tile: Weave.application.tile.wide };
+Weave.application.charts.appearance = { title: Weave.application.words.appearance, note: Weave.application.words.appearanceNote };
+Weave.application.charts.liveDesk = { title: Weave.application.words.liveDesk, note: Weave.application.words.liveDeskNote };
+Weave.application.charts.workspace = { title: Weave.application.words.workspace, note: Weave.application.words.workspaceNote };
+
+/* heroes, intros and buttons: the words of every loud block, so the functions below only add what moves. */
+Weave.application.heroes = {};
+Weave.application.heroes.greeting = { eyebrow: Weave.application.words.liveNow, glyph: Weave.application.words.sparkle, title: Weave.application.words.greeting, highlight: Weave.application.words.greetingAccent, note: Weave.application.words.greetingNote, wash: Weave.library.components.markNames.wash.midnight };
+Weave.application.heroes.site = { eyebrow: Weave.application.words.siteEyebrow, glyph: Weave.application.words.sparkle, title: Weave.application.words.siteTitle, highlight: Weave.application.words.siteAccent, note: Weave.application.words.siteNote, wash: Weave.library.components.markNames.wash.aurora };
+Weave.application.heroes.cta = { title: Weave.application.words.ctaTitle, highlight: Weave.application.words.ctaAccent, note: Weave.application.words.ctaNote, lay: Weave.library.components.markNames.lay.centre, wash: Weave.library.components.markNames.wash.midnight };
+/* intros: the heading over each block of the launch page. */
+Weave.application.intros = {};
+Weave.application.intros.why = { eyebrow: Weave.application.words.whyEyebrow, title: Weave.application.words.whyTitle, note: Weave.application.words.whyNote, lay: Weave.library.components.markNames.lay.centre };
+Weave.application.intros.pricing = { eyebrow: Weave.application.words.priceEyebrow, title: Weave.application.words.priceTitle, note: Weave.application.words.priceNote, lay: Weave.library.components.markNames.lay.centre };
+Weave.application.intros.loved = { eyebrow: Weave.application.words.lovedEyebrow, title: Weave.application.words.lovedTitle, lay: Weave.library.components.markNames.lay.centre };
+/* buttons: every button the desk draws more than once, by what it does. */
+Weave.application.buttons = {};
+Weave.application.buttons.palette = { label: Weave.application.words.openPalette, variant: Weave.library.components.markNames.variant.primary };
+Weave.application.buttons.customers = { label: Weave.application.words.seeCustomers, variant: Weave.library.components.markNames.variant.soft };
+Weave.application.buttons.resume = { label: Weave.application.words.resume };
+Weave.application.buttons.trial = { label: Weave.application.words.startTrial, variant: Weave.library.components.markNames.variant.primary, size: Weave.library.components.markNames.size.large };
+Weave.application.buttons.demo = { label: Weave.application.words.bookDemo, size: Weave.library.components.markNames.size.large };
+Weave.application.buttons.save = { label: Weave.application.words.save, variant: Weave.library.components.markNames.variant.primary };
+/* fields: the two things the workspace form asks. */
+Weave.application.fields = {};
+Weave.application.fields.name = { label: Weave.application.words.workspaceName, name: 'workspace', value: Weave.application.words.workspaceValue };
+Weave.application.fields.address = { label: Weave.application.words.addressLabel, name: 'address', prefix: Weave.application.words.addressPrefix, value: Weave.application.words.addressValue };
+Weave.application.owner = { name: Weave.application.words.owner, note: Weave.application.words.ownerRole, status: Weave.library.components.toneNames.success };
+Weave.application.pulseOn = { text: Weave.application.words.live, tone: Weave.library.components.toneNames.success };
+Weave.application.pulseOff = { text: Weave.application.words.paused, tone: Weave.library.components.toneNames.warning };
+/* spans: the three windows the revenue chart offers, how many days each holds and the words under its axis. */
+Weave.application.spans = {};
+Weave.application.spans.week = { label: 'Week', count: 7, ticks: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] };
+Weave.application.spans.month = { label: 'Month', count: 30, ticks: ['Week 1', 'Week 2', 'Week 3', 'Week 4'] };
+Weave.application.spans.quarter = { label: 'Quarter', count: 90, ticks: ['July', 'August', 'September'] };
+Weave.application.spanNames = Weave.library.components.nameTable(Weave.application.spans);
+
+/* the wave: every reading on the desk is a smooth swing plus a little noise, so the page looks alive and still looks the same twice. */
+Weave.application.driftOf = (row, index) => Weave.library.control.defaultTo(0)(row.drift) * index;
+Weave.application.swingOf = (row, index) => row.swing * (Math.sin(index / row.period + row.phase) + Weave.library.composition.noise(index + row.phase) - 0.5);
+Weave.application.wave = (row, index) => row.base * (1 + Weave.application.driftOf(row, index) + Weave.application.swingOf(row, index));
+Weave.application.readingsOver = (row, count, tick) => Weave.library.composition.range(count).map(index => Weave.application.wave(row, index + tick));
+Weave.application.pace = 2600;
+Weave.application.sparkDays = 14;
+
+/* streams and sources: the series the two area charts draw. The order here is the order of the colours. */
+Weave.application.streams = [];
+Weave.application.streams.push({ key: 'direct', drift: 0.012, label: 'Direct', base: 4200, swing: 0.16, period: 4, phase: 0 });
+Weave.application.streams.push({ key: 'partners', drift: 0.009, label: 'Partners', base: 2700, swing: 0.2, period: 5, phase: 2 });
+Weave.application.streams.push({ key: 'marketplace', drift: 0.015, label: 'Marketplace', base: 1500, swing: 0.24, period: 3, phase: 4 });
+Weave.application.sources = [];
+Weave.application.sources.push({ key: 'search', drift: 0.006, label: 'Search', base: 9200, swing: 0.12, period: 5, phase: 1 });
+Weave.application.sources.push({ key: 'social', drift: 0.004, label: 'Social', base: 5400, swing: 0.3, period: 3, phase: 3 });
+Weave.application.sources.push({ key: 'referral', drift: 0.008, label: 'Referral', base: 3100, swing: 0.18, period: 6, phase: 5 });
+Weave.application.sources.push({ key: 'email', drift: 0.01, label: 'Email', base: 1800, swing: 0.4, period: 2, phase: 7 });
+
+/* formats: how each kind of reading is written, each one a row of options the library formatter takes. */
+Weave.application.formats = {};
+Weave.application.formats.dollars = { style: Weave.library.formatting.numberStyles.currency, currency: Weave.application.words.currency, notation: Weave.library.formatting.notations.compact, maximumFractionDigits: 1 };
+Weave.application.formats.whole = { maximumFractionDigits: 0 };
+Weave.application.formats.share = { style: Weave.library.formatting.numberStyles.percent, maximumFractionDigits: 1 };
+Weave.application.formats.change = { style: Weave.library.formatting.numberStyles.percent, maximumFractionDigits: 1, signDisplay: 'exceptZero' };
+Weave.application.formats.money = { style: Weave.library.formatting.numberStyles.currency, currency: Weave.application.words.currency, maximumFractionDigits: 0 };
+Weave.application.write = name => value => Weave.library.formatting.number(Weave.application.formats[name])(value);
+Weave.application.dollars = Weave.application.write('dollars');
+Weave.application.whole = Weave.application.write('whole');
+Weave.application.share = Weave.application.write('share');
+Weave.application.shift = Weave.application.write('change');
+Weave.application.money = Weave.application.write('money');
+
+/* metrics: the four headline readings, each with the glyph it is known by and the way it is good for it to move. */
+Weave.application.metrics = [];
+Weave.application.metrics.push({ key: 'mrr', drift: 0.009, glyph: '💰', label: Weave.application.words.mrr, base: 284000, swing: 0.05, period: 6, phase: 1, format: Weave.application.dollars, good: Weave.library.components.trendNames.up });
+Weave.application.metrics.push({ key: 'users', drift: 0.005, glyph: '👤', label: Weave.application.words.users, base: 18400, swing: 0.07, period: 5, phase: 3, format: Weave.application.whole, good: Weave.library.components.trendNames.up });
+Weave.application.metrics.push({ key: 'conversion', drift: 0.006, glyph: '🎯', label: Weave.application.words.conversion, base: 0.042, swing: 0.09, period: 4, phase: 5, format: Weave.application.share, good: Weave.library.components.trendNames.up });
+Weave.application.metrics.push({ key: 'churn', drift: -0.01, glyph: '🧲', label: Weave.application.words.churn, base: 0.012, swing: 0.12, period: 3, phase: 2, format: Weave.application.share, good: Weave.library.components.trendNames.down });
+
+/* the rest of the desk's numbers: fixed rows, so the parts that do not stream never move under the reader. */
+Weave.application.data = {};
+Weave.application.data.plans = [{ label: 'Enterprise', value: 38 }, { label: 'Team', value: 34 }, { label: 'Solo', value: 21 }, { label: 'Legacy', value: 7 }];
+Weave.application.data.funnel = [{ label: 'Visited', value: 48200 }, { label: 'Signed up', value: 9640 }, { label: 'Activated', value: 5210 }, { label: 'Paid', value: 1870 }];
+Weave.application.data.signups = [{ label: 'Mon', value: 412 }, { label: 'Tue', value: 468 }, { label: 'Wed', value: 521 }, { label: 'Thu', value: 497 }, { label: 'Fri', value: 430 }, { label: 'Sat', value: 188 }, { label: 'Sun', value: 164 }];
+Weave.application.data.pages = [{ label: '/pricing', value: 18400 }, { label: '/docs/getting-started', value: 12900 }, { label: '/changelog', value: 8700 }, { label: '/integrations', value: 6100 }, { label: '/blog/orbit-3', value: 4300 }];
+Weave.application.data.regions = [{ label: 'Europe', value: 412000 }, { label: 'North America', value: 368000 }, { label: 'Asia Pacific', value: 196000 }, { label: 'Latin America', value: 74000 }];
+Weave.application.data.hours = ['00', '02', '04', '06', '08', '10', '12', '14', '16', '18', '20', '22'];
+Weave.application.data.days = Weave.application.data.signups.slice(0, 5).map(row => row.label);
+Weave.application.data.weeks = 18;
+Weave.application.data.activity = [{ key: 'a1', when: '09:41', label: 'Globex moved to Enterprise', note: 'Forty seats, billed yearly' }, { key: 'a2', when: '09:12', label: 'Orbit 3.2 shipped', note: 'Area charts, gauges and a calendar of deploys' }, { key: 'a3', when: '08:30', label: 'Initech started a trial', note: 'Invited by a friend at Hooli' }, { key: 'a4', when: 'Yesterday', label: 'Latency alert closed', note: 'p95 back under 300 ms in eleven minutes' }];
+Weave.application.data.team = [{ name: 'Ada Okonkwo', note: 'Platform', status: Weave.library.components.toneNames.success }, { name: 'Tomas Bauer', note: 'Payments', status: Weave.library.components.toneNames.success }, { name: 'Grace Whitfield', note: 'Lifecycle', status: Weave.library.components.toneNames.warning }, { name: 'Dev Raman', note: 'Support', status: Weave.library.components.toneNames.quiet }];
+Weave.application.data.paletteKeys = ['Ctrl', 'K'];
+Weave.application.data.accounts = [{ label: 'Paying accounts', value: '1,870' }, { label: 'Average seats', value: '24' }, { label: 'Net revenue retention', value: '118%' }, { label: 'Expansion this month', value: '$21.4K' }];
+Weave.application.data.alerts = [{ key: 'n1', label: 'Umbrella is close to its seat limit', note: '96 of 100 seats taken' }, { key: 'n2', label: 'A payout of $48,210 is on its way', note: 'Arrives Thursday' }, { key: 'n3', label: 'Weekly digest is ready', note: 'Revenue up, churn down, one incident' }];
+Weave.application.data.logos = ['Northwind', 'Globex', 'Initech', 'Umbrella', 'Hooli', 'Stark', 'Wayne', 'Soylent'];
+Weave.application.data.features = [{ glyph: '⚡', title: 'Live by default', note: 'Every chart streams. Nothing to refresh, nothing to schedule.' }, { glyph: '🧭', title: 'A palette for everything', note: 'Press Ctrl K and go anywhere, do anything, without the mouse.' }, { glyph: '🌗', title: 'Dark when you are', note: 'Four themes and a system setting, all from one table of tokens.' }, { glyph: '🔒', title: 'Yours, and only yours', note: 'Single sign on, audit trails and data that never leaves your region.' }, { glyph: '🧩', title: 'Plays with your stack', note: 'Stripe, Postgres, Segment and forty more, read without a line of code.' }, { glyph: '📱', title: 'Fits in a pocket', note: 'The rail lies down, the grid stacks, and every target stays easy to hit.' }];
+Weave.application.data.prices = [{ key: 'starter', name: 'Starter', price: '$0', note: 'For a side project finding its feet.', features: ['Three dashboards', 'Seven days of history', { text: 'Live streaming', off: true }] }, { key: 'growth', name: 'Growth', price: '$29', badge: 'Most chosen', featured: true, note: 'For a team shipping every week.', features: ['Unlimited dashboards', 'A year of history', 'Live streaming'] }, { key: 'scale', name: 'Scale', price: '$79', note: 'For a company with a board to answer to.', features: ['Everything in Growth', 'Single sign on', 'A person who answers'] }];
+Weave.application.data.quotes = [{ text: 'We replaced four tools and a weekly spreadsheet with one tab that is always right.', name: 'Ana Ferreira', role: 'VP Operations, Globex', score: 5 }, { text: 'The launch page and the desk speak the same language, so marketing stopped asking us for screenshots.', name: 'Dae-ho Lim', role: 'Head of Product, Initech', score: 5 }, { text: 'Our on call rotation checks one screen now. Pages went down by half in a month.', name: 'Wren Ashby', role: 'Staff Engineer, Hooli', score: 4 }];
+
+/* customers: one push per account. Plans and health are the two tables every row is toned from. */
+Weave.application.plans = {};
+Weave.application.plans.enterprise = { label: 'Enterprise', tone: Weave.library.components.toneNames.info };
+Weave.application.plans.growth = { label: 'Growth', tone: Weave.library.components.toneNames.success };
+Weave.application.plans.starter = { label: 'Starter', tone: Weave.library.components.toneNames.quiet };
+/* healths: how an account looks from here, each toned the way the whole desk tones that news. */
+Weave.application.healths = {};
+Weave.application.healths.everyone = { label: 'Everyone', tone: Weave.library.components.toneNames.quiet };
+Weave.application.healths.healthy = { label: 'Healthy', tone: Weave.library.components.toneNames.success };
+Weave.application.healths.risk = { label: 'At risk', tone: Weave.library.components.toneNames.warning };
+Weave.application.healths.churning = { label: 'Churning', tone: Weave.library.components.toneNames.danger };
+Weave.application.healthNames = Weave.library.components.nameTable(Weave.application.healths);
+Weave.application.people = [];
+Weave.application.people.push({ key: 'p1', name: 'Ada Okonkwo', company: 'Northwind', plan: 'enterprise', mrr: 12400, seats: 84, health: 'healthy', seen: '2 minutes ago' });
+Weave.application.people.push({ key: 'p2', name: 'Tomas Bauer', company: 'Globex', plan: 'enterprise', mrr: 9800, seats: 40, health: 'healthy', seen: '12 minutes ago' });
+Weave.application.people.push({ key: 'p3', name: 'Nour El-Amin', company: 'Umbrella', plan: 'enterprise', mrr: 8600, seats: 96, health: 'risk', seen: '1 hour ago' });
+Weave.application.people.push({ key: 'p4', name: 'Grace Whitfield', company: 'Hooli', plan: 'growth', mrr: 4100, seats: 31, health: 'healthy', seen: '3 hours ago' });
+Weave.application.people.push({ key: 'p5', name: 'Sofia Lindqvist', company: 'Initech', plan: 'growth', mrr: 2900, seats: 18, health: 'healthy', seen: 'Yesterday' });
+Weave.application.people.push({ key: 'p6', name: 'Marcus Reyes', company: 'Stark Industries', plan: 'enterprise', mrr: 15200, seats: 120, health: 'healthy', seen: '5 minutes ago' });
+Weave.application.people.push({ key: 'p7', name: 'Dev Raman', company: 'Wayne Enterprises', plan: 'growth', mrr: 3600, seats: 24, health: 'risk', seen: '4 days ago' });
+Weave.application.people.push({ key: 'p8', name: 'Priya Natarajan', company: 'Soylent', plan: 'starter', mrr: 0, seats: 3, health: 'churning', seen: '3 weeks ago' });
+Weave.application.people.push({ key: 'p9', name: 'Lucas Moreau', company: 'Cyberdyne', plan: 'growth', mrr: 2400, seats: 15, health: 'healthy', seen: '40 minutes ago' });
+Weave.application.people.push({ key: 'p10', name: 'Hana Sato', company: 'Tyrell', plan: 'enterprise', mrr: 11100, seats: 72, health: 'healthy', seen: 'Just now' });
+Weave.application.people.push({ key: 'p11', name: 'Kofi Mensah', company: 'Aperture', plan: 'growth', mrr: 1900, seats: 12, health: 'risk', seen: '6 days ago' });
+Weave.application.people.push({ key: 'p12', name: 'Elena Petrova', company: 'Oscorp', plan: 'starter', mrr: 0, seats: 2, health: 'churning', seen: '2 months ago' });
+Weave.application.people.push({ key: 'p13', name: 'Wren Ashby', company: 'Vandelay', plan: 'growth', mrr: 3200, seats: 22, health: 'healthy', seen: '2 hours ago' });
+Weave.application.people.push({ key: 'p14', name: 'Dae-ho Lim', company: 'Massive Dynamic', plan: 'enterprise', mrr: 13800, seats: 110, health: 'healthy', seen: '8 minutes ago' });
+
+/* sorts: one row per column a reader can sort by. A number sorts largest first, a name from A. */
+Weave.application.sorts = {};
+Weave.application.sorts.name = row => row.name;
+Weave.application.sorts.mrr = row => 0 - row.mrr;
+Weave.application.sorts.seats = row => 0 - row.seats;
+Weave.application.sortNames = Weave.library.components.nameTable(Weave.application.sorts);
+
+/* choices: the rows the settings page offers, each keyed by the library name it applies. */
+Weave.application.themeChoices = {};
+Weave.application.themeChoices.system = 'System';
+Weave.application.themeChoices.light = 'Light';
+Weave.application.themeChoices.dark = 'Dark';
+Weave.application.themeChoices.dusk = 'Dusk';
+Weave.application.themeChoices.contrast = 'High contrast';
+/* paletteChoices: the presets, and the indigo the library starts with. */
+Weave.application.paletteChoices = {};
+Weave.application.paletteChoices.indigo = 'Indigo';
+Weave.application.paletteChoices.ocean = 'Ocean';
+Weave.application.paletteChoices.forest = 'Forest';
+Weave.application.paletteChoices.plum = 'Plum';
+Weave.application.paletteChoices.ember = 'Ember';
+/* densityChoices: how tightly the desk sits. */
+Weave.application.densityChoices = {};
+Weave.application.densityChoices.standard = 'Standard';
+Weave.application.densityChoices.snug = 'Snug';
+Weave.application.densityChoices.roomy = 'Roomy';
+Weave.application.choiceNames = Weave.library.components.nameTable(Weave.library.composition.merge(Weave.application.themeChoices, Weave.library.composition.merge(Weave.application.paletteChoices, Weave.application.densityChoices)));
+
+/* state: where the reader is, what is switched off, what the customer list is narrowed to, and whether the desk is live. */
+Weave.application.startState = { view: Weave.application.viewNames.overview, span: Weave.application.spanNames.month, hidden: [], tick: 0, query: '', health: Weave.application.healthNames.everyone, sort: Weave.application.sortNames.mrr, live: true, digest: true, theme: Weave.application.choiceNames.system, palette: Weave.application.choiceNames.indigo, density: Weave.application.choiceNames.standard, unread: Weave.application.data.alerts.length };
+Weave.application.store = Weave.library.patterns.linkTo('view')(Weave.library.patterns.store(Weave.application.startState));
+Weave.application.change = made => Weave.application.store.update(() => made);
+Weave.application.toasts = Weave.library.patterns.notifications({});
+Weave.application.root = () => Weave.library.browser.documentElement();
+
+/* moving about: the rail, the palette and the number keys all go through here. */
+Weave.application.go = key => () => Weave.application.change({ view: key });
+Weave.application.shown = (state, row) => !state.hidden.includes(row.key);
+Weave.application.flipped = (hidden, key) => Weave.library.control.either(list => list.includes(key), list => list.filter(other => other !== key), list => list.concat([key]))(hidden);
+Weave.application.toggleSeries = key => () => Weave.application.store.update(state => ({ hidden: Weave.application.flipped(state.hidden, key) }));
+Weave.application.advance = state => Weave.library.control.either(() => state.live, () => ({ tick: state.tick + 1 }), () => ({}))(state);
+Weave.application.tick = () => Weave.application.store.update(Weave.application.advance);
+Weave.application.flipLive = () => (Weave.application.store.update(state => ({ live: !state.live })), Weave.application.toasts.push(Weave.application.liveWord(Weave.application.store.state), Weave.library.components.toneNames.info));
+Weave.application.liveWord = state => Weave.library.control.either(() => state.live, () => Weave.application.words.liveOn, () => Weave.application.words.liveOff)(state);
+
+/* appearance: each choice applies one library row to the document and remembers which it was. */
+Weave.application.applyTheme = key => Weave.library.control.either(() => key === Weave.application.choiceNames.system, () => Weave.library.attributes.removeAttribute(Weave.library.components.themeAttribute)(Weave.application.root()), () => Weave.library.components.setTheme(key))(key);
+Weave.application.chooseTheme = key => (Weave.application.applyTheme(key), Weave.application.change({ theme: key }));
+Weave.application.flipTheme = () => (Weave.library.components.toggleTheme(), Weave.application.change({ theme: Weave.library.components.theme() }), Weave.application.toasts.push(Weave.application.words.themeChanged, Weave.library.components.toneNames.success));
+Weave.application.clearPalette = () => Weave.library.composition.keys(Weave.library.components.presets.ocean).forEach(key => Weave.library.style.removeCss(Weave.library.components.variableName(key))(Weave.application.root()));
+Weave.application.applyPalette = key => Weave.library.control.either(() => key === Weave.application.choiceNames.indigo, Weave.application.clearPalette, () => Weave.library.components.usePreset(key))(key);
+Weave.application.choosePalette = key => (Weave.application.clearPalette(), Weave.application.applyPalette(key), Weave.application.change({ palette: key }));
+Weave.application.applyDensity = key => Weave.library.control.either(() => key === Weave.application.choiceNames.standard, () => Weave.library.attributes.removeAttribute(Weave.library.components.densityAttribute)(Weave.application.root()), () => Weave.library.components.setDensity(key))(key);
+Weave.application.chooseDensity = key => (Weave.application.applyDensity(key), Weave.application.change({ density: key }));
+
+/* readings: a metric's last fortnight, which way it moved, and whether that way is the good one. */
+Weave.application.sparkOf = (row, state) => Weave.application.readingsOver(row, Weave.application.sparkDays, state.tick);
+Weave.application.movement = values => (Weave.library.composition.last(values) - Weave.library.composition.first(values)) / Weave.library.composition.first(values);
+Weave.application.wayOf = change => Weave.library.control.either(() => change < 0, () => Weave.library.components.trendNames.down, () => Weave.library.components.trendNames.up)(change);
+Weave.application.toneOf = (row, way) => Weave.library.control.either(() => way === row.good, () => Weave.library.components.toneNames.success, () => Weave.library.components.toneNames.danger)(way);
+Weave.application.readingOf = (row, values) => ({ value: row.format(Weave.library.composition.last(values)), text: Weave.application.shift(Weave.application.movement(values)), direction: Weave.application.wayOf(Weave.application.movement(values)) });
+Weave.application.metricTone = (row, values) => Weave.application.toneOf(row, Weave.application.wayOf(Weave.application.movement(values)));
+Weave.application.metricSpec = (row, values, index) => Weave.library.composition.merge(Weave.application.readingOf(row, values), { tone: Weave.application.metricTone(row, values), values, series: Weave.library.components.seriesAt(index) });
+Weave.application.metricCard = state => (row, index) => Weave.library.components.metric(Weave.library.composition.merge(row, Weave.application.metricSpec(row, Weave.application.sparkOf(row, state), index)));
+Weave.application.metricCards = state => Weave.application.metrics.map(Weave.application.metricCard(state));
+
+/* series charts: the lines still switched on, each in the slot its row was declared in, and the legend that switches them. */
+Weave.application.spanOf = state => Weave.application.spans[state.span];
+Weave.application.slotted = rows => rows.map((row, index) => Weave.library.composition.merge(row, { series: Weave.library.components.seriesAt(index) }));
+Weave.application.linesOf = (rows, state, count) => Weave.application.slotted(rows).filter(row => Weave.application.shown(state, row)).map(row => Weave.library.composition.merge(row, { values: Weave.application.readingsOver(row, count, state.tick) }));
+Weave.application.legendOf = (rows, state) => Weave.application.slotted(rows).map(row => Weave.library.composition.merge(row, { shown: Weave.application.shown(state, row), onAction: Weave.application.toggleSeries(row.key) }));
+Weave.application.spanPicker = state => Weave.library.components.segmented({ active: state.span, items: Weave.library.composition.pairs(Weave.application.spans).map(([key, row]) => ({ key, label: row.label })), onPick: key => Weave.application.change({ span: key }) });
+Weave.application.revenueLines = state => Weave.application.linesOf(Weave.application.streams, state, Weave.application.spanOf(state).count);
+Weave.application.tallArea = (lines, label) => Weave.library.components.areaChart({ lines, label, plot: Weave.library.components.markNames.plot.tall });
+Weave.application.revenuePlot = state => [Weave.application.spanPicker(state), Weave.application.tallArea(Weave.application.revenueLines(state), Weave.application.words.revenue), Weave.library.components.axis({ labels: Weave.application.spanOf(state).ticks })];
+Weave.application.chartCard = chart => Weave.library.components.card({ tile: chart.tile, children: [Weave.library.components.chart(chart)] });
+Weave.application.revenue = state => Weave.application.chartCard(Weave.library.composition.merge(Weave.application.charts.revenue, { legend: Weave.application.legendOf(Weave.application.streams, state), children: Weave.application.revenuePlot(state) }));
+
+/* the rest of the overview: a funnel, the people on call, the plan mix, the deploy calendar and what just happened. */
+Weave.application.counted = rows => rows.map(row => Weave.library.composition.merge(row, { reading: Weave.application.whole(row.value) }));
+Weave.application.boxedHead = spec => [Weave.library.components.subtitle({ text: spec.title }), Weave.library.components.note({ text: spec.note })];
+Weave.application.boxed = (spec, children) => Weave.library.components.card(Weave.library.composition.merge(spec, { children: Weave.application.boxedHead(spec).concat(children) }));
+Weave.application.inSlot = slot => rows => rows.map(row => Weave.library.composition.merge(row, { series: slot }));
+Weave.application.funnelRows = () => Weave.application.inSlot(Weave.library.components.seriesNames.three)(Weave.application.counted(Weave.application.data.funnel));
+Weave.application.funnelCard = () => Weave.application.boxed(Weave.application.charts.funnel, [Weave.library.components.funnel({ items: Weave.application.funnelRows(), label: Weave.application.words.funnel })]);
+Weave.application.teamCard = () => Weave.application.boxed(Weave.application.charts.team, [Weave.library.components.stack({ children: Weave.application.data.team.map(Weave.library.components.person) })]);
+Weave.application.mixBar = () => Weave.library.components.stackBar({ items: Weave.application.slotted(Weave.application.data.plans), label: Weave.application.words.mix });
+Weave.application.mixCard = () => Weave.application.boxed(Weave.application.charts.mix, [Weave.application.mixBar(), Weave.library.components.descriptions({ rows: Weave.application.data.accounts })]);
+Weave.application.dayValue = index => Math.round(Weave.library.composition.noise(index) * 9 * Weave.library.control.either(() => index % 7 > 4, () => 0.25, () => 1)(index));
+Weave.application.deployDays = () => Weave.library.composition.range(Weave.application.data.weeks * 7).map(index => ({ value: Weave.application.dayValue(index), reading: String(Weave.application.dayValue(index)) }));
+Weave.application.deployKey = () => Weave.library.components.heatScale({ least: Weave.application.words.fewer, most: Weave.application.words.more });
+Weave.application.deployCard = () => Weave.application.boxed(Weave.application.charts.deploys, [Weave.library.components.calendarHeat({ items: Weave.application.deployDays(), label: Weave.application.words.deploys }), Weave.application.deployKey()]);
+Weave.application.activityCard = () => Weave.application.boxed(Weave.application.charts.activity, [Weave.library.components.timeline({ items: Weave.application.data.activity })]);
+
+/* the greeting: the hero over the overview, on the midnight wash, with the quarter goal beside it. */
+Weave.application.goalShare = state => Math.min(64 + state.tick * 0.7, 100);
+Weave.application.goalTone = share => Weave.library.control.either(() => share >= 75, () => Weave.library.components.toneNames.success, () => Weave.library.components.toneNames.info)(share);
+Weave.application.goalGauge = share => Weave.library.components.gauge({ value: share, reading: Weave.application.share(share / 100), label: Weave.application.words.goal, tone: Weave.application.goalTone(share) });
+Weave.application.onTrack = () => Weave.library.components.statusPill({ text: Weave.application.words.onTrack, tone: Weave.application.tone.good });
+Weave.application.centred = children => Weave.library.components.stack({ align: Weave.library.components.markNames.align.centre, children });
+Weave.application.goal = state => Weave.application.centred([Weave.application.goalGauge(Weave.application.goalShare(state)), Weave.application.onTrack()]);
+Weave.application.withAction = (button, run) => Weave.library.composition.merge(button, { onAction: run });
+Weave.application.openPalette = () => Weave.application.palette();
+Weave.application.greetingActions = () => [Weave.application.withAction(Weave.application.buttons.palette, Weave.application.openPalette), Weave.application.withAction(Weave.application.buttons.customers, Weave.application.go(Weave.application.viewNames.customers))];
+Weave.application.greeting = state => Weave.library.components.hero(Weave.library.composition.merge(Weave.application.heroes.greeting, { actions: Weave.application.greetingActions(), aside: Weave.application.goal(state) }));
+Weave.application.pausedAlert = () => Weave.library.components.alert({ tone: Weave.application.tone.warn, title: Weave.application.words.paused, note: Weave.application.words.pausedNote, action: Weave.application.withAction(Weave.application.buttons.resume, Weave.application.flipLive) });
+Weave.application.pausedNote = state => Weave.library.control.either(() => state.live, Weave.library.composition.noop, Weave.application.pausedAlert)(state);
+Weave.application.overviewCards = state => Weave.application.metricCards(state).concat([Weave.application.revenue(state), Weave.application.funnelCard(), Weave.application.teamCard(), Weave.application.mixCard(), Weave.application.deployCard(), Weave.application.activityCard()]);
+Weave.application.overview = state => Weave.library.composition.compact([Weave.application.pausedNote(state), Weave.application.greeting(state), Weave.library.components.bento({ children: Weave.application.overviewCards(state) })]);
+
+/* analytics: sessions by source, sign ups, the pages people read, where the money comes from, and how fast it was served. */
+Weave.application.sessionLines = state => Weave.application.linesOf(Weave.application.sources, state, Weave.application.spans.month.count);
+Weave.application.sessionPlot = state => [Weave.application.tallArea(Weave.application.sessionLines(state), Weave.application.words.sessions), Weave.library.components.axis({ labels: Weave.application.spans.month.ticks })];
+Weave.application.sessions = state => Weave.application.chartCard(Weave.library.composition.merge(Weave.application.charts.sessions, { legend: Weave.application.legendOf(Weave.application.sources, state), children: Weave.application.sessionPlot(state) }));
+Weave.application.signupRows = () => Weave.application.inSlot(Weave.library.components.seriesNames.two)(Weave.application.counted(Weave.application.data.signups));
+Weave.application.signupCard = () => Weave.application.chartCard(Weave.library.composition.merge(Weave.application.charts.signups, { children: [Weave.library.components.barChart({ items: Weave.application.signupRows(), label: Weave.application.words.signups })] }));
+Weave.application.pageRows = () => Weave.application.inSlot(Weave.library.components.seriesNames.one)(Weave.application.counted(Weave.application.data.pages));
+Weave.application.pageCard = () => Weave.application.chartCard(Weave.library.composition.merge(Weave.application.charts.pages, { children: [Weave.library.components.rankBars({ items: Weave.application.pageRows(), label: Weave.application.words.pages })] }));
+Weave.application.regionRows = () => Weave.application.slotted(Weave.application.data.regions).map(row => Weave.library.composition.merge(row, { key: row.label, reading: Weave.application.dollars(row.value) }));
+Weave.application.regionTotal = () => Weave.application.dollars(Weave.library.components.chartSum(Weave.application.data.regions.map(row => row.value)));
+Weave.application.regionRing = () => Weave.library.components.donut({ items: Weave.application.regionRows(), reading: Weave.application.regionTotal(), label: Weave.application.words.regionTotal });
+Weave.application.regionCard = () => Weave.application.chartCard(Weave.library.composition.merge(Weave.application.charts.regions, { legend: Weave.application.regionRows(), children: [Weave.application.regionRing()] }));
+Weave.application.latencyCell = (day, hour) => ({ value: 120 + 380 * Weave.library.composition.noise(day * 12 + hour) * Math.sin(hour / 3.8), reading: Weave.application.whole(120 + 380 * Weave.library.composition.noise(day * 12 + hour) * Math.sin(hour / 3.8)) });
+Weave.application.latencyRows = () => Weave.application.data.days.map((label, day) => ({ label, cells: Weave.application.data.hours.map((hour, index) => Weave.application.latencyCell(day, index)) }));
+Weave.application.latencyKey = () => Weave.library.components.heatScale({ least: Weave.application.words.quick, most: Weave.application.words.slow });
+Weave.application.latencyCard = () => Weave.application.chartCard(Weave.library.composition.merge(Weave.application.charts.latency, { children: [Weave.library.components.heatmap({ items: Weave.application.latencyRows(), label: Weave.application.words.latency }), Weave.application.latencyKey()] }));
+Weave.application.analytics = state => [Weave.library.components.bento({ children: [Weave.application.sessions(state), Weave.application.pageCard(), Weave.application.regionCard(), Weave.application.signupCard(), Weave.application.latencyCard()] })];
+
+/* customers: a search and a health filter over the accounts, sorted by whichever column the reader pressed last. */
+Weave.application.matchesQuery = (row, query) => (row.name + ' ' + row.company).toLowerCase().includes(query.toLowerCase());
+Weave.application.matchesHealth = (row, health) => [Weave.application.healthNames.everyone, row.health].includes(health);
+Weave.application.visible = state => Weave.library.composition.sortBy(Weave.application.sorts[state.sort])(Weave.application.people.filter(row => Weave.application.matchesQuery(row, state.query)).filter(row => Weave.application.matchesHealth(row, state.health)));
+Weave.application.typed = event => Weave.application.change({ query: Weave.library.events.valueOfTarget(event) });
+Weave.application.healthPicker = state => Weave.library.components.segmented({ active: state.health, items: Weave.library.composition.pairs(Weave.application.healths).map(([key, row]) => ({ key, label: row.label })), onPick: key => Weave.application.change({ health: key }) });
+Weave.application.finder = state => Weave.library.components.searchBox({ name: 'customer', label: Weave.application.words.findCustomer, value: state.query, onEdit: Weave.application.typed });
+Weave.application.headed = (state, key, label) => label + Weave.library.control.either(() => state.sort === key, () => Weave.application.words.sorted, () => '')(key);
+Weave.application.sortedColumn = state => column => Weave.library.composition.merge(column, { label: Weave.application.headed(state, column.key, column.label), onAction: () => Weave.application.change({ sort: column.key }) });
+Weave.application.maybeSorted = state => column => Weave.library.control.either(() => Weave.application.sortNames[column.key], Weave.application.sortedColumn(state), Weave.library.composition.identity)(column);
+Weave.application.who = (value, row) => Weave.library.components.person({ name: row.name, note: row.company });
+Weave.application.planTag = value => Weave.library.components.tag({ text: Weave.application.plans[value].label, tone: Weave.application.plans[value].tone });
+Weave.application.healthPill = value => Weave.library.components.statusPill({ text: Weave.application.healths[value].label, tone: Weave.application.healths[value].tone });
+Weave.application.seenHint = value => Weave.library.components.hint({ text: value });
+Weave.application.nameColumn = { key: Weave.application.sortNames.name, label: Weave.application.words.customer, format: Weave.application.who };
+Weave.application.planColumn = { key: 'plan', label: Weave.application.words.plan, format: Weave.application.planTag };
+Weave.application.mrrColumn = { key: Weave.application.sortNames.mrr, label: Weave.application.words.mrrShort, format: Weave.application.money };
+Weave.application.seatsColumn = { key: Weave.application.sortNames.seats, label: Weave.application.words.seats };
+Weave.application.healthColumn = { key: 'health', label: Weave.application.words.health, format: Weave.application.healthPill };
+Weave.application.seenColumn = { key: 'seen', label: Weave.application.words.seen, format: Weave.application.seenHint };
+Weave.application.columnOrder = [Weave.application.nameColumn, Weave.application.planColumn, Weave.application.mrrColumn, Weave.application.seatsColumn, Weave.application.healthColumn, Weave.application.seenColumn];
+Weave.application.columns = state => Weave.application.columnOrder.map(Weave.application.maybeSorted(state));
+Weave.application.nobody = () => Weave.library.components.emptyState({ glyph: '🔭', title: Weave.application.words.nobody, note: Weave.application.words.nobodyNote });
+Weave.application.ledger = state => Weave.library.control.either(rows => rows.length > 0, rows => Weave.library.components.table({ columns: Weave.application.columns(state), rows }), Weave.application.nobody)(Weave.application.visible(state));
+Weave.application.tally = state => Weave.library.components.pill({ text: String(Weave.application.visible(state).length) + Weave.application.words.accounts });
+Weave.application.customerTools = state => Weave.library.components.spread({ children: [Weave.library.components.row({ children: [Weave.application.finder(state), Weave.application.tally(state)] }), Weave.application.healthPicker(state)] });
+Weave.application.customers = state => [Weave.library.components.panel({ children: [Weave.application.customerTools(state), Weave.application.ledger(state)] })];
+
+/* the launch page: the public site, drawn with the same widgets as the desk and framed as a window inside it. */
+Weave.application.siteActions = () => [Weave.application.buttons.trial, Weave.application.buttons.demo];
+Weave.application.mixShot = () => Weave.library.components.card({ children: [Weave.library.components.subtitle({ text: Weave.application.words.mix }), Weave.application.mixBar()] });
+Weave.application.siteShot = state => Weave.library.components.stack({ children: [Weave.application.metricCard(state)(Weave.library.composition.first(Weave.application.metrics), 0), Weave.application.mixShot()] });
+Weave.application.siteHero = state => Weave.library.components.hero(Weave.library.composition.merge(Weave.application.heroes.site, { actions: Weave.application.siteActions(), aside: Weave.application.siteShot(state) }));
+Weave.application.loose = children => Weave.library.components.stack({ gap: Weave.library.components.markNames.gap.loose, children });
+Weave.application.block = (intro, children) => Weave.application.loose([Weave.library.components.sectionIntro(intro), Weave.library.components.panels({ children })]);
+Weave.application.why = () => Weave.application.block(Weave.application.intros.why, Weave.application.data.features.map(Weave.library.components.feature));
+Weave.application.priceCard = row => Weave.library.components.plan(Weave.library.composition.merge(row, { per: Weave.application.words.perSeat, action: { label: Weave.application.words.choose } }));
+Weave.application.pricing = () => Weave.application.block(Weave.application.intros.pricing, Weave.application.data.prices.map(Weave.application.priceCard));
+Weave.application.loved = () => Weave.application.block(Weave.application.intros.loved, Weave.application.data.quotes.map(Weave.library.components.testimonial));
+Weave.application.callToAction = () => Weave.library.components.hero(Weave.library.composition.merge(Weave.application.heroes.cta, { actions: [Weave.application.buttons.trial] }));
+Weave.application.logoBand = () => Weave.library.components.marquee({ label: Weave.application.words.trusted, items: Weave.application.data.logos });
+Weave.application.divide = () => Weave.library.components.labelDivider({ text: Weave.application.words.orWord });
+Weave.application.siteParts = state => [Weave.application.siteHero(state), Weave.application.logoBand(), Weave.application.why(), Weave.application.divide(), Weave.application.pricing(), Weave.application.loved(), Weave.application.callToAction()];
+Weave.application.launch = state => [Weave.library.components.windowFrame({ title: Weave.application.words.site, label: Weave.application.words.site, children: [Weave.application.loose(Weave.application.siteParts(state))] })];
+
+/* settings: the appearance rows, the live desk switches and the workspace name. Every control writes the store and nothing else. */
+Weave.application.picker = (table, active, pick) => Weave.library.components.segmented({ active, items: Weave.library.composition.pairs(table).map(([key, label]) => ({ key, label })), onPick: pick });
+Weave.application.choiceRow = (label, picker) => Weave.library.components.stack({ gap: Weave.library.components.markNames.gap.tight, children: [Weave.library.components.fieldLabel({ label }), picker] });
+Weave.application.themeRow = state => Weave.application.choiceRow(Weave.application.words.themeWord, Weave.application.picker(Weave.application.themeChoices, state.theme, Weave.application.chooseTheme));
+Weave.application.paletteRow = state => Weave.application.choiceRow(Weave.application.words.paletteWord, Weave.application.picker(Weave.application.paletteChoices, state.palette, Weave.application.choosePalette));
+Weave.application.densityRow = state => Weave.application.choiceRow(Weave.application.words.densityWord, Weave.application.picker(Weave.application.densityChoices, state.density, Weave.application.chooseDensity));
+Weave.application.appearance = state => Weave.application.boxed(Weave.application.charts.appearance, [Weave.application.themeRow(state), Weave.application.paletteRow(state), Weave.application.densityRow(state)]);
+Weave.application.streamSwitch = state => Weave.library.components.switchField({ label: Weave.application.words.streamLabel, checked: state.live, onChoose: Weave.application.flipLive });
+Weave.application.digestSwitch = state => Weave.library.components.switchField({ label: Weave.application.words.digestLabel, checked: state.digest, onChoose: () => Weave.application.change({ digest: !state.digest }) });
+Weave.application.liveDesk = state => Weave.application.boxed(Weave.application.charts.liveDesk, [Weave.application.streamSwitch(state), Weave.application.digestSwitch(state)]);
+Weave.application.saved = () => Weave.application.toasts.push(Weave.application.words.saved, Weave.library.components.toneNames.success);
+Weave.application.saveButton = () => Weave.library.components.actions({ children: [Weave.library.components.actionButton(Weave.application.withAction(Weave.application.buttons.save, Weave.application.saved))] });
+Weave.application.workspaceForm = () => Weave.application.boxed(Weave.application.charts.workspace, [Weave.library.components.field(Weave.application.fields.name), Weave.library.components.inputGroup(Weave.application.fields.address), Weave.application.saveButton()]);
+Weave.application.settingsMain = state => Weave.library.components.column({ span: Weave.library.components.markNames.span.twoThirds, children: [Weave.application.appearance(state), Weave.application.workspaceForm()] });
+Weave.application.settingsSide = state => Weave.library.components.column({ span: Weave.library.components.markNames.span.third, children: [Weave.application.liveDesk(state)] });
+Weave.application.settings = state => [Weave.library.components.columns({ children: [Weave.application.settingsMain(state), Weave.application.settingsSide(state)] })];
+
+/* the rail and the bar: where the reader can go, and what they can do from anywhere. */
+Weave.application.atRisk = () => Weave.application.people.filter(row => row.health === Weave.application.healthNames.risk).length;
+Weave.application.countFor = key => Weave.library.control.either(() => key === Weave.application.viewNames.customers, Weave.application.atRisk, Weave.library.composition.noop)(key);
+Weave.application.railItem = key => Weave.library.composition.merge(Weave.application.views[key], { key, onAction: Weave.application.go(key), count: Weave.application.countFor(key) });
+Weave.application.railGroup = group => ({ label: group.label, items: group.keys.map(Weave.application.railItem) });
+Weave.application.railFoot = () => [Weave.library.components.person(Weave.application.owner), Weave.library.components.statusPill({ text: Weave.application.words.systems, tone: Weave.application.tone.good })];
+Weave.application.rail = state => Weave.library.components.sideNav({ title: Weave.application.words.brand, glyph: Weave.application.words.planet, active: state.view, groups: Weave.application.railGroups.map(Weave.application.railGroup), footer: Weave.application.railFoot() });
+Weave.application.pulse = state => Weave.library.components.statusPill(Weave.library.control.either(() => state.live, () => Weave.application.pulseOn, () => Weave.application.pulseOff)(state));
+Weave.application.bellLabel = state => Weave.application.words.bellLabel + ', ' + String(state.unread) + Weave.application.words.unread;
+Weave.application.finderButton = () => Weave.library.components.searchTrigger({ label: Weave.application.words.search, keys: Weave.application.data.paletteKeys, onAction: Weave.application.openPalette });
+Weave.application.bellButton = state => Weave.library.components.iconButton({ glyph: Weave.application.words.bell, label: Weave.application.bellLabel(state), onAction: Weave.application.bell });
+Weave.application.themeButton = () => Weave.library.components.iconButton({ glyph: Weave.application.words.halfMoon, label: Weave.application.words.themeLabel, onAction: Weave.application.flipTheme });
+Weave.application.barActions = state => [Weave.application.finderButton(), Weave.application.pulse(state), Weave.application.bellButton(state), Weave.application.themeButton()];
+Weave.application.bar = state => Weave.library.components.topBar({ title: Weave.application.views[state.view].label, note: Weave.application.views[state.view].note, actions: Weave.application.barActions(state) });
+
+/* overlays: the palette, the notification drawer and the key map that reaches them. */
+Weave.application.command = (label, run, close) => ({ label, onAction: () => (close(), run()) });
+Weave.application.viewCommands = close => Weave.application.viewKeysInOrder().map(key => Weave.application.command(Weave.application.words.goPrefix + Weave.application.views[key].label, Weave.application.go(key), close));
+Weave.application.actionRows = () => [[Weave.application.words.flipTheme, Weave.application.flipTheme], [Weave.application.words.flipLive, Weave.application.flipLive], [Weave.application.words.openBell, Weave.application.bell]];
+Weave.application.moreCommands = close => Weave.application.actionRows().map(([label, run]) => Weave.application.command(label, run, close));
+Weave.application.commands = close => Weave.application.viewCommands(close).concat(Weave.application.moreCommands(close));
+Weave.application.palette = () => Weave.library.patterns.dialog({ title: Weave.application.words.paletteTitle, body: close => [Weave.library.patterns.commandPalette({ commands: Weave.application.commands(close) }).element] });
+Weave.application.bellBody = () => [Weave.library.components.listGroup({ items: Weave.application.data.alerts }), Weave.library.components.note({ text: Weave.application.words.caughtUp })];
+Weave.application.bell = () => (Weave.library.patterns.drawer({ title: Weave.application.words.bellLabel, body: Weave.application.bellBody() }), Weave.application.change({ unread: 0 }));
+Weave.application.viewKeysInOrder = () => Weave.library.composition.keys(Weave.application.views);
+Weave.application.numberKeys = () => Weave.library.composition.fromPairs(Weave.application.viewKeysInOrder().map((key, index) => [String(index + 1), Weave.application.go(key)]));
+Weave.application.keyMap = () => Weave.library.composition.merge(Weave.application.numberKeys(), { 'ctrl+k': Weave.application.palette, t: Weave.application.flipTheme, l: Weave.application.flipLive });
+
+/* the desk: one render for the whole application, the view it draws looked up from a table and never chosen by a branch. */
+Weave.application.bodies = {};
+Weave.application.bodies.overview = Weave.application.overview;
+Weave.application.bodies.analytics = Weave.application.analytics;
+Weave.application.bodies.customers = Weave.application.customers;
+Weave.application.bodies.launch = Weave.application.launch;
+Weave.application.bodies.settings = Weave.application.settings;
+Weave.application.render = state => Weave.library.components.workspace({ nav: Weave.application.rail(state), children: [Weave.application.bar(state), Weave.library.components.page({ data: { key: state.view }, children: Weave.application.bodies[state.view](state) })] });
+Weave.application.desk = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.render).element;
+Weave.application.mountDesk = () => Weave.library.elements.append([Weave.application.desk()])(Weave.library.browser.body());
+Weave.application.start = () => (Weave.library.components.installStyles(), Weave.application.mountDesk(), Weave.library.patterns.shortcuts(Weave.application.keyMap()), Weave.library.timing.every(Weave.application.pace, Weave.application.tick));
+Weave.library.events.ready(Weave.application.start);
+</script>
+</body>
+</html>

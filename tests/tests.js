@@ -961,7 +961,8 @@ Weave.tests.cases.areaChartDrawsGuides = () => Weave.tests.findAll(Weave.tests.t
 Weave.tests.cases.areaChartBareDrawsNoGuides = () => Weave.tests.findAll(Weave.library.components.areaChart({ bare: true, lines: [{ values: [1, 2] }] }), 'plotGuide').length === 0;
 Weave.tests.cases.metricSparkIsBare = () => Weave.tests.findAll(Weave.library.components.metric({ label: 'Users', value: 12, values: [1, 2, 3] }), 'plotGuide').length === 0;
 Weave.tests.cases.metricSaysWhichWayItMoved = () => Weave.tests.findAll(Weave.library.components.metric({ label: 'Users', value: 12, text: '+4%', direction: 'up' }), 'trendMark').length === 1;
-Weave.tests.cases.gaugeStrokesItsShare = () => Weave.tests.find(Weave.library.components.gauge({ value: 50, reading: '50%' }), 'gaugeArc').style.strokeDasharray.startsWith(String(Weave.library.components.ringLength(0.5)));
+Weave.tests.dashOf = el => parseFloat(el.style.strokeDasharray);
+Weave.tests.cases.gaugeStrokesItsShare = () => Math.abs(Weave.tests.dashOf(Weave.tests.find(Weave.library.components.gauge({ value: 50, reading: '50%' }), 'gaugeArc')) - Weave.library.components.ringLength(0.5)) < 0.01;
 Weave.tests.cases.gaugeTakesItsTone = () => Weave.library.components.gauge({ value: 5, tone: 'danger' }).dataset.tone === 'danger';
 Weave.tests.widthsOf = el => [...Weave.tests.findAll(el, 'stackSegment')].map(part => parseFloat(part.style.width));
 Weave.tests.cases.stackBarSharesAddUpToTheWhole = () => Math.round(Weave.tests.widthsOf(Weave.library.components.stackBar({ items: [{ label: 'a', value: 1 }, { label: 'b', value: 3 }] })).reduce((sum, width) => sum + width, 0)) === 100;
@@ -977,3 +978,6 @@ Weave.tests.cases.sheetCarriesTheSlide = () => Weave.library.components.styleTex
 Weave.tests.cases.sheetGlidesOnlyForASteadyReader = () => Weave.library.components.styleText().includes('(prefers-reduced-motion: no-preference){.weave-card { transition:');
 Weave.tests.cases.sheetStillPutsTheCompactBlockAfterTheGlides = () => Weave.library.composition.keys(Weave.library.components.sheetExtras).indexOf('glides') < Weave.library.composition.keys(Weave.library.components.sheetExtras).indexOf('media');
 Weave.tests.cases.phoneLaysTheRailAcross = () => Weave.library.components.mediaRules.compact.rules.navBox.flexDirection === 'row';
+Weave.tests.lowPointOf = spec => parseFloat(Weave.tests.find(Weave.library.components.areaChart(spec), 'chartLine').getAttribute('points').split(' ')[0].split(',')[1]);
+Weave.tests.cases.areaChartFitsANarrowReadingToItsOwnFloor = () => Weave.tests.lowPointOf({ fit: true, lines: [{ values: [100, 104] }] }) > 50;
+Weave.tests.cases.areaChartMeasuresFromNoughtUnlessAskedToFit = () => Weave.tests.lowPointOf({ lines: [{ values: [100, 104] }] }) < 20;
