@@ -845,3 +845,18 @@ Weave.tests.cases.commentThreadDrawsARowPerRemark = () => Weave.library.query.al
 Weave.tests.cases.commentThreadTakesAReplyUnderTheLast = () => Weave.library.query.allWithin(Weave.tests.selectorFor('threadItem'))(Weave.tests.threadOf([Weave.library.components.note({ text: 'answering' })])).length === 2;
 Weave.tests.markedWhileOver = target => (Weave.library.events.trigger('dragenter')(target), Weave.library.attributes.data(Weave.library.components.overKey)(target));
 Weave.tests.cases.dropzoneMarksItselfWhileAFileIsOverIt = () => Weave.tests.markedWhileOver(Weave.library.components.dropzone({ title: 'Drop it', note: 'here' })) === true;
+/* inventory: one row per bug the inventory named, pinned once it was reproduced and fixed. */
+Weave.tests.shownWhenMeasured = [];
+Weave.tests.noteShown = el => (Weave.tests.shownWhenMeasured.push(Weave.library.style.isShown(el)), {});
+Weave.tests.measureWhileShowing = el => (Weave.library.control.attemptOr(Weave.library.effects.afterShowing(Weave.tests.noteShown, {}), undefined)(Weave.library.style.hide(el)), Weave.tests.shownWhenMeasured.pop());
+Weave.tests.cases.effectsMeasureTheOpeningAfterShowing = () => Weave.tests.withFixture(Weave.tests.measureWhileShowing) === true;
+Weave.tests.responseTyped = type => ({ headers: { get: () => type } });
+Weave.tests.cases.networkParsesAFormResponseAsText = () => Weave.library.network.parserNameFor(Weave.tests.responseTyped(Weave.library.browser.mimeTypes.form)) === Weave.library.network.textParser;
+Weave.tests.cases.networkEveryPickedParserExists = () => Weave.library.network.typedParserNames().every(name => Weave.library.predicates.isFunction(Weave.library.network.parsers[name]));
+Weave.tests.cases.interactionSecondDragStartsWhereTheFirstEnded = () => Weave.library.interaction.translation(Object.assign(Weave.library.interaction.settleDrag({ offsetX: 0, offsetY: 0, dx: 50, dy: 0 }), { dx: 10 })) === 'translate(60px, 0px)';
+Weave.tests.sortList = () => Weave.library.query.oneWithin('ul')(Weave.library.elements.div({ html: '<ul><li><span>a</span></li><li><span>b</span></li><li><span>c</span></li></ul>' }));
+Weave.tests.listText = list => Weave.library.browser.childrenOf(list).map(Weave.library.elements.textOf).join();
+Weave.tests.firstSpanOwner = list => Weave.library.interaction.listChildOf(list, Weave.library.query.oneWithin('span')(list));
+Weave.tests.cases.interactionSortResolvesTheListItem = () => Weave.library.predicates.matches('li')(Weave.tests.firstSpanOwner(Weave.tests.sortList())) === true;
+Weave.tests.placedDown = list => (Weave.library.interaction.placeBeside(Weave.library.browser.childrenOf(list)[0], Weave.library.browser.childrenOf(list)[2]), Weave.tests.listText(list));
+Weave.tests.cases.interactionSortDropsDownwardAfterTheTarget = () => Weave.tests.placedDown(Weave.tests.sortList()) === 'b,c,a';

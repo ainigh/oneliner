@@ -50,8 +50,9 @@ Weave.library.network.parsers.html = response => Weave.library.composition.then(
 Weave.library.network.parsers.blob = Weave.library.browser.responseBlob;
 Weave.library.network.parsers.formData = Weave.library.browser.responseFormData;
 Weave.library.network.contentTypeOf = response => Weave.library.control.defaultTo(Weave.library.browser.mimeTypes.text)(Weave.library.browser.headerOf(response, Weave.library.network.headerNames.contentType));
-Weave.library.network.parserNameFor = response => Weave.library.control.defaultTo(Weave.library.network.textParser)(Weave.library.composition.keys(Weave.library.browser.mimeTypes).find(name => Weave.library.network.contentTypeOf(response).includes(Weave.library.browser.mimeTypes[name])));
+Weave.library.network.parserNameFor = response => Weave.library.control.defaultTo(Weave.library.network.textParser)(Weave.library.network.typedParserNames().find(name => Weave.library.network.contentTypeOf(response).includes(Weave.library.browser.mimeTypes[name])));
 Weave.library.network.textParser = 'text';
+Weave.library.network.typedParserNames = () => Weave.library.composition.keys(Weave.library.network.parsers).filter(name => name in Weave.library.browser.mimeTypes);
 Weave.library.network.parseByContentType = response => Weave.library.network.parsers[Weave.library.network.parserNameFor(response)](response);
 Weave.library.network.jsonHeaders = { [Weave.library.network.headerNames.contentType]: Weave.library.browser.mimeTypes.json, [Weave.library.network.headerNames.accept]: Weave.library.browser.mimeTypes.json };
 Weave.library.network.formHeaders = { [Weave.library.network.headerNames.contentType]: Weave.library.browser.mimeTypes.form };

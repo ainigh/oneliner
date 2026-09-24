@@ -35,13 +35,16 @@ Weave.library.effects.fadeTo = (opacity, options) => el => Weave.library.effects
 Weave.library.effects.heightFrames = (from, to) => ({ [Weave.library.browser.properties.height]: [from, to], [Weave.library.browser.properties.overflow]: [Weave.library.browser.keywords.hidden, Weave.library.browser.keywords.hidden] });
 Weave.library.effects.zeroHeight = Weave.library.composition.pixels(0);
 Weave.library.effects.naturalHeight = el => Weave.library.composition.pixels(Weave.library.browser.scrollHeightOf(el));
-Weave.library.effects.slideDown = options => el => Weave.library.effects.animate(Weave.library.effects.heightFrames(Weave.library.effects.zeroHeight, Weave.library.effects.naturalHeight(el)), options)(Weave.library.style.show(el));
+Weave.library.effects.afterShowing = (framesOf, options) => el => Weave.library.effects.animate(framesOf(Weave.library.style.show(el)), options)(el);
+Weave.library.effects.openingHeight = el => Weave.library.effects.heightFrames(Weave.library.effects.zeroHeight, Weave.library.effects.naturalHeight(el));
+Weave.library.effects.slideDown = options => el => Weave.library.effects.afterShowing(Weave.library.effects.openingHeight, options)(el);
 Weave.library.effects.slideUp = options => el => Weave.library.composition.then(Weave.library.style.hide)(Weave.library.effects.animate(Weave.library.effects.heightFrames(Weave.library.effects.naturalHeight(el), Weave.library.effects.zeroHeight), options)(el));
 Weave.library.effects.slideToggle = options => el => Weave.library.control.either(Weave.library.style.isShown, Weave.library.effects.slideUp(options), Weave.library.effects.slideDown(options))(el);
 Weave.library.effects.sizeFrames = (from, to) => Weave.library.composition.merge(Weave.library.effects.heightFrames(from.height, to.height), Weave.library.effects.opacityFrames(from.opacity, to.opacity));
 Weave.library.effects.collapsed = { height: Weave.library.effects.zeroHeight, opacity: Weave.library.effects.clear };
 Weave.library.effects.expanded = el => ({ height: Weave.library.effects.naturalHeight(el), opacity: Weave.library.effects.opaque });
-Weave.library.effects.showAnimated = options => el => Weave.library.effects.animate(Weave.library.effects.sizeFrames(Weave.library.effects.collapsed, Weave.library.effects.expanded(el)), options)(Weave.library.style.show(el));
+Weave.library.effects.openingSize = el => Weave.library.effects.sizeFrames(Weave.library.effects.collapsed, Weave.library.effects.expanded(el));
+Weave.library.effects.showAnimated = options => el => Weave.library.effects.afterShowing(Weave.library.effects.openingSize, options)(el);
 Weave.library.effects.hideAnimated = options => el => Weave.library.composition.then(Weave.library.style.hide)(Weave.library.effects.animate(Weave.library.effects.sizeFrames(Weave.library.effects.expanded(el), Weave.library.effects.collapsed), options)(el));
 Weave.library.effects.toggleAnimated = options => el => Weave.library.control.either(Weave.library.style.isShown, Weave.library.effects.hideAnimated(options), Weave.library.effects.showAnimated(options))(el);
 
