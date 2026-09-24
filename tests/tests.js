@@ -566,7 +566,7 @@ Weave.tests.cases.datesDaysInMonthCountsTheLongOnes = () => Weave.library.dates.
 Weave.tests.cases.datesEndOfMonthStaysInsideIt = () => Weave.tests.monthOf(Weave.library.dates.endOf(Weave.library.dates.names.month)(Weave.tests.lastOfJanuary())) === 0;
 Weave.tests.gridDayNames = () => Weave.library.composition.flatten(Weave.library.dates.monthGrid(Weave.tests.lastOfJanuary())).map(day => day.toDateString());
 Weave.tests.cases.datesMonthGridNeverRepeatsADay = () => Weave.library.composition.unique(Weave.tests.gridDayNames()).length === 42;
-Weave.tests.regionSelector = () => Weave.library.query.attributeSelector(Weave.library.browser.keywords.id, Weave.library.accessibility.regionId);
+Weave.tests.regionSelector = () => Weave.library.query.attributeSelector(Weave.library.browser.keywords.id, Weave.library.accessibility.regionIdFor(Weave.library.accessibility.politeness.polite));
 Weave.tests.announcedThrice = () => (Weave.library.control.times(3)(() => Weave.library.accessibility.announce('counted')), Weave.library.query.all(Weave.tests.regionSelector()).length);
 Weave.tests.cases.accessibilityAnnounceKeepsOneRegion = () => Weave.tests.announcedThrice() === 1;
 Weave.tests.badEscape = () => Weave.library.control.attemptOr(() => Weave.library.navigation.route('/users/:id')('/users/100%').id, false)();
@@ -892,3 +892,11 @@ Weave.tests.cases.storageBringsADateBack = () => Weave.library.dates.iso(Weave.l
 Weave.tests.cases.storageLeavesOrdinaryStringsAlone = () => Weave.library.storage.decode(Weave.library.storage.encode({ code: '2026-01-15' })).code === '2026-01-15';
 Weave.tests.addressAgrees = () => (Weave.library.navigation.setHash('tab=b'), Weave.library.patterns.changedAddress('tab', { state: { tab: 'b' } }));
 Weave.tests.cases.patternsLinkIgnoresItsOwnWrite = () => Weave.library.predicates.isDefined(Weave.tests.addressAgrees()) === false;
+Weave.tests.prevented = [];
+Weave.tests.fakeKey = { preventDefault: () => Weave.tests.prevented.push(true) };
+Weave.tests.cases.accessibilityRovingKeepsArrowsFromScrolling = () => (Weave.library.accessibility.rovingKeys(Weave.library.browser.childrenOf(Weave.tests.sortList())).arrowDown(Weave.tests.fakeKey), Weave.tests.prevented.length === 1);
+Weave.tests.cases.accessibilityRovingJumpsToTheEnd = () => Weave.library.predicates.isFunction(Weave.library.accessibility.rovingKeys([]).end) === true;
+Weave.tests.cases.accessibilityAnnounceKeepsARegionPerPoliteness = () => Weave.library.accessibility.announce('urgent', Weave.library.accessibility.politeness.assertive) !== Weave.library.accessibility.announce('calm', Weave.library.accessibility.politeness.polite);
+Weave.tests.goneSheet = () => Weave.library.elements.appendTo(Weave.library.browser.head())(Weave.library.elements.fromHtml('<style>.weave-test-gone { display: none; }</style>')[0]);
+Weave.tests.hiddenByClass = el => (Weave.tests.goneSheet(), Weave.library.style.isShown(Weave.library.attributes.addClass('weave-test-gone')(el)));
+Weave.tests.cases.styleSeesAClassThatHides = () => Weave.tests.withFixture(Weave.tests.hiddenByClass) === false;
