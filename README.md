@@ -139,6 +139,9 @@ colour. The written widgets — `prose`, `callout`, `contents`, `codeListing`, `
 `diffStat`, `comment`, `commentThread` and `dropzone` — carry a page of words and a page of diff
 the same way.
 
+The showcase widgets — a hero, features, plans, a window frame, a bento grid, a side rail, metrics,
+area charts, gauges, funnels and more — are described under *The showcase wave* below.
+
 `demos/elements.html` draws every one of them, live, with the call that draws it underneath.
 
 A pattern is a component with state. Every one returns the same handle, `{ element, state, update }`,
@@ -327,7 +330,9 @@ marks — which is how a table look is one row rather than three. `components.ma
 value as a name, so an application asks for one by name and never by string.
 
 `tone` is read off every spec, not only the specs that ask for it, and `components.toneSpends` is
-the one place a way of spending a tone is written — five of them, shared by every toned class.
+the one place a way of spending a tone is written — seven of them, shared by every toned class. `soft`
+and `wash` mix the tone into a tint with `color-mix`, so a tag, a chip or an alert carries its tone
+as a quiet field of colour rather than an outline.
 
 ### Four ways to change how it all looks
 
@@ -377,6 +382,47 @@ the survivors:
 ```js
 Weave.library.patterns.chartBoard({ spans, lines: services, draw: view => Weave.library.components.lineChart({ lines: view.lines }) });
 ```
+
+## The showcase wave
+
+The widgets a product page and a live console reach for, added so that what a page can be built
+from is as good as what the library can prove about itself. Every one is still a spec in and an
+element out, still names parts and never tags, and still spends tokens and never values.
+
+```js
+Weave.library.components.hero({ eyebrow: 'New', title: 'Ship the screen,', highlight: 'not the stylesheet', actions, aside, wash: 'aurora' });
+Weave.library.components.metric({ glyph: '💰', label: 'MRR', value: '$294K', text: '+5.4%', direction: 'up', tone: 'success', values });
+Weave.library.components.areaChart({ lines, label: 'Revenue', plot: 'tall' });
+Weave.library.components.bento({ children: [card({ tile: 'big', children }), feature({ tile: 'wide', glyph, title, note })] });
+Weave.library.components.workspace({ nav: sideNav({ title, glyph, active, groups, footer }), children: [topBar({ title, actions }), page] });
+```
+
+| Group | Widgets |
+|---|---|
+| building a page | `hero`, `sectionIntro`, `eyebrow`, `highlight`, `feature`, `plan`, `checklist`, `testimonial`, `logoCloud`, `marquee`, `windowFrame`, `bento`, `labelDivider` |
+| running an application | `workspace`, `sideNav`, `topBar`, `searchTrigger`, `iconButton`, `iconBadge`, `statusPill`, `person` |
+| charts | `metric`, `areaChart`, `gauge`, `stackBar`, `funnel`, `calendarHeat` |
+
+Seven modifiers came with them, each a table any spec can ask from by name:
+
+| Modifier | Table | What it does |
+|---|---|---|
+| `surface` | `components.surfaces` | `raised`, `glass`, `tinted`, `flat`, `featured`, and `inverse`, which carries the dark theme's tokens onto one box so everything inside it follows |
+| `wash` | `components.washes` | `aurora`, `sunrise`, `ocean`, and `midnight`, a dark field that also carries the dark tokens |
+| `tile` | `components.bentoSpans` | `wide`, `tall`, `big` and `full` inside a `bento`; a phone stacks them all |
+| `lay` | `components.lays` | `centre` for a hero's copy or a section intro |
+| `plot` | `components.plotSizes` | `spark` and `tall` for an area or line chart |
+| `hue` | `components.hues` | a portrait's tint, taken from its name, so the same person is always the same colour |
+| `dot` | `components.windowDots` | the three dots on a window frame |
+
+`areaChart` fades each fill from its own series colour: the gradient sits inside the series' own
+group, so `currentColor` resolves to that series and no chart names a colour. `fit: true` measures
+from just under the lowest reading instead of from nought, which is what a sparkline wants, and
+`metric` asks for it. A chart that changes its reading glides to the new length, because
+`components.glides` names the classes that move rather than jump and the sheet emits them only for
+a reader who has not asked for less motion. Boxes rise into place once, on arrival.
+
+`demos/orbit.html` is the whole wave running as one product.
 
 ## The written pages
 
@@ -485,7 +531,7 @@ npm run check       # all of the above
 
 ## The demos
 
-`demos/index.html` links twenty-three pages: two of them catalogues of the library itself, and the rest
+`demos/index.html` links twenty-four pages: Orbit, the showcase; two catalogues of the library itself; and the rest
 applications that put the patterns under load in a different shape. Each is short because the
 patterns do the work:
 
@@ -506,6 +552,7 @@ patterns do the work:
 | `account.html` | signing in | the gate, the session behind it, the desk it lets you at, and sign out |
 | `bank.html` | retail banking | accounts, a transfer that asks first, and a statement drawn twice from one set of rows |
 | `shop.html` | retail | a storefront on one store: a navbar counting the basket, an offer carousel, chips that filter, a basket in a sheet |
+| `orbit.html` | the showcase | a product command centre on one store: a rail and a top bar, a live desk of metrics, area charts, a gauge, a funnel and a deploy calendar, a sortable customer ledger, a launch page framed inside the product, settings that restyle the page, a palette and the keys to reach it all |
 | `landing.html` | marketing | the shape every product site takes: a hero, three reasons, prices, quotes and questions |
 | `signal.html` | service analytics | every chart the library draws: a line board whose legend switches a series off, bars with their own numbers, ranked bars, a ring, a heatmap, and the same week again as a table |
 | `travel.html` | booking | four steps and a summary over one store, priced by cabin and by how many are travelling |

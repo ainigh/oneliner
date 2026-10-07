@@ -207,7 +207,7 @@ Audit.catalog.emit = (file, entries) => Audit.platform.write(file, JSON.stringif
 /* run: audit every file, print every finding, exit non-zero when anything failed. */
 Audit.run = {};
 Audit.run.files = ['dist/weave.js', 'audit.js', 'tests/tests.js', 'demos/kit.js'];
-Audit.run.applications = ['sample.html', 'todo.html', 'tests.html', 'studio.html', 'styleguide.html', 'apps/relay.html', 'apps/pantry.html', 'demos/index.html', 'demos/crm.html', 'demos/board.html', 'demos/helpdesk.html', 'demos/warehouse.html', 'demos/school.html', 'demos/clinic.html', 'demos/agenda.html', 'demos/tenants.html', 'demos/kit.html', 'demos/elements.html', 'demos/patterns.html', 'demos/account.html', 'demos/bank.html', 'demos/shop.html', 'demos/tailor.html', 'demos/landing.html', 'demos/travel.html', 'demos/signal.html'];
+Audit.run.applications = ['sample.html', 'todo.html', 'tests.html', 'studio.html', 'styleguide.html', 'apps/relay.html', 'apps/pantry.html', 'demos/index.html', 'demos/crm.html', 'demos/board.html', 'demos/helpdesk.html', 'demos/warehouse.html', 'demos/school.html', 'demos/clinic.html', 'demos/agenda.html', 'demos/tenants.html', 'demos/kit.html', 'demos/elements.html', 'demos/orbit.html', 'demos/patterns.html', 'demos/account.html', 'demos/bank.html', 'demos/shop.html', 'demos/tailor.html', 'demos/landing.html', 'demos/travel.html', 'demos/signal.html'];
 Audit.run.auditMarkup = file => Audit.run.withSource(file, Audit.text.scriptSource(Audit.platform.read(file)));
 Audit.run.auditFile = file => Audit.run.withSource(file, Audit.platform.read(file));
 Audit.run.withSource = (file, source) => Audit.run.applyRules(file, Audit.codeLines(source), Audit.rules.recordComments(file, source), Audit.rules.recordSource(file, source));
