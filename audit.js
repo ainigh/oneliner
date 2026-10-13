@@ -9,7 +9,7 @@ Audit.platform.exists = file => require('fs').existsSync(file);
 Audit.platform.join = (...parts) => require('path').join(...parts);
 Audit.platform.print = text => console.log(text);
 Audit.platform.exit = code => process.exit(code);
-Audit.platform.argument = index => process.argv[index];
+Audit.platform.argument = index => process.argv[index]; 
 
 /* text: masking and splitting, so operator checks never see the inside of a literal. */
 Audit.text = {};
