@@ -166,7 +166,7 @@ Weave.application.rosterTitle = 'Everybody here';
 /* inviting: the library's own validators guard the address, and the new member lands in the same roster. */
 Weave.application.inviteFields = {};
 Weave.application.inviteFields.who = { label: 'Full name', rules: { required: true } };
-Weave.application.inviteFields.where = { label: 'Work email', rules: { email: true } };
+Weave.application.inviteFields.where = { label: 'Work email', rules: { required: true, email: true } };
 Weave.application.inviteRows = () => Weave.library.composition.pairs(Weave.application.inviteFields).map(([name, row]) => Weave.library.composition.merge(row, { name }));
 Weave.application.inviteLabel = 'Send the invitation';
 Weave.application.invitedRole = Weave.library.composition.first(Weave.application.otherRoles);

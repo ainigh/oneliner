@@ -13,9 +13,13 @@
 Weave.application = {};
 Weave.application.agent = 'Desk';
 Weave.application.tickets = [{ label: 'Login loop on Safari', who: 'ana@acme.test', said: [{ from: 'Ana', text: 'It bounces me back to the form.' }, { from: Weave.application.agent, text: 'Which Safari version?' }] }, { label: 'Invoice missing tax line', who: 'ben@acme.test', said: [{ from: 'Ben', text: 'The March invoice has no VAT row.' }] }, { label: 'Export times out', who: 'cleo@acme.test', said: [{ from: 'Cleo', text: 'Anything over 20k rows just hangs.' }, { from: Weave.application.agent, text: 'Trying a smaller batch now.' }] }];
-Weave.application.thread = ticket => Weave.library.patterns.chat({ title: ticket.label, author: Weave.application.agent, messages: ticket.said }).element;
+/* the queue: one store holds every ticket and the one that is open, so a reply is written back to its ticket and survives a switch. */
+Weave.application.desk = Weave.library.patterns.store(Weave.library.patterns.detailState({ items: Weave.application.tickets }));
+Weave.application.withSaid = (items, ticket, said) => items.map(item => Weave.library.control.either(() => item.id === ticket.id, () => Weave.library.composition.merge(item, { said }), () => item)(item));
+Weave.application.reply = ticket => change => Weave.application.desk.update(state => ({ items: Weave.application.withSaid(state.items, ticket, change({ messages: ticket.said }).messages) }));
+Weave.application.thread = ticket => Weave.library.patterns.chatBody({ title: ticket.label, author: Weave.application.agent })({ messages: ticket.said }, Weave.application.reply(ticket));
 Weave.application.detail = ticket => Weave.library.components.stack({ children: [Weave.library.components.note({ text: ticket.who }), Weave.application.thread(ticket)] });
-Weave.application.queue = () => Weave.library.patterns.masterDetail({ items: Weave.application.tickets, detail: Weave.application.detail });
+Weave.application.queue = () => Weave.library.patterns.connect(Weave.application.desk)(Weave.library.patterns.detailBody({ detail: Weave.application.detail }));
 Weave.application.title = 'Help desk';
 Weave.application.page = () => Weave.kit.shell({ title: Weave.application.title, note: Weave.application.blurb, children: [Weave.application.queue().element] });
 Weave.application.blurb = 'Three tickets, one open at a time. The detail pane is a live chat, and the reply lands in it.';

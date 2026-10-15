@@ -73,6 +73,8 @@ Weave.library.browser.keywords.slash = '/';
 Weave.library.browser.keywords.plus = '+';
 Weave.library.browser.keywords.draggable = 'draggable';
 Weave.library.browser.keywords.move = 'move';
+Weave.library.browser.keywords.customPropertyPrefix = '--';
+Weave.library.browser.keywords.borderBox = 'border-box';
 
 Weave.library.browser.properties = {};
 Weave.library.browser.properties.display = 'display';
@@ -81,10 +83,12 @@ Weave.library.browser.properties.opacity = 'opacity';
 Weave.library.browser.properties.height = 'height';
 Weave.library.browser.properties.width = 'width';
 Weave.library.browser.properties.overflow = 'overflow';
+Weave.library.browser.properties.paddingRight = 'paddingRight';
 Weave.library.browser.properties.transition = 'transition';
 Weave.library.browser.properties.transform = 'transform';
 Weave.library.browser.properties.touchAction = 'touchAction';
 Weave.library.browser.properties.position = 'position';
+Weave.library.browser.properties.boxSizing = 'boxSizing';
 
 Weave.library.browser.selectors = {};
 Weave.library.browser.selectors.focusable = 'a[href], button, input, select, textarea, [tabindex], [contenteditable], summary, iframe, audio[controls], video[controls]';
@@ -92,7 +96,8 @@ Weave.library.browser.selectors.enabled = ':not([disabled]):not([tabindex="-1"])
 Weave.library.browser.selectors.submittable = 'input:not([type=submit]):not([type=button]):not([type=reset]):not([disabled]), select:not([disabled]), textarea:not([disabled])';
 Weave.library.browser.selectors.formControl = 'input, select, textarea, button';
 Weave.library.browser.selectors.anchor = 'a[href]';
-Weave.library.browser.selectors.editable = 'input, textarea, select, [contenteditable="true"]';
+Weave.library.browser.selectors.editable = ':read-write, select';
+Weave.library.browser.selectors.disabled = ':disabled';
 
 Weave.library.browser.keyNames = {};
 Weave.library.browser.keyNames.enter = 'Enter';
@@ -158,6 +163,7 @@ Weave.library.browser.mimeTypes.multipart = 'multipart/form-data';
 Weave.library.browser.mimeTypes.text = 'text/plain';
 Weave.library.browser.mimeTypes.html = 'text/html';
 Weave.library.browser.mimeTypes.identifier = 'application/x-weave-identifier';
+Weave.library.browser.jsonMimePattern = /^[^;]*[/+]json\s*(;|$)/i;
 
 Weave.library.browser.httpMethods = {};
 Weave.library.browser.httpMethods.get = 'GET';
@@ -236,6 +242,7 @@ Weave.library.browser.setStyle = (el, [property, value]) => (el.style[property] 
 Weave.library.browser.removeStyle = (el, property) => (el.style.removeProperty(property), el);
 Weave.library.browser.computedStyleOf = el => getComputedStyle(el);
 Weave.library.browser.computedValueOf = (el, property) => getComputedStyle(el).getPropertyValue(property);
+Weave.library.browser.inlineValueOf = (el, property) => el.style.getPropertyValue(property);
 Weave.library.browser.setCssVariable = (el, [name, value]) => (el.style.setProperty(name, value), el);
 Weave.library.browser.cssVariableOf = (el, name) => getComputedStyle(el).getPropertyValue(name);
 Weave.library.browser.boundingRectOf = el => el.getBoundingClientRect();
@@ -263,9 +270,8 @@ Weave.library.browser.pageScrollX = () => scrollX;
 Weave.library.browser.pageScrollY = () => scrollY;
 Weave.library.browser.scrollWindowTo = options => (scrollTo(options), undefined);
 Weave.library.browser.devicePixelRatio = () => devicePixelRatio;
-Weave.library.browser.functionType = 'function';
 Weave.library.browser.mediaStub = { matches: false, media: '', addEventListener: Weave.library.composition.noop, removeEventListener: Weave.library.composition.noop, addListener: Weave.library.composition.noop, removeListener: Weave.library.composition.noop };
-Weave.library.browser.hasMatchMedia = () => typeof matchMedia === Weave.library.browser.functionType;
+Weave.library.browser.hasMatchMedia = () => typeof matchMedia === Weave.library.predicates.typeNames.isFunction;
 Weave.library.browser.matchMedia = query => Weave.library.control.either(Weave.library.browser.hasMatchMedia, () => matchMedia(query), () => Weave.library.browser.mediaStub)(query);
 
 /* events: registration, dispatch and every getter the event object exposes. */
@@ -296,6 +302,7 @@ Weave.library.browser.codeOf = event => event.code;
 Weave.library.browser.buttonOf = event => event.button;
 Weave.library.browser.pointerTypeOf = event => event.pointerType;
 Weave.library.browser.clientXOf = event => event.clientX;
+Weave.library.browser.composedPathOf = event => event.composedPath();
 Weave.library.browser.clientYOf = event => event.clientY;
 Weave.library.browser.pageXOf = event => event.pageX;
 Weave.library.browser.pageYOf = event => event.pageY;
@@ -352,10 +359,10 @@ Weave.library.browser.measure = (label, from) => performance.measure(label, from
 
 /* observers: one constructor each, plus the three verbs they share. */
 Weave.library.browser.createMutationObserver = callback => new MutationObserver(callback);
-Weave.library.browser.hasIntersectionObserver = () => typeof IntersectionObserver === Weave.library.browser.functionType;
+Weave.library.browser.hasIntersectionObserver = () => typeof IntersectionObserver === Weave.library.predicates.typeNames.isFunction;
 Weave.library.browser.createIntersectionObserver = (callback, options) => Weave.library.control.either(Weave.library.browser.hasIntersectionObserver, () => new IntersectionObserver(callback, options), () => Weave.library.browser.observerStub)(callback);
 Weave.library.browser.observerStub = { observe: Weave.library.composition.noop, unobserve: Weave.library.composition.noop, disconnect: Weave.library.composition.noop };
-Weave.library.browser.hasResizeObserver = () => typeof ResizeObserver === Weave.library.browser.functionType;
+Weave.library.browser.hasResizeObserver = () => typeof ResizeObserver === Weave.library.predicates.typeNames.isFunction;
 Weave.library.browser.createResizeObserver = callback => Weave.library.control.either(Weave.library.browser.hasResizeObserver, () => new ResizeObserver(callback), () => Weave.library.browser.observerStub)(callback);
 Weave.library.browser.observe = (observer, el, options) => (observer.observe(el, options), observer);
 Weave.library.browser.unobserve = (observer, el) => (observer.unobserve(el), observer);
@@ -449,6 +456,8 @@ Weave.library.browser.dateFromParts = (year, month, day, hours = 0, minutes = 0,
 Weave.library.browser.dateTimeValue = date => date.getTime();
 Weave.library.browser.isoOf = date => date.toISOString();
 Weave.library.browser.isValidDate = date => Number.isFinite(date.getTime());
+Weave.library.browser.isDate = value => value instanceof Date;
+Weave.library.browser.utcTextOf = date => date.toUTCString();
 
 /* dateParts: one row per readable field of a Date. The generator below turns each row into a reader. */
 Weave.library.browser.dateParts = {};
@@ -467,6 +476,7 @@ Weave.library.composition.defineEach(Weave.library.browser.dateReaders, Weave.li
 /* intl: the only place a locale formatter is constructed. One function per formatter the library needs. */
 Weave.library.browser.formatNumber = (value, locale, options) => new Intl.NumberFormat(locale, options).format(value);
 Weave.library.browser.formatDate = (date, locale, options) => new Intl.DateTimeFormat(locale, options).format(date);
-Weave.library.browser.formatRelative = (value, unit, locale) => new Intl.RelativeTimeFormat(locale).format(value, unit);
+Weave.library.browser.formatRelative = (value, unit, locale, options) => new Intl.RelativeTimeFormat(locale, options).format(value, unit);
 Weave.library.browser.formatList = (items, locale) => new Intl.ListFormat(locale).format(items);
+Weave.library.browser.collator = options => new Intl.Collator(undefined, options);
 Weave.library.browser.canonicalLocale = name => Weave.library.composition.first(Intl.getCanonicalLocales(name));

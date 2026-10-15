@@ -57,7 +57,8 @@ Weave.library.formatting.fittingNames = distance => Weave.library.formatting.spa
 Weave.library.formatting.smallestName = () => Weave.library.composition.first(Weave.library.formatting.spanNames());
 Weave.library.formatting.unitFor = distance => Weave.library.control.defaultTo(Weave.library.formatting.smallestName())(Weave.library.composition.last(Weave.library.formatting.fittingNames(distance)));
 Weave.library.formatting.countIn = (difference, name) => Math.trunc(difference / Weave.library.dates.spans[name]);
-Weave.library.formatting.relativeWith = (difference, name) => Weave.library.browser.formatRelative(Weave.library.formatting.countIn(difference, name), name, Weave.library.formatting.localeName());
+Weave.library.formatting.relativeOptions = { numeric: Weave.library.browser.keywords.auto };
+Weave.library.formatting.relativeWith = (difference, name) => Weave.library.browser.formatRelative(Weave.library.formatting.countIn(difference, name), name, Weave.library.formatting.localeName(), Weave.library.formatting.relativeOptions);
 Weave.library.formatting.relativeIn = difference => Weave.library.formatting.relativeWith(difference, Weave.library.formatting.unitFor(Math.abs(difference)));
 Weave.library.formatting.relative = (date, base = Weave.library.dates.today()) => Weave.library.formatting.relativeIn(Weave.library.dates.milliseconds(date) - Weave.library.dates.milliseconds(base));
 

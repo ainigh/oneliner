@@ -90,6 +90,8 @@ Weave.library.components.blueprints.sticky = Weave.library.components.parts.box;
 Weave.library.components.blueprints.shell = Weave.library.components.parts.box;
 Weave.library.components.blueprints.pane = Weave.library.components.parts.section;
 Weave.library.components.blueprints.rowButton = Weave.library.components.parts.button;
+Weave.library.components.blueprints.headerButton = Weave.library.components.parts.button;
+Weave.library.components.blueprints.pageGap = Weave.library.components.parts.inline;
 Weave.library.components.blueprints.strong = Weave.library.components.parts.emphasis;
 Weave.library.components.blueprints.tabBar = Weave.library.components.parts.navigation;
 Weave.library.components.blueprints.choiceGroup = Weave.library.components.parts.group;
@@ -316,7 +318,7 @@ Weave.library.components.classNames = Weave.library.components.nameTable(Weave.l
 Weave.library.components.icon = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'icon', { text: Weave.library.components.textOf(spec, Weave.library.components.glyphKey), aria: { hidden: Weave.library.browser.keywords.true } });
 Weave.library.components.glyphKey = 'glyph';
 Weave.library.components.initials = text => Weave.library.composition.words(text).map(word => word.slice(0, 1).toUpperCase()).slice(0, 2).join(Weave.library.browser.keywords.empty);
-Weave.library.components.portraitSpec = (name, spec) => ({ text: Weave.library.components.initials(name), aria: { label: spec.name }, hue: Weave.library.components.hueOf(name) });
+Weave.library.components.portraitSpec = (name, spec) => Weave.library.components.keepMarks(spec, { text: Weave.library.components.initials(name), aria: { label: spec.name }, hue: Weave.library.components.hueOf(name) });
 Weave.library.components.portrait = spec => Weave.library.components.avatar(Weave.library.components.portraitSpec(Weave.library.components.textOf(spec, Weave.library.components.nameKey), spec));
 Weave.library.components.nameKey = 'name';
 Weave.library.components.statTile = spec => Weave.library.components.build(Weave.library.components.parts.article, 'statTile', { children: [Weave.library.components.note({ text: spec.label }), Weave.library.components.value({ text: String(spec.value) })] });
@@ -335,44 +337,57 @@ Weave.library.components.progressBar = spec => Weave.library.components.build(We
 /* controls: every interactive leaf. The type table already exists, so a field never spells a type. */
 Weave.library.components.placeholderAttribute = 'placeholder';
 Weave.library.components.typeOf = spec => Weave.library.control.defaultTo(Weave.library.elements.inputTypes.text)(spec.type);
-Weave.library.components.entryAttributes = spec => ({ [Weave.library.browser.keywords.type]: Weave.library.components.typeOf(spec), [Weave.library.components.placeholderAttribute]: spec.placeholder, [Weave.library.browser.keywords.value]: spec.value });
+Weave.library.components.entryAttributes = spec => ({ [Weave.library.browser.keywords.type]: Weave.library.components.typeOf(spec), [Weave.library.components.placeholderAttribute]: spec.placeholder, [Weave.library.browser.keywords.value]: spec.value, autocomplete: spec.autocomplete });
 Weave.library.components.controlAttributes = spec => Weave.library.composition.merge(Weave.library.components.namedAttribute(spec), Weave.library.components.entryAttributes(spec));
 Weave.library.components.controlAria = spec => Weave.library.composition.merge(Weave.library.components.labelAria(spec), Weave.library.control.defaultTo({})(spec.aria));
-Weave.library.components.controlSpec = spec => ({ attributes: Weave.library.components.controlAttributes(spec), onEdit: spec.onEdit, onChoose: spec.onChoose, onPress: spec.onPress, aria: Weave.library.components.controlAria(spec) });
+Weave.library.components.controlSpec = spec => Weave.library.components.keepMarks(spec, { attributes: Weave.library.components.controlAttributes(spec), onEdit: spec.onEdit, onChoose: spec.onChoose, onPress: spec.onPress, aria: Weave.library.components.controlAria(spec) });
 Weave.library.components.control = spec => Weave.library.components.build(Weave.library.components.parts.entry, 'control', Weave.library.components.controlSpec(spec));
 Weave.library.components.fieldLabel = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'fieldLabel', { text: Weave.library.components.textOf(spec, Weave.library.components.labelKey) });
 Weave.library.components.labelKey = 'label';
 Weave.library.components.field = spec => Weave.library.components.build(Weave.library.components.parts.label, 'field', { children: Weave.library.components.fieldItems(spec) });
 Weave.library.components.textAreaSpec = spec => ({ text: Weave.library.components.textOf(spec, Weave.library.browser.keywords.value), attributes: Weave.library.components.namedAttribute(spec), onEdit: spec.onEdit, aria: Weave.library.components.labelAria(spec) });
 Weave.library.components.textArea = spec => Weave.library.components.build(Weave.library.components.parts.area, 'textArea', Weave.library.components.textAreaSpec(spec));
-Weave.library.components.optionLabel = value => Weave.library.control.defaultTo(String(value))(value.label);
-Weave.library.components.optionValue = value => Weave.library.control.defaultTo(String(value))(value.value);
+Weave.library.components.optionRows = key => [[Weave.library.predicates.isNil, () => Weave.library.browser.keywords.empty], [given => Weave.library.predicates.isDefined(Weave.library.control.reach(given, key)), given => given[key]], [Weave.library.composition.always, given => String(given)]];
+Weave.library.components.optionField = key => value => Weave.library.control.select(Weave.library.components.optionRows(key))(value);
+Weave.library.components.optionLabel = Weave.library.components.optionField(Weave.library.components.labelKey);
+Weave.library.components.optionValue = Weave.library.components.optionField(Weave.library.browser.keywords.value);
 Weave.library.components.optionFor = value => Weave.library.components.build(Weave.library.components.parts.option, 'option', { text: Weave.library.components.optionLabel(value), attributes: { [Weave.library.browser.keywords.value]: Weave.library.components.optionValue(value) } });
 Weave.library.components.selectValue = spec => el => Weave.library.control.maybe(chosen => Weave.library.attributes.setValue(chosen)(el))(spec.value);
 Weave.library.components.labelMark = label => ({ label });
 Weave.library.components.labelAria = spec => Weave.library.control.defaultTo({})(Weave.library.control.maybe(Weave.library.components.labelMark)(spec.label));
-Weave.library.components.selectSpec = spec => ({ children: spec.options.map(Weave.library.components.optionFor), attributes: Weave.library.components.namedAttribute(spec), onChoose: spec.onChoose, ref: Weave.library.components.selectValue(spec), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.selectParts = spec => ({ children: spec.options.map(Weave.library.components.optionFor), attributes: Weave.library.components.namedAttribute(spec), onChoose: spec.onChoose, ref: Weave.library.components.selectValue(spec), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.selectSpec = spec => Weave.library.components.keepMarks(spec, Weave.library.components.selectParts(spec));
 Weave.library.components.selectBox = spec => Weave.library.components.build(Weave.library.components.parts.choice, 'selectBox', Weave.library.components.selectSpec(spec));
 Weave.library.components.checkProperties = spec => ({ [Weave.library.attributes.booleanAttributes.checked]: Weave.library.control.defaultTo(false)(spec.checked), [Weave.library.attributes.booleanAttributes.indeterminate]: Weave.library.control.defaultTo(false)(spec.partial) });
 Weave.library.components.checkSpec = spec => ({ properties: Weave.library.components.checkProperties(spec), onChoose: spec.onChoose, aria: Weave.library.components.labelAria(spec) });
 Weave.library.components.checkMark = spec => Weave.library.components.build(Weave.library.components.parts.checkbox, Weave.library.components.interactive.checkMark, Weave.library.components.checkSpec(spec));
 Weave.library.components.checkField = spec => Weave.library.components.build(Weave.library.components.parts.label, 'checkField', { children: [Weave.library.components.checkMark(spec), Weave.library.components.fieldLabel(spec)] });
 Weave.library.components.searchAttributes = spec => Weave.library.composition.merge(Weave.library.components.namedAttribute(spec), { [Weave.library.components.placeholderAttribute]: Weave.library.control.defaultTo(spec.label)(spec.placeholder), [Weave.library.browser.keywords.value]: spec.value });
-Weave.library.components.searchBox = spec => Weave.library.components.build(Weave.library.components.parts.search, 'searchBox', { attributes: Weave.library.components.searchAttributes(spec), onEdit: spec.onEdit, aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.searchSpec = spec => ({ attributes: Weave.library.components.searchAttributes(spec), onEdit: spec.onEdit, onPress: spec.onPress, aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.searchBox = spec => Weave.library.components.build(Weave.library.components.parts.search, 'searchBox', Weave.library.components.keepMarks(spec, Weave.library.components.searchSpec(spec)));
 
 /* groups: a widget that arranges other widgets. Each names one part and one class, nothing else. */
 Weave.library.components.toolbarName = 'toolbar';
-Weave.library.components.toolbar = spec => Weave.library.components.build(Weave.library.components.parts.box, Weave.library.components.toolbarName, { children: Weave.library.components.childrenOf(spec, Weave.library.components.itemsKey) });
+Weave.library.components.toolbar = spec => Weave.library.components.build(Weave.library.components.parts.box, Weave.library.components.toolbarName, Weave.library.components.keepMarks(spec, { children: Weave.library.components.childrenOf(spec, Weave.library.components.itemsKey) }));
 Weave.library.components.itemsKey = 'items';
 Weave.library.components.actionSpec = item => ({ text: item.label, onAction: item.onAction, aria: item.aria, attributes: { [Weave.library.browser.keywords.title]: item.hint } });
 Weave.library.components.actionButton = item => Weave.library.components.button(Weave.library.composition.merge(Weave.library.components.marksOf(item), Weave.library.components.actionSpec(item)));
-Weave.library.components.actionBar = spec => Weave.library.components.toolbar({ items: spec.actions.map(Weave.library.components.actionButton) });
+Weave.library.components.actionBar = spec => Weave.library.components.toolbar(Weave.library.components.keepMarks(spec, { items: spec.actions.map(Weave.library.components.actionButton) }));
 Weave.library.components.menuItem = item => Weave.library.components.item({ children: [Weave.library.components.actionButton(item)], attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.menuitem) });
 Weave.library.components.menu = spec => Weave.library.components.build(Weave.library.components.parts.list, 'menu', { children: spec.items.map(Weave.library.components.menuItem), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.menu) });
 Weave.library.components.isActive = (spec, item) => String(spec.active === item.key);
-Weave.library.components.tabSpec = (spec, item) => ({ text: item.label, onAction: item.onAction, attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tab), aria: { selected: Weave.library.components.isActive(spec, item) } });
-Weave.library.components.tab = spec => item => Weave.library.components.build(Weave.library.components.parts.button, 'tab', Weave.library.components.tabSpec(spec, item));
-Weave.library.components.tabs = spec => Weave.library.components.build(Weave.library.components.parts.navigation, 'tabs', { children: spec.items.map(Weave.library.components.tab(spec)), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tablist) });
+Weave.library.components.hasActiveTab = spec => spec.items.some(item => item.key === spec.active);
+Weave.library.components.isTabStop = (spec, item, index) => Weave.library.control.either(() => Weave.library.components.hasActiveTab(spec), () => item.key === spec.active, () => index === 0)(item);
+Weave.library.components.tabStop = (spec, item, index) => ({ [Weave.library.browser.keywords.tabindex]: Weave.library.accessibility.rovingValue(Weave.library.components.isTabStop(spec, item, index)) });
+Weave.library.components.tabAttributes = (spec, item, index) => Weave.library.composition.merge(Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tab), Weave.library.components.tabStop(spec, item, index));
+Weave.library.components.tabSpec = (spec, item, index) => ({ text: item.label, onAction: item.onAction, attributes: Weave.library.components.tabAttributes(spec, item, index), aria: { selected: Weave.library.components.isActive(spec, item) } });
+Weave.library.components.tab = spec => (item, index) => Weave.library.components.build(Weave.library.components.parts.button, 'tab', Weave.library.components.tabSpec(spec, item, index));
+Weave.library.components.tabKeySteps = () => Weave.library.composition.fromPairs(Weave.library.composition.pairs(Weave.library.accessibility.rovingSteps).map(([name, step]) => [Weave.library.browser.keyNames[name], step]));
+Weave.library.components.tabStepOf = event => Weave.library.control.ownValue(Weave.library.components.tabKeySteps(), Weave.library.browser.keyOf(event));
+Weave.library.components.tabWalk = event => step => (Weave.library.events.preventDefault(event), Weave.library.accessibility.rovingMove(Weave.library.query.children(Weave.library.browser.currentTargetOf(event)), step));
+Weave.library.components.tabMove = event => Weave.library.control.maybe(Weave.library.components.tabWalk(event))(Weave.library.components.tabStepOf(event));
+Weave.library.components.tabsSpec = spec => ({ children: spec.items.map(Weave.library.components.tab(spec)), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tablist), onPress: Weave.library.components.tabMove });
+Weave.library.components.tabs = spec => Weave.library.components.build(Weave.library.components.parts.navigation, 'tabs', Weave.library.components.tabsSpec(spec));
 Weave.library.components.hrefAttribute = row => ({ [Weave.library.browser.keywords.href]: Weave.library.control.defaultTo(Weave.library.components.hashHref)(row.href) });
 Weave.library.components.crumb = item => Weave.library.components.anchor({ text: item.label, attributes: Weave.library.components.hrefAttribute(item), onAction: item.onAction });
 Weave.library.components.hashHref = '#';
@@ -392,16 +407,22 @@ Weave.library.components.tree = spec => Weave.library.components.build(Weave.lib
 
 /* table: one table function, driven by a column table the caller supplies. */
 Weave.library.components.cellValue = (row, column) => Weave.library.control.defaultTo(Weave.library.composition.identity)(column.format)(row[column.key], row);
-Weave.library.components.headerCell = column => Weave.library.components.build(Weave.library.components.parts.gridHeader, 'tableHeader', { text: column.label, onAction: column.onAction });
+Weave.library.components.sortAria = column => Weave.library.control.defaultTo({})(Weave.library.control.maybe(order => ({ sort: order }))(column.sort));
+Weave.library.components.headerLabel = column => Weave.library.control.either(Weave.library.predicates.isFunction, () => [Weave.library.components.headerButton({ text: column.label })], () => Weave.library.composition.compact([column.label]))(column.onAction);
+Weave.library.components.headerName = 'tableHeader';
+Weave.library.components.headerSpec = column => ({ children: Weave.library.components.headerLabel(column), onAction: column.onAction, aria: Weave.library.components.sortAria(column), textAlign: column.align });
+Weave.library.components.headerCell = column => Weave.library.components.build(Weave.library.components.parts.gridHeader, Weave.library.components.headerName, Weave.library.components.headerSpec(column));
 Weave.library.components.cellName = 'tableCell';
-Weave.library.components.bodyCell = row => column => Weave.library.components.build(Weave.library.components.parts.gridCell, Weave.library.components.cellName, { children: [Weave.library.components.cellValue(row, column)] });
+Weave.library.components.isBlankCell = value => Weave.library.control.or(Weave.library.predicates.isNil(value), value === false);
+Weave.library.components.cellShown = value => Weave.library.control.either(Weave.library.components.isBlankCell, () => Weave.library.browser.keywords.empty, Weave.library.composition.identity)(value);
+Weave.library.components.bodyCell = row => column => Weave.library.components.build(Weave.library.components.parts.gridCell, Weave.library.components.cellName, { children: [Weave.library.components.cellShown(Weave.library.components.cellValue(row, column))], textAlign: column.align });
 Weave.library.components.tableRow = children => Weave.library.components.build(Weave.library.components.parts.gridRow, 'tableRow', { children });
 Weave.library.components.headerRow = columns => Weave.library.components.tableRow(columns.map(Weave.library.components.headerCell));
 Weave.library.components.bodyRow = columns => row => Weave.library.components.tableRow(columns.map(Weave.library.components.bodyCell(row)));
 Weave.library.components.tableHead = columns => Weave.library.components.build(Weave.library.components.parts.gridHead, 'tableHead', { children: [Weave.library.components.headerRow(columns)] });
 Weave.library.components.tableBody = spec => Weave.library.components.build(Weave.library.components.parts.gridBody, 'tableBody', { children: spec.rows.map(Weave.library.components.bodyRow(spec.columns)) });
 Weave.library.components.tableName = 'table';
-Weave.library.components.gridOf = spec => Weave.library.components.build(Weave.library.components.parts.grid, Weave.library.components.tableName, { children: [Weave.library.components.tableHead(spec.columns), Weave.library.components.tableBody(spec)] });
+Weave.library.components.gridOf = spec => Weave.library.components.build(Weave.library.components.parts.grid, Weave.library.components.tableName, Weave.library.components.keepMarks(spec, { children: [Weave.library.components.tableHead(spec.columns), Weave.library.components.tableBody(spec)] }));
 Weave.library.components.table = spec => Weave.library.components.tableBox({ children: [Weave.library.components.gridOf(spec)] });
 
 /* pages: a form, a dialog and a pager. The last widgets before a pattern starts composing them. */
@@ -416,11 +437,20 @@ Weave.library.components.closeButton = spec => Weave.library.components.actionBu
 Weave.library.components.dialogHeader = spec => Weave.library.components.spread({ children: Weave.library.composition.compact([Weave.library.components.title({ text: Weave.library.components.titleOf(spec) }), Weave.library.components.alertClose(spec)]) });
 Weave.library.components.closeLabel = 'Close';
 Weave.library.components.modalAttributes = spec => Weave.library.composition.merge(Weave.library.components.openAttribute(spec), Weave.library.components.roleAttribute(Weave.library.accessibility.roles.dialog));
-Weave.library.components.modalSpec = spec => ({ children: [Weave.library.components.dialogHeader(spec), Weave.library.components.disclosureBody(spec)], attributes: Weave.library.components.modalAttributes(spec) });
+Weave.library.components.modalAria = spec => Weave.library.components.labelAria({ label: Weave.library.control.defaultTo(spec.title)(spec.label) });
+Weave.library.components.modalSpec = spec => ({ children: [Weave.library.components.dialogHeader(spec), Weave.library.components.disclosureBody(spec)], attributes: Weave.library.components.modalAttributes(spec), aria: Weave.library.components.modalAria(spec) });
 Weave.library.components.modal = spec => Weave.library.components.build(Weave.library.components.parts.dialog, 'modal', Weave.library.components.modalSpec(spec));
 Weave.library.components.pageButton = spec => page => Weave.library.components.build(Weave.library.components.parts.button, 'pageButton', { text: String(page), onAction: () => spec.onGo(page), aria: { current: String(page === spec.page) } });
 Weave.library.components.pageNumbers = spec => Weave.library.composition.range(spec.pages).map(index => index + 1);
-Weave.library.components.pagination = spec => Weave.library.components.build(Weave.library.components.parts.navigation, 'pagination', { children: Weave.library.components.pageNumbers(spec).map(Weave.library.components.pageButton(spec)), aria: { label: spec.label } });
+Weave.library.components.pageReach = 1;
+Weave.library.components.isPageShown = spec => page => Weave.library.control.or([1, spec.pages].includes(page), Math.abs(page - Weave.library.control.defaultTo(1)(spec.page)) <= Weave.library.components.pageReach);
+Weave.library.components.shownPages = spec => Weave.library.components.pageNumbers(spec).filter(Weave.library.components.isPageShown(spec));
+Weave.library.components.pageSkip = () => Weave.library.components.pageGap({ text: Weave.library.components.glyphs.more, aria: { hidden: Weave.library.browser.keywords.true } });
+Weave.library.components.hasPageGap = (page, index, shown) => Weave.library.control.and(index > 0, page - shown[index - 1] > 1);
+Weave.library.components.pageLead = (page, index, shown) => Weave.library.control.either(() => Weave.library.components.hasPageGap(page, index, shown), () => [Weave.library.components.pageSkip()], () => [])(page);
+Weave.library.components.pageRun = spec => (page, index, shown) => Weave.library.components.pageLead(page, index, shown).concat([Weave.library.components.pageButton(spec)(page)]);
+Weave.library.components.pageParts = spec => Weave.library.components.shownPages(spec).flatMap(Weave.library.components.pageRun(spec));
+Weave.library.components.pagination = spec => Weave.library.components.build(Weave.library.components.parts.navigation, 'pagination', { children: Weave.library.components.pageParts(spec), aria: { label: spec.label } });
 
 /* tokens: the only place a dimension, a colour or a duration is written. Emitted as custom properties. */
 Weave.library.components.tokens = {};
@@ -529,7 +559,7 @@ Weave.library.components.tokens.trackingCode = '0.3em';
 Weave.library.components.tokens.ratioWide = '16 / 9';
 Weave.library.components.tokens.ratioSquare = '1 / 1';
 Weave.library.components.tokens.ratioTall = '3 / 4';
-Weave.library.components.tokens.wideWidth = '1100px';
+Weave.library.components.tokens.wideWidth = '1440px';
 Weave.library.components.tokens.gateWidth = '380px';
 Weave.library.components.tokens.seriesOne = '#2a78d6';
 Weave.library.components.tokens.seriesTwo = '#eb6834';
@@ -608,6 +638,7 @@ Weave.library.components.tokens.spanTwo = 'span 2';
 Weave.library.components.tokens.spanAll = '1 / -1';
 Weave.library.components.tokens.underlineGap = '0.2em';
 Weave.library.components.tokens.tabSize = '2';
+Weave.library.components.tokens.barRoom = '88px';
 Weave.library.composition.defineEach(Weave.library.components.vars, Weave.library.components.variableUse)(Weave.library.components.tokens);
 
 /* values: the only place a bare css keyword is written. One row, one keyword. */
@@ -687,6 +718,7 @@ Weave.library.components.values.thin = 'thin';
 Weave.library.components.values.negativeLine = '-1px';
 Weave.library.components.values.smooth = 'antialiased';
 Weave.library.components.values.legible = 'optimizeLegibility';
+Weave.library.components.values.inherit = 'inherit';
 Weave.library.components.borders = {};
 Weave.library.components.borders.hairline = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.edge;
 Weave.library.components.borders.accentLine = Weave.library.components.vars.line + Weave.library.components.values.solid + Weave.library.components.vars.accent;
@@ -749,7 +781,7 @@ Weave.library.components.rules.glyphMark = { fontSize: Weave.library.components.
 Weave.library.components.rules.progressBar = { display: Weave.library.components.values.block, width: Weave.library.components.values.full, height: Weave.library.components.vars.space, appearance: Weave.library.components.values.none, border: Weave.library.components.values.none, borderRadius: Weave.library.components.vars.radiusRound, background: Weave.library.components.vars.sunken, color: Weave.library.components.vars.accent };
 Weave.library.components.rules.swatch = { display: Weave.library.components.values.inlineFlex, width: Weave.library.components.vars.controlHeightLarge, height: Weave.library.components.vars.controlHeight, borderRadius: Weave.library.components.vars.radiusSmall, border: Weave.library.components.borders.hairline };
 Weave.library.components.rules.pagination = { display: Weave.library.components.values.flex, gap: Weave.library.components.vars.spaceTight };
-Weave.library.components.rules.pageButton = { minWidth: Weave.library.components.vars.controlHeight, minHeight: Weave.library.components.vars.controlHeight, border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.surface, cursor: Weave.library.components.values.pointer, fontWeight: Weave.library.components.values.medium, fontVariantNumeric: Weave.library.components.values.tabular };
+Weave.library.components.rules.pageButton = { minWidth: Weave.library.components.vars.controlHeight, minHeight: Weave.library.components.vars.controlHeight, border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.surface, color: Weave.library.components.vars.ink, fontFamily: Weave.library.components.vars.font, cursor: Weave.library.components.values.pointer, fontWeight: Weave.library.components.values.medium, fontVariantNumeric: Weave.library.components.values.tabular };
 Weave.library.components.rules.rail = { width: Weave.library.components.vars.railWidth, borderRight: Weave.library.components.borders.hairline, paddingRight: Weave.library.components.vars.space, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space };
 Weave.library.components.rules.pageHeader = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.between, gap: Weave.library.components.vars.space, paddingBottom: Weave.library.components.vars.space, borderBottom: Weave.library.components.borders.hairline };
 Weave.library.components.rules.pageFooter = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.between, gap: Weave.library.components.vars.space, paddingTop: Weave.library.components.vars.space, borderTop: Weave.library.components.borders.hairline, color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall };
@@ -768,6 +800,7 @@ Weave.library.components.states.pressed = ':active';
 Weave.library.components.states.off = ':disabled';
 Weave.library.components.states.invalid = '[aria-invalid="true"]';
 Weave.library.components.states.chosen = '[aria-selected="true"]';
+Weave.library.components.states.pushed = '[aria-pressed="true"]';
 Weave.library.components.states.here = '[aria-current="true"]';
 Weave.library.components.states.over = '[data-over="true"]';
 Weave.library.components.states.track = '::-webkit-progress-bar';
@@ -776,6 +809,8 @@ Weave.library.components.states.on = '[aria-checked="true"]';
 Weave.library.components.states.knob = '::after';
 Weave.library.components.states.knobOn = '[aria-checked="true"]::after';
 Weave.library.components.states.unchosen = '[aria-selected="false"]';
+Weave.library.components.states.unpushed = '[aria-pressed="false"]';
+Weave.library.components.states.within = ':focus-within';
 
 /* stateNames: the same states as names, in the order the sheet emits them. A later row wins the cascade. */
 Weave.library.components.stateNames = {};
@@ -801,12 +836,14 @@ Weave.library.components.rootText = () => Weave.library.components.blockFor(Weav
 Weave.library.components.ruleTexts = () => Weave.library.composition.pairs(Weave.library.components.rules).map(Weave.library.components.ruleText);
 Weave.library.components.stateTexts = () => Weave.library.composition.sortBy(Weave.library.components.stateRank)(Weave.library.composition.values(Weave.library.components.stateRules)).map(Weave.library.components.stateText);
 Weave.library.components.styleText = () => [Weave.library.components.rootText()].concat(Weave.library.components.ruleTexts(), Weave.library.components.stateTexts(), Weave.library.components.extraTexts()).join('\n');
-Weave.library.components.addStyleSheet = () => Weave.library.elements.append([Weave.library.elements.style({ text: Weave.library.components.styleText() })])(Weave.library.browser.head());
+Weave.library.components.sheetHolder = { element: null };
+Weave.library.components.holdSheet = el => (Object.assign(Weave.library.components.sheetHolder, { element: el }), el);
+Weave.library.components.addStyleSheet = () => Weave.library.elements.append([Weave.library.components.holdSheet(Weave.library.elements.style({ text: Weave.library.components.styleText() }))])(Weave.library.browser.head());
 Weave.library.components.installStyles = Weave.library.control.once(Weave.library.components.addStyleSheet);
 
 /* calendar day: the one piece a month grid needs, keyed by the state names the sheet already owns. */
 Weave.library.components.dayName = 'dayButton';
-Weave.library.components.dayMarks = spec => ({ current: String(spec.here === true), selected: String(spec.chosen === true) });
+Weave.library.components.dayMarks = spec => ({ current: String(spec.here === true), pressed: String(spec.chosen === true) });
 Weave.library.components.daySpec = spec => ({ text: spec.label, onAction: spec.onAction, aria: Weave.library.components.dayMarks(spec), data: { key: spec.key } });
 Weave.library.components.dayButton = spec => Weave.library.components.build(Weave.library.components.parts.button, Weave.library.components.dayName, Weave.library.components.daySpec(spec));
 Weave.library.components.rules.dayButton = { width: Weave.library.components.values.full, minHeight: Weave.library.components.vars.controlHeight, border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radiusSmall, background: Weave.library.components.vars.surface, color: Weave.library.components.vars.ink, cursor: Weave.library.components.values.pointer, fontFamily: Weave.library.components.vars.font, fontSize: Weave.library.components.vars.fontSize, fontWeight: Weave.library.components.values.medium };
@@ -814,7 +851,7 @@ Weave.library.components.stateRules.dayChosen = { name: Weave.library.components
 Weave.library.components.stateRules.dayHere = { name: Weave.library.components.dayName, state: Weave.library.components.stateNames.here, style: { borderColor: Weave.library.components.vars.accent, fontWeight: Weave.library.components.values.bold } };
 /* themes: one row per theme, each a table of token overrides. A theme row may only name token keys. */
 Weave.library.components.themes = {};
-Weave.library.components.themes.dark = { mediaWash: 'linear-gradient(145deg, #1f2a38, #262230 52%, #1a2436)', groundWash: 'radial-gradient(1100px 520px at 0% -8%, rgba(129, 140, 248, 0.16), transparent 62%), radial-gradient(900px 460px at 100% 0%, rgba(236, 72, 153, 0.10), transparent 60%)', washAurora: 'radial-gradient(120% 150% at 0% 0%, #26235e 0%, transparent 55%), radial-gradient(120% 150% at 100% 0%, #3b1737 0%, transparent 55%), radial-gradient(130% 150% at 50% 100%, #0f3a3a 0%, transparent 62%), #121a27', washSunrise: 'linear-gradient(135deg, #2c1d14 0%, #34161f 52%, #2e2512 100%)', washOcean: 'linear-gradient(135deg, #0c2a33 0%, #0f2538 50%, #1c1d45 100%)', glass: 'rgba(18, 26, 39, 0.72)', shadowRaised: '0 1px 2px rgba(0, 0, 0, 0.4), 0 28px 56px -22px rgba(0, 0, 0, 0.8)', shadowInput: '0 1px 2px rgba(0, 0, 0, 0.3)', accentSoft: '#232055', accentSoftInk: '#c7d2fe', ink: '#e8ecf4', muted: '#9aa4b6', edge: '#252f3f', surface: '#121a27', sunken: '#0a0f19', accent: '#a5b4fc', accentInk: '#0b1024', shadow: '0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3)', shadowLifted: '0 12px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4)', shadowOverlay: '0 32px 64px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.45)', focusRing: '0 0 0 4px rgba(165, 180, 252, 0.3)' , seriesOne: '#3987e5', seriesTwo: '#d95926', seriesThree: '#199e70', seriesFour: '#c98500', seriesFive: '#d55181', heatOne: '#152238', heatTwo: '#1c3a63', heatThree: '#24558f', heatFour: '#2f74bd', heatFive: '#4a95e0' , addedWash: '#16301f', removedWash: '#38191c' };
+Weave.library.components.themes.dark = { mediaWash: 'linear-gradient(145deg, #1f2a38, #262230 52%, #1a2436)', groundWash: 'radial-gradient(1100px 520px at 0% -8%, rgba(129, 140, 248, 0.16), transparent 62%), radial-gradient(900px 460px at 100% 0%, rgba(236, 72, 153, 0.10), transparent 60%)', washAurora: 'radial-gradient(120% 150% at 0% 0%, #26235e 0%, transparent 55%), radial-gradient(120% 150% at 100% 0%, #3b1737 0%, transparent 55%), radial-gradient(130% 150% at 50% 100%, #0f3a3a 0%, transparent 62%), #121a27', washSunrise: 'linear-gradient(135deg, #2c1d14 0%, #34161f 52%, #2e2512 100%)', washOcean: 'linear-gradient(135deg, #0c2a33 0%, #0f2538 50%, #1c1d45 100%)', glass: 'rgba(18, 26, 39, 0.72)', shadowRaised: '0 1px 2px rgba(0, 0, 0, 0.4), 0 28px 56px -22px rgba(0, 0, 0, 0.8)', shadowInput: '0 1px 2px rgba(0, 0, 0, 0.3)', accentSoft: '#232055', accentSoftInk: '#c7d2fe', ink: '#e8ecf4', muted: '#9aa4b6', edge: '#252f3f', surface: '#121a27', sunken: '#0a0f19', accent: '#a5b4fc', accentInk: '#0b1024', shadow: '0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3)', shadowLifted: '0 12px 28px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4)', shadowOverlay: '0 32px 64px rgba(0, 0, 0, 0.6), 0 6px 16px rgba(0, 0, 0, 0.45)', focusRing: '0 0 0 4px rgba(165, 180, 252, 0.3)' , seriesOne: '#3987e5', seriesTwo: '#d95926', seriesThree: '#199e70', seriesFour: '#c98500', seriesFive: '#d55181', heatOne: '#152238', heatTwo: '#1c3a63', heatThree: '#24558f', heatFour: '#2f74bd', heatFive: '#4a95e0' , addedWash: '#16301f', removedWash: '#38191c', danger: '#f87171', toneInfo: '#a5b4fc', toneSuccess: '#4ade80', toneWarning: '#fbbf24', toneDanger: '#f87171', toneQuiet: '#9aa4b6' };
 
 /* themeNames: the only place a theme name is written. Every theme call takes a row from here. */
 Weave.library.components.themeNames = {};
@@ -834,13 +871,15 @@ Weave.library.components.braceOpen = '{';
 Weave.library.components.braceClose = '}';
 Weave.library.components.mediaOpen = '@media ';
 Weave.library.components.mediaText = (query, body) => Weave.library.components.mediaOpen + query + Weave.library.components.braceOpen + body + Weave.library.components.braceClose;
-Weave.library.components.schemeSelector = () => Weave.library.components.rootSelector + Weave.library.components.notOpen + Weave.library.query.attributeSelector(Weave.library.components.themeAttribute, Weave.library.components.themeNames.light) + Weave.library.composition.closeParen;
+Weave.library.components.schemeSelector = () => Weave.library.components.rootSelector + Weave.library.components.notOpen + Weave.library.query.openBracket + Weave.library.components.themeAttribute + Weave.library.query.closeBracket + Weave.library.composition.closeParen;
 Weave.library.components.schemeBlock = () => Weave.library.components.blockFor(Weave.library.components.schemeSelector(), Weave.library.components.themeStyle(Weave.library.components.themes.dark));
 Weave.library.components.schemeText = () => Weave.library.components.mediaText(Weave.library.browser.mediaQueries.darkScheme, Weave.library.components.schemeBlock());
 Weave.library.components.setTheme = name => Weave.library.attributes.setAttribute(Weave.library.components.themeAttribute, name)(Weave.library.browser.documentElement());
 Weave.library.components.theme = () => Weave.library.attributes.attribute(Weave.library.components.themeAttribute)(Weave.library.browser.documentElement());
 Weave.library.components.nextTheme = current => Weave.library.control.either(() => current === Weave.library.components.themeNames.dark, () => Weave.library.components.themeNames.light, () => Weave.library.components.themeNames.dark)(current);
-Weave.library.components.toggleTheme = () => Weave.library.components.setTheme(Weave.library.components.nextTheme(Weave.library.components.theme()));
+Weave.library.components.isDarkScheme = () => Weave.library.browser.matchMedia(Weave.library.browser.mediaQueries.darkScheme).matches === true;
+Weave.library.components.themeInForce = () => Weave.library.control.defaultTo(Weave.library.components.schemeName(Weave.library.components.isDarkScheme()))(Weave.library.components.theme());
+Weave.library.components.toggleTheme = () => Weave.library.components.setTheme(Weave.library.components.nextTheme(Weave.library.components.themeInForce()));
 Weave.library.components.schemeName = isDark => Weave.library.control.either(Weave.library.composition.identity, () => Weave.library.components.themeNames.dark, () => Weave.library.components.themeNames.light)(isDark);
 Weave.library.components.schemeTheme = isDark => Weave.library.components.setTheme(Weave.library.components.schemeName(isDark));
 Weave.library.components.followScheme = () => Weave.library.observers.onColorScheme(Weave.library.components.schemeTheme);
@@ -904,7 +943,8 @@ Weave.library.components.alert = spec => Weave.library.components.build(Weave.li
 Weave.library.components.statusDot = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'statusDot', { data: Weave.library.components.toneData(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
 Weave.library.components.countKey = 'count';
 Weave.library.components.countText = spec => String(Weave.library.components.textOf(spec, Weave.library.components.countKey));
-Weave.library.components.badge = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'badge', { text: Weave.library.components.countText(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
+Weave.library.components.badgeSpec = spec => ({ text: Weave.library.components.countText(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
+Weave.library.components.badge = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'badge', Weave.library.components.keepMarks(spec, Weave.library.components.badgeSpec(spec)));
 Weave.library.components.keysKey = 'keys';
 Weave.library.components.keyCap = key => Weave.library.components.build(Weave.library.components.parts.keyCap, 'keyCap', { text: key });
 Weave.library.components.kbd = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'kbd', { children: Weave.library.components.childrenOf(spec, Weave.library.components.keysKey).map(Weave.library.components.keyCap) });
@@ -930,24 +970,38 @@ Weave.library.components.stepperSteps = {};
 Weave.library.components.stepperSteps.decrement = { label: 'Less', step: -1 };
 Weave.library.components.stepperSteps.increment = { label: 'More', step: 1 };
 Weave.library.components.stepperValue = spec => Weave.library.control.defaultTo(spec.min)(spec.value);
-Weave.library.components.stepperNext = (spec, step) => Weave.library.composition.clamp(spec.min, spec.max)(Weave.library.components.stepperValue(spec) + step);
-Weave.library.components.stepperMove = spec => row => Weave.library.components.actionButton({ label: row.label, onAction: () => spec.onChange(Weave.library.components.stepperNext(spec, row.step)) });
+Weave.library.components.stepperFloor = spec => Weave.library.control.defaultTo(-Infinity)(spec.min);
+Weave.library.components.stepperCeiling = spec => Weave.library.control.defaultTo(Infinity)(spec.max);
+Weave.library.components.stepperFrom = spec => Weave.library.composition.number(Weave.library.components.stepperValue(spec));
+Weave.library.components.stepperNext = (spec, step) => Weave.library.composition.clamp(Weave.library.components.stepperFloor(spec), Weave.library.components.stepperCeiling(spec))(Weave.library.components.stepperFrom(spec) + step);
+Weave.library.components.stepperEntryOf = event => Weave.library.query.findOne(Weave.library.components.classSelector(Weave.library.components.interactive.control))(Weave.library.query.parent(Weave.library.browser.currentTargetOf(event)));
+Weave.library.components.stepperWrite = (spec, step, entry) => Weave.library.attributes.setValue(String(Weave.library.components.stepperNext(Weave.library.composition.merge(spec, { value: Weave.library.attributes.value(entry) }), step)))(entry);
+Weave.library.components.stepperOwn = (spec, step) => event => Weave.library.control.maybe(entry => Weave.library.components.stepperWrite(spec, step, entry))(Weave.library.components.stepperEntryOf(event));
+Weave.library.components.stepperAction = (spec, step) => Weave.library.control.either(Weave.library.predicates.isFunction, change => () => change(Weave.library.components.stepperNext(spec, step)), () => Weave.library.components.stepperOwn(spec, step))(spec.onChange);
+Weave.library.components.stepperMove = spec => row => Weave.library.components.actionButton({ label: row.label, onAction: Weave.library.components.stepperAction(spec, row.step) });
 Weave.library.components.stepperControl = spec => Weave.library.components.control(Weave.library.composition.merge(spec, { type: Weave.library.elements.inputTypes.number, value: Weave.library.components.stepperValue(spec) }));
 Weave.library.components.stepperRow = spec => [Weave.library.components.stepperMove(spec)(Weave.library.components.stepperSteps.decrement), Weave.library.components.stepperControl(spec), Weave.library.components.stepperMove(spec)(Weave.library.components.stepperSteps.increment)];
 Weave.library.components.stepperField = spec => Weave.library.components.build(Weave.library.components.parts.box, 'stepperField', { children: [Weave.library.components.fieldLabel(spec), Weave.library.components.row({ children: Weave.library.components.stepperRow(spec) })] });
 
 /* disclosure widgets: a dropdown and a tooltip, both assembled from parts that already exist. */
-Weave.library.components.dropdownSummary = spec => Weave.library.components.disclosureSummary({ title: spec.label });
+Weave.library.components.dropdownSummary = spec => Weave.library.components.disclosureSummary({ title: Weave.library.control.defaultTo(spec.label)(spec.title) });
 Weave.library.components.dropdown = spec => Weave.library.components.build(Weave.library.components.parts.details, 'dropdown', { children: [Weave.library.components.dropdownSummary(spec), Weave.library.components.menu(spec)] });
 Weave.library.components.tooltipPrefix = 'weave-tip-';
-Weave.library.components.tooltipId = () => Weave.library.composition.randomId(Weave.library.components.tooltipPrefix);
+Weave.library.components.hashBase = 31;
+Weave.library.components.hashModulus = 2147483647;
+Weave.library.components.hashRadix = 36;
+Weave.library.components.stableHash = text => String(text).split(Weave.library.browser.keywords.empty).reduce((carried, letter) => (carried * Weave.library.components.hashBase + letter.charCodeAt(0)) % Weave.library.components.hashModulus, 7).toString(Weave.library.components.hashRadix);
+Weave.library.components.tooltipWords = spec => Weave.library.components.textOf(spec, Weave.library.components.textKey) + Weave.library.components.pointJoin + Weave.library.components.textOf(spec, Weave.library.components.hintKey);
+Weave.library.components.tooltipId = spec => Weave.library.control.defaultTo(Weave.library.components.tooltipPrefix + Weave.library.components.stableHash(Weave.library.components.tooltipWords(spec)))(spec.id);
 Weave.library.components.hintKey = 'hint';
 Weave.library.components.tooltipNoteAttributes = id => Weave.library.composition.merge(Weave.library.components.roleAttribute(Weave.library.accessibility.roles.tooltip), { [Weave.library.browser.keywords.id]: id });
-Weave.library.components.tooltipNoteSpec = (spec, id) => ({ text: Weave.library.components.textOf(spec, Weave.library.components.hintKey), attributes: Weave.library.components.tooltipNoteAttributes(id), styles: Weave.library.accessibility.visuallyHidden });
+Weave.library.components.tooltipNoteSpec = (spec, id) => ({ text: Weave.library.components.textOf(spec, Weave.library.components.hintKey), attributes: Weave.library.components.tooltipNoteAttributes(id) });
 Weave.library.components.tooltipNote = (spec, id) => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltipNote', Weave.library.components.tooltipNoteSpec(spec, id));
-Weave.library.components.tooltipTarget = (spec, id) => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltipTarget', { text: Weave.library.components.textOf(spec, Weave.library.components.textKey), aria: { [Weave.library.accessibility.states.describedby]: id } });
+Weave.library.components.focusableAttribute = { [Weave.library.browser.keywords.tabindex]: Weave.library.accessibility.zeroText };
+Weave.library.components.tooltipTargetSpec = (spec, id) => ({ text: Weave.library.components.textOf(spec, Weave.library.components.textKey), attributes: Weave.library.components.focusableAttribute, aria: { [Weave.library.accessibility.states.describedby]: id } });
+Weave.library.components.tooltipTarget = (spec, id) => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltipTarget', Weave.library.components.tooltipTargetSpec(spec, id));
 Weave.library.components.tooltipParts = (spec, id) => [Weave.library.components.tooltipTarget(spec, id), Weave.library.components.tooltipNote(spec, id)];
-Weave.library.components.tooltip = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltip', { children: Weave.library.components.tooltipParts(spec, Weave.library.components.tooltipId()) });
+Weave.library.components.tooltip = spec => Weave.library.components.build(Weave.library.components.parts.inline, 'tooltip', { children: Weave.library.components.tooltipParts(spec, Weave.library.components.tooltipId(spec)) });
 
 /* rules, second wave: one row per class added above, values still token references and nothing else. */
 Weave.library.components.rules.alert = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight, padding: Weave.library.components.vars.spaceLoose, border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radius, background: Weave.library.components.vars.surface };
@@ -964,8 +1018,9 @@ Weave.library.components.rules.sliderField = { display: Weave.library.components
 Weave.library.components.rules.sliderControl = { width: Weave.library.components.values.full };
 Weave.library.components.rules.stepperField = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.spaceTight };
 Weave.library.components.rules.dropdown = { border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radiusSmall, padding: Weave.library.components.vars.space };
-Weave.library.components.rules.tooltip = { display: Weave.library.components.values.inlineFlex, gap: Weave.library.components.vars.spaceTight };
+Weave.library.components.rules.tooltip = { position: Weave.library.components.values.relative, display: Weave.library.components.values.inlineFlex, gap: Weave.library.components.vars.spaceTight };
 Weave.library.components.rules.tooltipTarget = { borderBottom: Weave.library.components.borders.hairline, cursor: Weave.library.components.values.pointer };
+Weave.library.components.rules.tooltipNote = { position: Weave.library.components.values.absolute, left: Weave.library.components.values.zero, bottom: Weave.library.components.values.full, marginBottom: Weave.library.components.vars.spaceTight, width: Weave.library.components.values.maxContent, maxWidth: Weave.library.components.vars.tipWidth, zIndex: Weave.library.components.vars.layerTip, pointerEvents: Weave.library.components.values.none, opacity: Weave.library.components.values.zero, background: Weave.library.components.vars.ink, color: Weave.library.components.vars.surface, padding: Weave.library.components.vars.spaceTight, borderRadius: Weave.library.components.vars.radiusSmall, fontSize: Weave.library.components.vars.fontSizeSmall, boxShadow: Weave.library.components.vars.shadowLifted };
 
 /* interactive: the only place a class that behaves like a control is named. Focus, rest and ease follow. */
 Weave.library.components.interactive = {};
@@ -987,6 +1042,7 @@ Weave.library.components.interactive.radioMark = 'radioMark';
 Weave.library.components.interactive.iconButtonBox = 'iconButtonBox';
 Weave.library.components.interactive.searchTriggerBox = 'searchTriggerBox';
 Weave.library.components.interactive.navItem = 'navItem';
+Weave.library.components.interactive.headerButton = 'headerButton';
 
 /* marks: the one style a checkbox and a radio share, generated onto both names. */
 Weave.library.components.markStyle = { width: Weave.library.components.vars.markSize, height: Weave.library.components.vars.markSize, margin: Weave.library.components.values.zero, accentColor: Weave.library.components.vars.accent, cursor: Weave.library.components.values.pointer, flexShrink: Weave.library.components.values.zero };
@@ -1045,7 +1101,7 @@ Weave.library.components.breakpoints.compact = Weave.library.browser.upToWidth(W
 
 /* mediaRules: the only place a rule that applies under a query is written. One row per query, keyed by class. */
 Weave.library.components.mediaRules = {};
-Weave.library.components.mediaRules.compact = { query: Weave.library.components.breakpoints.compact, rules: { rail: { width: Weave.library.components.values.full, borderRight: Weave.library.components.values.none, paddingRight: Weave.library.components.values.zero }, tiles: { gridTemplateColumns: Weave.library.components.vars.compactTrack }, pageHeader: { flexWrap: Weave.library.components.values.wrap, alignItems: Weave.library.components.values.start }, panel: { padding: Weave.library.components.vars.space }, panels: { gridTemplateColumns: Weave.library.components.values.full }, split: { flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.stretch }, table: { fontSize: Weave.library.components.vars.fontSizeSmall }, modal: { padding: Weave.library.components.vars.spaceLoose }, page: { padding: Weave.library.components.vars.space }, display: { fontSize: Weave.library.components.vars.fontSizeLarge }, value: { fontSize: Weave.library.components.vars.fontSizeLarge } }, marks: {} };
+Weave.library.components.mediaRules.compact = { query: Weave.library.components.breakpoints.compact, rules: { rail: { width: Weave.library.components.values.full, borderRight: Weave.library.components.values.none, paddingRight: Weave.library.components.values.zero }, tiles: { gridTemplateColumns: Weave.library.components.vars.compactTrack }, pageHeader: { flexWrap: Weave.library.components.values.wrap, alignItems: Weave.library.components.values.start }, panel: { padding: Weave.library.components.vars.space }, panels: { gridTemplateColumns: Weave.library.components.values.full }, split: { flexDirection: Weave.library.components.values.column, alignItems: Weave.library.components.values.stretch }, table: { fontSize: Weave.library.components.vars.fontSizeSmall }, modal: { padding: Weave.library.components.vars.spaceLoose }, page: { padding: Weave.library.components.vars.space, paddingBottom: Weave.library.components.vars.barRoom }, display: { fontSize: Weave.library.components.vars.fontSizeLarge }, value: { fontSize: Weave.library.components.vars.fontSizeLarge } }, marks: {} };
 Weave.library.components.mediaRules.calm = { query: Weave.library.browser.mediaQueries.reducedMotion, rules: { skeletonLine: { animation: Weave.library.components.values.none } }, marks: {} };
 Weave.library.components.mediaRules.paper = { query: Weave.library.browser.mediaQueries.print, rules: { toolbar: { display: Weave.library.components.values.none }, pagination: { display: Weave.library.components.values.none }, card: { boxShadow: Weave.library.components.values.none } }, marks: {} };
 Weave.library.components.mediaBody = rules => Weave.library.composition.pairs(rules).map(Weave.library.components.ruleText).join(Weave.library.browser.keywords.space);
@@ -1208,7 +1264,7 @@ Weave.library.components.seriesInks.five = { color: Weave.library.components.var
 Weave.library.components.seriesNames = Weave.library.components.nameTable(Weave.library.components.seriesInks);
 Weave.library.components.seriesOrder = Weave.library.composition.keys(Weave.library.components.seriesInks);
 Weave.library.components.seriesLast = () => Weave.library.components.seriesOrder.length - 1;
-Weave.library.components.seriesAt = index => Weave.library.components.seriesOrder[Math.min(index, Weave.library.components.seriesLast())];
+Weave.library.components.seriesAt = index => Weave.library.components.seriesOrder[Weave.library.composition.clamp(0, Weave.library.components.seriesLast())(Math.floor(Weave.library.composition.number(index)))];
 Weave.library.components.chartClasses = [Weave.library.components.classNames.chartLine, Weave.library.components.classNames.chartBar, Weave.library.components.classNames.rankFill, Weave.library.components.classNames.legendSwatch, Weave.library.components.classNames.ringSegment, Weave.library.components.classNames.areaLayer, Weave.library.components.classNames.stackSegment, Weave.library.components.classNames.funnelFill];
 Weave.library.components.modifiers.series = { on: Weave.library.components.chartClasses, styles: Weave.library.components.seriesInks };
 
@@ -1222,8 +1278,8 @@ Weave.library.components.heatSteps.five = { background: Weave.library.components
 Weave.library.components.heatNames = Weave.library.components.nameTable(Weave.library.components.heatSteps);
 Weave.library.components.heatOrder = Weave.library.composition.keys(Weave.library.components.heatSteps);
 Weave.library.components.heatLast = () => Weave.library.components.heatOrder.length - 1;
-Weave.library.components.heatStepOf = share => Math.floor(share * Weave.library.components.heatOrder.length);
-Weave.library.components.heatAt = share => Weave.library.components.heatOrder[Math.min(Weave.library.components.heatStepOf(share), Weave.library.components.heatLast())];
+Weave.library.components.heatStepOf = share => Math.floor(Weave.library.composition.number(share) * Weave.library.components.heatOrder.length);
+Weave.library.components.heatAt = share => Weave.library.components.heatOrder[Weave.library.composition.clamp(0, Weave.library.components.heatLast())(Weave.library.components.heatStepOf(share))];
 Weave.library.components.modifiers.heat = { on: [Weave.library.components.classNames.heatCell, Weave.library.components.classNames.heatSquare], styles: Weave.library.components.heatSteps };
 
 /* edits: the three things a line in a diff can be, one row each, so no review colours a row of its own. */
@@ -1245,7 +1301,7 @@ Weave.library.components.image = spec => Weave.library.components.build(Weave.li
 Weave.library.components.mediaPicture = spec => Weave.library.control.maybe(() => Weave.library.components.image(spec))(spec.src);
 Weave.library.components.mediaGlyph = spec => Weave.library.control.maybe(glyph => Weave.library.components.icon({ glyph }))(spec.glyph);
 Weave.library.components.mediaParts = spec => Weave.library.composition.compact([Weave.library.components.mediaPicture(spec), Weave.library.components.mediaGlyph(spec)]);
-Weave.library.components.media = spec => Weave.library.components.build(Weave.library.components.parts.media, Weave.library.components.mediaName, { children: Weave.library.components.mediaParts(spec), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.media = spec => Weave.library.components.build(Weave.library.components.parts.media, Weave.library.components.mediaName, Weave.library.components.keepMarks(spec, { children: Weave.library.components.mediaParts(spec), aria: Weave.library.components.labelAria(spec) }));
 Weave.library.components.rules.media = { position: Weave.library.components.values.relative, display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.center, aspectRatio: Weave.library.components.vars.mediaRatio, margin: Weave.library.components.values.zero, borderRadius: Weave.library.components.vars.radius, background: Weave.library.components.vars.mediaWash, overflow: Weave.library.components.values.clip, fontSize: Weave.library.components.vars.glyphSize };
 Weave.library.components.rules.image = { width: Weave.library.components.values.full, height: Weave.library.components.values.full, objectFit: Weave.library.components.values.cover, display: Weave.library.components.values.block };
 
@@ -1254,8 +1310,11 @@ Weave.library.components.radioAttributes = spec => ({ [Weave.library.browser.key
 Weave.library.components.radioProperties = spec => ({ [Weave.library.attributes.booleanAttributes.checked]: Weave.library.control.defaultTo(false)(spec.checked) });
 Weave.library.components.radioSpec = spec => ({ attributes: Weave.library.components.radioAttributes(spec), properties: Weave.library.components.radioProperties(spec), onChoose: spec.onChoose });
 Weave.library.components.radioMark = spec => Weave.library.components.build(Weave.library.components.parts.radio, Weave.library.components.interactive.radioMark, Weave.library.components.radioSpec(spec));
-Weave.library.components.choicePicked = (spec, option) => event => spec.onChoose(option.value, event);
-Weave.library.components.choiceSpec = (spec, option) => Weave.library.composition.merge(option, { group: spec.name, checked: option.value === spec.value, onChoose: Weave.library.components.choicePicked(spec, option) });
+Weave.library.components.choicePicked = (spec, option) => event => Weave.library.control.defaultTo(Weave.library.composition.noop)(spec.onChoose)(option.value, event);
+Weave.library.components.choicesPrefix = 'weave-choices-';
+Weave.library.components.choicesWords = spec => Weave.library.components.textOf(spec, Weave.library.components.labelKey) + Weave.library.components.pointJoin + Weave.library.control.defaultTo([])(spec.options).map(Weave.library.components.optionValue).join(Weave.library.components.pointJoin);
+Weave.library.components.groupName = spec => Weave.library.control.defaultTo(Weave.library.components.choicesPrefix + Weave.library.components.stableHash(Weave.library.components.choicesWords(spec)))(spec.name);
+Weave.library.components.choiceSpec = (spec, option) => Weave.library.composition.merge(option, { group: Weave.library.components.groupName(spec), checked: option.value === spec.value, onChoose: Weave.library.components.choicePicked(spec, option) });
 Weave.library.components.choiceRow = (spec, option) => [Weave.library.components.radioMark(Weave.library.components.choiceSpec(spec, option)), Weave.library.components.fieldLabel(option), Weave.library.components.fill({}), Weave.library.components.note({ text: option.note })];
 Weave.library.components.choiceField = spec => option => Weave.library.components.build(Weave.library.components.parts.label, 'choiceField', { children: Weave.library.components.choiceRow(spec, option) });
 Weave.library.components.choiceParts = spec => [Weave.library.components.choiceLegend({ text: Weave.library.components.textOf(spec, Weave.library.components.labelKey) })].concat(spec.options.map(Weave.library.components.choiceField(spec)));
@@ -1288,8 +1347,11 @@ Weave.library.components.nestRules = {};
 Weave.library.components.nestRules.panelInPanel = { outers: ['panel', 'dialogBox', 'drawerBox', 'sheetBox'], inner: 'panel', style: { boxShadow: Weave.library.components.values.none, animation: Weave.library.components.values.none, border: Weave.library.components.values.none, borderRadius: Weave.library.components.values.zero, padding: Weave.library.components.values.zero, background: Weave.library.components.values.transparent } };
 Weave.library.components.quietRowStyle = { display: Weave.library.components.values.flex, width: Weave.library.components.values.full, justifyContent: Weave.library.components.values.start, borderColor: Weave.library.components.values.transparent };
 Weave.library.components.nestRules.quietRows = { outers: ['menu', 'tree'], inner: 'button', style: Weave.library.components.quietRowStyle };
+Weave.library.components.nestRules.tipShown = { outers: ['tooltip'], states: [Weave.library.components.stateNames.hover, Weave.library.components.stateNames.within], inner: 'tooltipNote', style: { opacity: Weave.library.components.values.opaque } };
 Weave.library.components.nestRules.cardInCard = { outers: ['card'], inner: 'card', style: { border: Weave.library.components.values.none, boxShadow: Weave.library.components.values.none, padding: Weave.library.components.values.zero, background: Weave.library.components.values.transparent } };
-Weave.library.components.nestPair = row => outer => Weave.library.components.classSelector(outer) + Weave.library.browser.keywords.space + Weave.library.components.classSelector(row.inner);
+Weave.library.components.nestSuffixes = row => Weave.library.control.defaultTo([Weave.library.browser.keywords.empty])(Weave.library.control.maybe(names => names.map(name => Weave.library.components.states[name]))(row.states));
+Weave.library.components.nestOne = (row, outer) => suffix => Weave.library.components.classSelector(outer) + suffix + Weave.library.browser.keywords.space + Weave.library.components.classSelector(row.inner);
+Weave.library.components.nestPair = row => outer => Weave.library.components.nestSuffixes(row).map(Weave.library.components.nestOne(row, outer)).join(Weave.library.components.selectorJoin);
 Weave.library.components.nestSelector = row => row.outers.map(Weave.library.components.nestPair(row)).join(Weave.library.components.selectorJoin);
 Weave.library.components.nestText = ([ignored, row]) => Weave.library.components.blockFor(Weave.library.components.nestSelector(row), row.style);
 Weave.library.components.nestTexts = () => Weave.library.composition.pairs(Weave.library.components.nestRules).map(Weave.library.components.nestText);
@@ -1354,7 +1416,7 @@ Weave.library.components.rules.navbarBox = { display: Weave.library.components.v
 Weave.library.components.rules.brand = { fontSize: Weave.library.components.vars.fontSizeLarge, fontWeight: Weave.library.components.values.heavy, letterSpacing: Weave.library.components.vars.tracking };
 
 /* listGroup: rows that look like one object. A row with an action is a button, a row without one is not. */
-Weave.library.components.groupChoice = item => Weave.library.components.rowButton({ children: Weave.library.components.twoLines(item), onAction: item.onAction, aria: { selected: String(item.active === true) } });
+Weave.library.components.groupChoice = item => Weave.library.components.rowButton({ children: Weave.library.components.twoLines(item), onAction: item.onAction, aria: { pressed: String(item.active === true) } });
 Weave.library.components.groupLines = item => Weave.library.components.fill({ children: Weave.library.components.twoLines(item) });
 Weave.library.components.groupContent = item => Weave.library.control.either(() => Weave.library.predicates.isFunction(item.onAction), () => Weave.library.components.groupChoice(item), () => Weave.library.components.groupLines(item))(item);
 Weave.library.components.groupAside = item => Weave.library.composition.compact([Weave.library.components.groupContent(item), item.aside]);
@@ -1373,15 +1435,15 @@ Weave.library.components.rules.inputGroupBox = { maxWidth: Weave.library.compone
 Weave.library.components.rules.addon = { display: Weave.library.components.values.inlineFlex, alignItems: Weave.library.components.values.center, padding: Weave.library.components.vars.padSnug, background: Weave.library.components.vars.sunken, color: Weave.library.components.vars.muted, fontSize: Weave.library.components.vars.fontSizeSmall, whiteSpace: Weave.library.components.values.nowrap };
 
 /* buttonGroup and segmented: buttons welded into one control, and the same control answering a choice. */
-Weave.library.components.buttonGroup = spec => Weave.library.components.buttonGroupBox({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.actionButton) });
+Weave.library.components.buttonGroup = spec => Weave.library.components.buttonGroupBox(Weave.library.components.keepMarks(spec, { children: Weave.library.components.itemsOf(spec).map(Weave.library.components.actionButton) }));
 Weave.library.components.segmentPick = (spec, item) => () => spec.onPick(item.key);
-Weave.library.components.segmentSpec = spec => item => Weave.library.composition.merge(item, { aria: { selected: String(item.key === spec.active) }, onAction: Weave.library.components.segmentPick(spec, item) });
-Weave.library.components.segmented = spec => Weave.library.components.buttonGroup({ items: Weave.library.components.itemsOf(spec).map(Weave.library.components.segmentSpec(spec)) });
+Weave.library.components.segmentSpec = spec => item => Weave.library.composition.merge(item, { aria: { pressed: String(item.key === spec.active) }, onAction: Weave.library.components.segmentPick(spec, item) });
+Weave.library.components.segmented = spec => Weave.library.components.buttonGroup(Weave.library.components.keepMarks(spec, { items: Weave.library.components.itemsOf(spec).map(Weave.library.components.segmentSpec(spec)) }));
 Weave.library.components.rules.buttonGroupBox = { display: Weave.library.components.values.inlineFlex, alignItems: Weave.library.components.values.center, border: Weave.library.components.borders.hairline, borderRadius: Weave.library.components.vars.radiusSmall, overflow: Weave.library.components.values.clip, width: Weave.library.components.values.fit };
 
 /* spinner: the one busy mark, so nothing in the system spells an animation twice. */
 Weave.library.components.busyAria = spec => ({ label: Weave.library.control.defaultTo(Weave.library.components.busyLabel)(spec.label), busy: Weave.library.browser.keywords.true });
-Weave.library.components.spinner = spec => Weave.library.components.spinnerMark({ aria: Weave.library.components.busyAria(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) });
+Weave.library.components.spinner = spec => Weave.library.components.spinnerMark(Weave.library.components.keepMarks(spec, { aria: Weave.library.components.busyAria(spec), attributes: Weave.library.components.roleAttribute(Weave.library.accessibility.roles.status) }));
 Weave.library.components.keyframes.spin = { from: { transform: Weave.library.components.vars.turnStart }, to: { transform: Weave.library.components.vars.turnEnd } };
 Weave.library.components.rules.spinnerMark = { display: Weave.library.components.values.inlineBlock, width: Weave.library.components.vars.spinnerSize, height: Weave.library.components.vars.spinnerSize, borderRadius: Weave.library.components.values.full, border: Weave.library.components.borders.spinnerRing, borderTopColor: Weave.library.components.vars.accent, animation: Weave.library.components.vars.spin };
 
@@ -1403,7 +1465,7 @@ Weave.library.components.rules.credit = { color: Weave.library.components.vars.m
 
 /* banner: the loud strip at the top of a page, toned like everything else that speaks. */
 Weave.library.components.bannerParts = spec => Weave.library.composition.compact([Weave.library.components.display({ text: Weave.library.components.titleOf(spec) }), Weave.library.components.note({ text: Weave.library.components.noteOf(spec) }), Weave.library.components.actionRow(spec)]);
-Weave.library.components.banner = spec => Weave.library.components.bannerBox({ children: Weave.library.components.bannerParts(spec), data: Weave.library.components.toneData(spec) });
+Weave.library.components.banner = spec => Weave.library.components.bannerBox(Weave.library.components.keepMarks(spec, { children: Weave.library.components.bannerParts(spec), data: Weave.library.components.toneData(spec) }));
 Weave.library.components.rules.bannerBox = { display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space, padding: Weave.library.components.vars.spaceWide, borderRadius: Weave.library.components.vars.radiusLarge, background: Weave.library.components.vars.accentSoft, color: Weave.library.components.vars.accentSoftInk, borderLeft: Weave.library.components.borders.accentLine };
 
 /* rating: a score out of the one count the system keeps, drawn from the two glyphs it keeps beside it. */
@@ -1416,7 +1478,8 @@ Weave.library.components.starFor = spec => index => Weave.library.components.ico
 Weave.library.components.ratingTotal = spec => Weave.library.control.defaultTo(Weave.library.components.starCount)(spec.total);
 Weave.library.components.ratingLabel = spec => String(spec.value) + Weave.library.components.ratingJoin + String(Weave.library.components.ratingTotal(spec));
 Weave.library.components.ratingJoin = ' of ';
-Weave.library.components.rating = spec => Weave.library.components.ratingBox({ children: Weave.library.composition.range(Weave.library.components.ratingTotal(spec)).map(Weave.library.components.starFor(spec)), aria: { label: Weave.library.components.ratingLabel(spec) } });
+Weave.library.components.ratingStars = spec => Weave.library.composition.range(Weave.library.components.ratingTotal(spec)).map(Weave.library.components.starFor(spec));
+Weave.library.components.rating = spec => Weave.library.components.ratingBox(Weave.library.composition.merge(Weave.library.components.graphicSpec(Weave.library.components.ratingLabel(spec)), { children: Weave.library.components.ratingStars(spec) }));
 Weave.library.components.rules.ratingBox = { display: Weave.library.components.values.inlineFlex, gap: Weave.library.components.vars.spaceTight, color: Weave.library.components.vars.toneWarning, letterSpacing: Weave.library.components.vars.tracking };
 
 /* chip: a tag you can take off again, for the filters a reader has already chosen. */
@@ -1428,7 +1491,7 @@ Weave.library.components.rules.chipBox = { display: Weave.library.components.val
 
 /* timeline: what happened and when, one row each, the time held to one side of the rail. */
 Weave.library.components.momentParts = row => [Weave.library.components.timestamp({ text: row.when }), Weave.library.components.fill({ children: Weave.library.components.twoLines(row) })];
-Weave.library.components.momentOf = row => Weave.library.components.timelineRow({ children: Weave.library.components.momentParts(row), data: { key: row.key } });
+Weave.library.components.momentOf = row => Weave.library.components.timelineRow(Weave.library.components.keepMarks(row, { children: Weave.library.components.momentParts(row), data: { key: row.key } }));
 Weave.library.components.timeline = spec => Weave.library.components.timelineList({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.momentOf) });
 Weave.library.components.rules.timelineList = { listStyle: Weave.library.components.values.none, margin: Weave.library.components.values.zero, padding: Weave.library.components.values.zero, display: Weave.library.components.values.flex, flexDirection: Weave.library.components.values.column, gap: Weave.library.components.vars.space };
 Weave.library.components.rules.timelineRow = { display: Weave.library.components.values.flex, alignItems: Weave.library.components.values.start, gap: Weave.library.components.vars.space, paddingLeft: Weave.library.components.vars.space, borderLeft: Weave.library.components.borders.hairline };
@@ -1485,12 +1548,12 @@ Weave.library.components.presetTokens = name => Weave.library.control.defaultTo(
 Weave.library.components.applyPreset = name => element => Weave.library.components.applyTokens(Weave.library.components.presetTokens(name))(element);
 Weave.library.components.usePreset = name => Weave.library.components.applyPreset(name)(Weave.library.browser.documentElement());
 
-/* configure: the one way a page moves a token before the sheet is written, so no page edits the library. */
-Weave.library.components.configure = overrides => Object.assign(Weave.library.components.tokens, overrides);
+/* configure: the one way a page moves a token, so no page edits the library. A sheet already written is written again from the new tokens. */
+Weave.library.components.configure = overrides => (Object.assign(Weave.library.components.tokens, overrides), Weave.library.control.maybe(el => Weave.library.elements.setText(Weave.library.components.styleText())(el))(Weave.library.components.sheetHolder.element), Weave.library.components.tokens);
 
 /* themes, second wave: two more rows, each still nothing but token overrides. */
 Weave.library.components.themes.contrast = { ink: '#000000', muted: '#1f2937', edge: '#000000', surface: '#ffffff', sunken: '#f1f1f1', accent: '#0b3ea8', accentSoft: '#dbe6ff', accentSoftInk: '#062a75', shadow: '0 0 0 1px #000000', focusRing: '0 0 0 3px #0b3ea8', groundWash: 'none', washAurora: '#f1f1f1', washSunrise: '#fff8e6', washOcean: '#eef6ff', glass: '#ffffff', shadowRaised: '0 0 0 2px #000000', shadowButton: 'none' };
-Weave.library.components.themes.dusk = { ink: '#f5e9d7', muted: '#b9a68c', edge: '#4a3b2c', surface: '#2f2519', sunken: '#241c14', accent: '#e0a458', accentInk: '#241c14', accentSoft: '#3b2d1c', accentSoftInk: '#f0c891', mediaWash: 'linear-gradient(145deg, #3b2d1c, #241c14)', shadow: '0 1px 2px rgba(0, 0, 0, 0.45)', shadowLifted: '0 10px 30px rgba(0, 0, 0, 0.55)', focusRing: '0 0 0 3px rgba(224, 164, 88, 0.45)', groundWash: 'radial-gradient(1100px 520px at 0% -8%, rgba(224, 164, 88, 0.14), transparent 62%)', washAurora: 'linear-gradient(135deg, #43321d, #2f2519 60%, #3a2a24)', washSunrise: 'linear-gradient(135deg, #4a3320, #3b2419)', washOcean: 'linear-gradient(135deg, #2a3029, #2f2519)', glass: 'rgba(47, 37, 25, 0.78)', shadowRaised: '0 24px 48px -20px rgba(0, 0, 0, 0.7)', shadowInput: '0 1px 2px rgba(0, 0, 0, 0.35)' };
+Weave.library.components.themes.dusk = { ink: '#f5e9d7', muted: '#b9a68c', edge: '#4a3b2c', surface: '#2f2519', sunken: '#241c14', accent: '#e0a458', accentInk: '#241c14', accentSoft: '#3b2d1c', accentSoftInk: '#f0c891', mediaWash: 'linear-gradient(145deg, #3b2d1c, #241c14)', shadow: '0 1px 2px rgba(0, 0, 0, 0.45)', shadowLifted: '0 10px 30px rgba(0, 0, 0, 0.55)', focusRing: '0 0 0 3px rgba(224, 164, 88, 0.45)', groundWash: 'radial-gradient(1100px 520px at 0% -8%, rgba(224, 164, 88, 0.14), transparent 62%)', washAurora: 'linear-gradient(135deg, #43321d, #2f2519 60%, #3a2a24)', washSunrise: 'linear-gradient(135deg, #4a3320, #3b2419)', washOcean: 'linear-gradient(135deg, #2a3029, #2f2519)', glass: 'rgba(47, 37, 25, 0.78)', shadowRaised: '0 24px 48px -20px rgba(0, 0, 0, 0.7)', shadowInput: '0 1px 2px rgba(0, 0, 0, 0.35)', shadowOverlay: '0 32px 64px rgba(0, 0, 0, 0.62), 0 6px 16px rgba(0, 0, 0, 0.48)', seriesOne: '#4a8fe0', seriesTwo: '#e0662e', seriesThree: '#22a679', seriesFour: '#d19000', seriesFive: '#dc5b8a', heatOne: '#3a2c1d', heatTwo: '#5a4026', heatThree: '#80582e', heatFour: '#b07a3c', heatFive: '#e0a458', addedWash: '#26331f', removedWash: '#45261f', danger: '#f79a8c', toneInfo: '#a9c1f5', toneSuccess: '#8fd6a0', toneWarning: '#f2b866', toneDanger: '#f79a8c', toneQuiet: '#c2b096' };
 
 /* breakpoints, second wave: the wide viewport, and what the new pieces do on a narrow one. */
 Weave.library.components.breakpoints.wide = Weave.library.browser.fromWidth(Weave.library.components.tokens.pageWidth);
@@ -1527,7 +1590,8 @@ Weave.library.components.plotAttributes = () => ({ viewBox: Weave.library.compon
 Weave.library.components.ringAttributes = () => ({ viewBox: Weave.library.components.plotFrame() });
 Weave.library.components.chartCeiling = spec => Weave.library.components.chartTop(Weave.library.components.linesIn(spec).flatMap(Weave.library.components.valuesIn));
 Weave.library.components.traceFor = spec => line => Weave.library.components.chartLine({ series: line.series, attributes: { points: Weave.library.components.pointsText(line.values, Weave.library.components.chartCeiling(spec)) } });
-Weave.library.components.lineChart = spec => Weave.library.components.chartPlot({ children: Weave.library.components.linesIn(spec).map(Weave.library.components.traceFor(spec)), attributes: Weave.library.components.plotAttributes(), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.lineSpec = spec => ({ children: Weave.library.components.linesIn(spec).map(Weave.library.components.traceFor(spec)), attributes: Weave.library.components.plotAttributes(), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.lineChart = spec => Weave.library.components.chartPlot(Weave.library.components.keepMarks(spec, Weave.library.components.lineSpec(spec)));
 Weave.library.components.sparkTrace = spec => Weave.library.components.chartLine({ series: spec.series, attributes: { points: Weave.library.components.pointsText(Weave.library.components.valuesIn(spec), Weave.library.components.chartTop(Weave.library.components.valuesIn(spec))) } });
 Weave.library.components.sparkline = spec => Weave.library.components.sparkPlot({ children: [Weave.library.components.sparkTrace(spec)], attributes: Weave.library.components.plotAttributes(), aria: Weave.library.components.labelAria(spec) });
 
@@ -1538,7 +1602,7 @@ Weave.library.components.axis = spec => Weave.library.components.axisRow({ child
 /* charts, the legend: one entry per series, and pressing an entry takes that series off the chart. */
 Weave.library.components.legendLabel = item => Weave.library.components.hint({ text: item.label });
 Weave.library.components.legendParts = item => [Weave.library.components.legendSwatch({ series: item.series }), Weave.library.components.legendLabel(item)];
-Weave.library.components.legendPress = item => Weave.library.components.legendButton({ children: Weave.library.components.legendParts(item), onAction: item.onAction, aria: { selected: String(item.shown) } });
+Weave.library.components.legendPress = item => Weave.library.components.legendButton({ children: Weave.library.components.legendParts(item), onAction: item.onAction, aria: { pressed: String(item.shown !== false) } });
 Weave.library.components.legendStill = item => Weave.library.components.legendFace({ children: Weave.library.components.legendParts(item) });
 Weave.library.components.legendBody = item => Weave.library.control.either(Weave.library.predicates.isFunction, () => Weave.library.components.legendPress(item), () => Weave.library.components.legendStill(item))(item.onAction);
 Weave.library.components.legendRow = item => Weave.library.components.legendItem({ children: [Weave.library.components.legendBody(item)], data: { key: item.key } });
@@ -1558,7 +1622,7 @@ Weave.library.components.barOf = top => item => Weave.library.components.chartBa
 Weave.library.components.barNumber = item => Weave.library.control.maybe(words => Weave.library.components.barValue({ text: words }))(item.reading);
 Weave.library.components.barParts = (top, item) => Weave.library.composition.compact([Weave.library.components.barNumber(item), Weave.library.components.barTrack({ children: [Weave.library.components.barOf(top)(item)] }), Weave.library.components.axisLabel({ text: item.label })]);
 Weave.library.components.barOne = top => item => Weave.library.components.barColumn({ children: Weave.library.components.barParts(top, item) });
-Weave.library.components.barChart = spec => Weave.library.components.barsRow({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.barOne(Weave.library.components.topOfItems(spec))), aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.barChart = spec => Weave.library.components.barsRow(Weave.library.composition.merge(Weave.library.components.graphicSpec(spec.label), { children: Weave.library.components.itemsOf(spec).map(Weave.library.components.barOne(Weave.library.components.topOfItems(spec))) }));
 
 /* charts, the ranks: the same reading lying down, for the list of names too long to stand up. */
 Weave.library.components.rankBarOf = top => item => Weave.library.components.rankFill({ series: item.series, styles: { width: Weave.library.components.chartLength(Weave.library.components.chartShare(item.value, top)) } });
@@ -1574,19 +1638,24 @@ Weave.library.components.ringRound = () => 2 * Math.PI * Weave.library.component
 Weave.library.components.ringLength = share => Math.max(share * Weave.library.components.ringRound() - Weave.library.components.ringGap, 0);
 Weave.library.components.ringDash = share => String(Weave.library.components.ringLength(share)) + Weave.library.components.pointJoin + String(Weave.library.components.ringRound());
 Weave.library.components.ringShift = before => String(0 - before * Weave.library.components.ringRound());
-Weave.library.components.ringShares = spec => Weave.library.components.itemsOf(spec).map(item => Weave.library.components.chartShare(item.value, Weave.library.components.chartSum(Weave.library.components.itemsOf(spec).map(Weave.library.components.valueOfRow))));
-Weave.library.components.ringBefore = (shares, index) => Weave.library.components.chartSum(shares.slice(0, index));
+Weave.library.components.ringValues = spec => Weave.library.components.itemsOf(spec).map(Weave.library.components.valueOfRow);
+Weave.library.components.ringSharesOf = (values, total) => values.map(value => Weave.library.components.chartShare(value, total));
+Weave.library.components.ringShares = spec => Weave.library.components.ringSharesOf(Weave.library.components.ringValues(spec), Weave.library.components.chartSum(Weave.library.components.ringValues(spec)));
+Weave.library.components.ringStarts = shares => shares.reduce((starts, share) => (starts.push(Weave.library.composition.last(starts) + share), starts), [0]);
 Weave.library.components.ringPlace = () => ({ cx: Weave.library.components.ringMiddle(), cy: Weave.library.components.ringMiddle(), r: Weave.library.components.ringRadius });
-Weave.library.components.ringStroke = (shares, index) => ({ strokeDasharray: Weave.library.components.ringDash(shares[index]), strokeDashoffset: Weave.library.components.ringShift(Weave.library.components.ringBefore(shares, index)) });
-Weave.library.components.ringArc = shares => (item, index) => Weave.library.components.ringSegment({ series: item.series, attributes: Weave.library.components.ringPlace(), styles: Weave.library.components.ringStroke(shares, index), aria: { label: item.reading } });
-Weave.library.components.ringFace = spec => Weave.library.components.ringPlot({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.ringArc(Weave.library.components.ringShares(spec))), attributes: Weave.library.components.ringAttributes() });
+Weave.library.components.ringStroke = (shares, starts, index) => ({ strokeDasharray: Weave.library.components.ringDash(shares[index]), strokeDashoffset: Weave.library.components.ringShift(starts[index]) });
+Weave.library.components.ringArcSpec = (shares, starts, item, index) => ({ series: item.series, attributes: Weave.library.components.ringPlace(), styles: Weave.library.components.ringStroke(shares, starts, index) });
+Weave.library.components.ringArc = (shares, starts) => (item, index) => Weave.library.components.ringSegment(Weave.library.composition.mergeDeep(Weave.library.components.graphicSpec(item.reading), Weave.library.components.ringArcSpec(shares, starts, item, index)));
+Weave.library.components.ringArcs = shares => Weave.library.components.ringArc(shares, Weave.library.components.ringStarts(shares));
+Weave.library.components.ringFace = spec => Weave.library.components.ringPlot({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.ringArcs(Weave.library.components.ringShares(spec))), attributes: Weave.library.components.ringAttributes() });
 Weave.library.components.ringHeart = spec => Weave.library.components.ringCentre({ children: [Weave.library.components.value({ text: spec.reading }), Weave.library.components.hint({ text: spec.label })] });
-Weave.library.components.donut = spec => Weave.library.components.ringBox({ children: [Weave.library.components.ringFace(spec), Weave.library.components.ringHeart(spec)], aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.donut = spec => Weave.library.components.ringBox(Weave.library.composition.merge(Weave.library.components.graphicSpec(spec.label), { children: [Weave.library.components.ringFace(spec), Weave.library.components.ringHeart(spec)] }));
 
 /* charts, the heatmap: a cell per reading, its step taken from the ramp, with that ramp drawn beside it. */
 Weave.library.components.cellsOf = row => Weave.library.control.defaultTo([])(row.cells);
 Weave.library.components.heatTop = spec => Weave.library.components.chartTop(Weave.library.components.itemsOf(spec).flatMap(Weave.library.components.cellsOf).map(Weave.library.components.valueOfRow));
-Weave.library.components.heatCellOf = top => cell => Weave.library.components.heatCell({ heat: Weave.library.components.heatAt(Weave.library.components.chartShare(cell.value, top)), attributes: { title: cell.reading }, aria: { label: cell.reading } });
+Weave.library.components.heatSpec = (top, cell) => Weave.library.composition.mergeDeep(Weave.library.components.graphicSpec(cell.reading), { heat: Weave.library.components.heatAt(Weave.library.components.chartShare(cell.value, top)), attributes: { title: cell.reading } });
+Weave.library.components.heatCellOf = top => cell => Weave.library.components.heatCell(Weave.library.components.heatSpec(top, cell));
 Weave.library.components.heatLine = top => row => Weave.library.components.heatRow({ children: [Weave.library.components.axisLabel({ text: row.label })].concat(Weave.library.components.cellsOf(row).map(Weave.library.components.heatCellOf(top))) });
 Weave.library.components.heatmap = spec => Weave.library.components.heatGrid({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.heatLine(Weave.library.components.heatTop(spec))), aria: Weave.library.components.labelAria(spec) });
 Weave.library.components.heatChip = name => Weave.library.components.heatCell({ heat: name });
@@ -1761,6 +1830,7 @@ Weave.library.components.glyphs = {};
 Weave.library.components.glyphs.search = '🔎';
 Weave.library.components.glyphs.tick = '✓';
 Weave.library.components.glyphs.cross = '✕';
+Weave.library.components.glyphs.more = '…';
 
 /* surfaces and washes: how a box stands off the page, and the colour field it can be laid on. Both are modifiers any box takes. */
 Weave.library.components.surfaces = {};
@@ -1941,7 +2011,7 @@ Weave.library.components.gaugeShare = spec => Weave.library.components.chartShar
 Weave.library.components.gaugeFill = spec => Weave.library.components.gaugeArc({ attributes: Weave.library.components.ringPlace(), styles: { strokeDasharray: Weave.library.components.ringDash(Weave.library.components.gaugeShare(spec)) } });
 Weave.library.components.gaugeFace = spec => Weave.library.components.gaugePlot({ children: [Weave.library.components.gaugeTrack({ attributes: Weave.library.components.ringPlace() }), Weave.library.components.gaugeFill(spec)], attributes: Weave.library.components.ringAttributes() });
 Weave.library.components.gaugeHeart = spec => Weave.library.components.gaugeCentre({ children: Weave.library.composition.compact([Weave.library.components.value({ text: spec.reading }), Weave.library.components.hintOf(spec.label)]) });
-Weave.library.components.gauge = spec => Weave.library.components.gaugeBox({ children: [Weave.library.components.gaugeFace(spec), Weave.library.components.gaugeHeart(spec)], tone: spec.tone, aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.gauge = spec => Weave.library.components.gaugeBox(Weave.library.composition.merge(Weave.library.components.graphicSpec(spec.label), { children: [Weave.library.components.gaugeFace(spec), Weave.library.components.gaugeHeart(spec)], tone: spec.tone }));
 
 /* charts, the stack: parts of one whole laid end to end in a single bar, with the share of each written in its key. */
 Weave.library.components.stackJoin = ' · ';
@@ -1949,7 +2019,7 @@ Weave.library.components.stackPiece = shares => (item, index) => Weave.library.c
 Weave.library.components.stackKeyOf = shares => (item, index) => ({ key: item.label, series: item.series, label: item.label + Weave.library.components.stackJoin + Weave.library.components.chartLength(shares[index]) });
 Weave.library.components.stackTrackOf = spec => Weave.library.components.stackTrack({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.stackPiece(Weave.library.components.ringShares(spec))) });
 Weave.library.components.stackKey = spec => Weave.library.components.legend({ items: Weave.library.components.itemsOf(spec).map(Weave.library.components.stackKeyOf(Weave.library.components.ringShares(spec))) });
-Weave.library.components.stackBar = spec => Weave.library.components.stackBox({ children: [Weave.library.components.stackTrackOf(spec), Weave.library.components.stackKey(spec)], aria: Weave.library.components.labelAria(spec) });
+Weave.library.components.stackBar = spec => Weave.library.components.stackBox(Weave.library.composition.merge(Weave.library.components.graphicSpec(spec.label), { children: [Weave.library.components.stackTrackOf(spec), Weave.library.components.stackKey(spec)] }));
 
 /* charts, the funnel: how many are left at each step, each bar a share of the first and centred so the narrowing shows. */
 Weave.library.components.funnelRate = (top, item) => Weave.library.components.chartLength(Weave.library.components.chartShare(item.value, top));
@@ -1959,7 +2029,7 @@ Weave.library.components.funnelStep = top => item => Weave.library.components.fu
 Weave.library.components.funnel = spec => Weave.library.components.funnelList({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.funnelStep(Weave.library.components.topOfItems(spec))), aria: Weave.library.components.labelAria(spec) });
 
 /* charts, the calendar: a square a day, a column a week, stepped off the same ramp the heatmap uses. */
-Weave.library.components.heatDay = top => cell => Weave.library.components.heatSquare({ heat: Weave.library.components.heatAt(Weave.library.components.chartShare(cell.value, top)), attributes: { title: cell.reading }, aria: { label: cell.reading } });
+Weave.library.components.heatDay = top => cell => Weave.library.components.heatSquare(Weave.library.components.heatSpec(top, cell));
 Weave.library.components.calendarHeat = spec => Weave.library.components.heatWeeks({ children: Weave.library.components.itemsOf(spec).map(Weave.library.components.heatDay(Weave.library.components.topOfItems(spec))), aria: Weave.library.components.labelAria(spec) });
 
 /* tones, the showcase wave: how each new toned class spends the tone it is handed. */
@@ -2069,6 +2139,10 @@ Weave.library.components.mediaRules.compact.rules.navList = { flexDirection: Wea
 Weave.library.components.mediaRules.compact.rules.navLabel = { display: Weave.library.components.values.none };
 Weave.library.components.mediaRules.compact.rules.navFoot = { display: Weave.library.components.values.none };
 Weave.library.components.mediaRules.compact.rules.topBarBox = { position: Weave.library.components.values.relative, padding: Weave.library.components.vars.space };
+Weave.library.components.values.snapStart = 'start';
+Weave.library.components.values.borderBox = 'border-box';
+Weave.library.components.mediaRules.compact.rules.shell = { overflowX: Weave.library.components.values.auto, scrollSnapType: Weave.library.components.values.snapX };
+Weave.library.components.mediaRules.compact.marks.pane = { width: Weave.library.components.values.full, flexShrink: Weave.library.components.values.zero, boxSizing: Weave.library.components.values.borderBox, scrollSnapAlign: Weave.library.components.values.snapStart };
 Weave.library.components.mediaRules.calm.rules.marqueeTrack = { animation: Weave.library.components.values.none };
 Weave.library.components.mediaRules.calm.rules.heroBox = { animation: Weave.library.components.values.none };
 Weave.library.components.mediaRules.calm.rules.featureBox = { animation: Weave.library.components.values.none };
@@ -2076,5 +2150,24 @@ Weave.library.components.mediaRules.calm.rules.planBox = { animation: Weave.libr
 Weave.library.components.mediaRules.calm.rules.metricBox = { animation: Weave.library.components.values.none };
 Weave.library.components.mediaRules.calm.rules.testimonialBox = { animation: Weave.library.components.values.none };
 Weave.library.components.mediaRules.calm.rules.windowBox = { animation: Weave.library.components.values.none };
+
+/* fixes: a graphic that carries a label says it is an image, a sorted header is a button, a number column lines up on its right, and a toggle button answers to aria-pressed. */
+Weave.library.components.graphicRole = 'img';
+Weave.library.components.graphicAttributes = label => Weave.library.control.defaultTo({})(Weave.library.control.maybe(() => Weave.library.components.roleAttribute(Weave.library.components.graphicRole))(label));
+Weave.library.components.graphicSpec = label => ({ attributes: Weave.library.components.graphicAttributes(label), aria: Weave.library.components.labelAria({ label }) });
+Weave.library.components.rules.headerButton = { padding: Weave.library.components.values.zero, border: Weave.library.components.values.none, background: Weave.library.components.values.transparent, color: Weave.library.components.values.inherited, cursor: Weave.library.components.values.pointer, font: Weave.library.components.values.inherit, letterSpacing: Weave.library.components.values.inherit, textTransform: Weave.library.components.values.inherit, textAlign: Weave.library.components.values.inherit };
+Weave.library.components.rules.pageGap = { display: Weave.library.components.values.inlineFlex, alignItems: Weave.library.components.values.center, justifyContent: Weave.library.components.values.center, minWidth: Weave.library.components.vars.controlHeight, color: Weave.library.components.vars.muted };
+Weave.library.components.textAligns = {};
+Weave.library.components.textAligns.start = { textAlign: Weave.library.components.values.left };
+Weave.library.components.textAligns.centre = { textAlign: Weave.library.components.values.center };
+Weave.library.components.textAligns.end = { textAlign: Weave.library.components.values.right };
+Weave.library.components.modifiers.textAlign = { on: [Weave.library.components.cellName, Weave.library.components.headerName], styles: Weave.library.components.textAligns };
+Weave.library.components.stateTwins = {};
+Weave.library.components.stateTwins.chosen = Weave.library.components.stateNames.pushed;
+Weave.library.components.stateTwins.unchosen = Weave.library.components.stateNames.unpushed;
+Weave.library.components.isTwinned = row => Weave.library.predicates.isDefined(Weave.library.control.ownValue(Weave.library.components.stateTwins, row.state));
+Weave.library.components.twinRule = row => Weave.library.composition.merge(row, { state: Weave.library.components.stateTwins[row.state] });
+Weave.library.components.twinSources = () => Weave.library.composition.fromPairs(Weave.library.composition.pairs(Weave.library.components.stateRules).filter(([ignored, row]) => Weave.library.components.isTwinned(row)));
+Weave.library.composition.defineEachPrefixed(Weave.library.components.stateRules, Weave.library.components.stateNames.pushed, Weave.library.components.twinRule)(Weave.library.components.twinSources());
 
 Weave.library.composition.defineEach(Weave.library.components.markNames, row => Weave.library.components.nameTable(row.styles))(Weave.library.components.modifiers);

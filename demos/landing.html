@@ -42,9 +42,12 @@ Weave.application.questions = [{ title: 'Does it need a build step?', body: ['On
 /* the hero: a banner with the two things every hero has, over the navbar every page has. */
 Weave.application.links = [{ label: Weave.application.words.product, active: true }, { label: Weave.application.words.pricing }, { label: Weave.application.words.docs }];
 Weave.application.bar = () => Weave.library.components.navbar({ title: Weave.application.words.title, items: Weave.application.links, actions: [{ label: Weave.application.words.start, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.noted }] });
-Weave.application.heroActions = () => [{ label: Weave.application.words.start, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.noted }, { label: Weave.application.words.tour, variant: Weave.library.components.markNames.variant.outline }];
+Weave.application.tourAction = () => ({ label: Weave.application.words.tour, variant: Weave.library.components.markNames.variant.outline, onAction: Weave.application.tour });
+Weave.application.heroActions = () => [{ label: Weave.application.words.start, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.noted }, Weave.application.tourAction()];
 Weave.application.hero = () => Weave.library.components.banner({ title: Weave.application.words.heroTitle, note: Weave.application.words.heroNote, tone: Weave.library.components.toneNames.info, actions: Weave.application.heroActions() });
 Weave.application.noted = () => Weave.kit.cheer(Weave.application.words.picked);
+Weave.application.tour = () => Weave.library.control.maybe(Weave.application.showSection)(Weave.application.sectionsByWord[Weave.application.tourStart()]);
+Weave.application.showSection = section => Weave.library.style.scrollIntoView({})(section);
 
 /* the reasons: three columns, each a card with a glyph over it, from one row of the table above. */
 Weave.application.reasonCard = row => Weave.library.components.card({ children: [Weave.library.components.glyphMark({ text: row.glyph }), Weave.library.components.subtitle({ text: row.label }), Weave.library.components.note({ text: row.note })] });
@@ -73,7 +76,11 @@ Weave.application.faq = () => Weave.library.components.accordion({ sections: Wea
 /* the page: the sections in the order a reader meets them, under the bar and over the footer. */
 Weave.application.foot = () => Weave.library.components.pageFooter({ children: [Weave.library.components.note({ text: Weave.application.words.rights }), Weave.library.components.row({ children: Weave.application.links.map(Weave.library.components.navLink) })] });
 Weave.application.panels = [['reasons', 'reasonRow'], ['prices', 'priceRow'], ['said', 'quoteRow'], ['asked', 'faq']];
-Weave.application.panelFor = ([word, maker]) => Weave.kit.section({ title: Weave.application.words[word], children: [Weave.application[maker]()] });
+Weave.application.panelFor = ([word, maker]) => Weave.application.keepSection(word, Weave.kit.section({ title: Weave.application.words[word], children: [Weave.application[maker]()] }));
+/* sectionsByWord: one row per section once the page is drawn, keyed by its word, so the tour can find where it starts. */
+Weave.application.sectionsByWord = {};
+Weave.application.keepSection = (word, section) => Object.assign(Weave.application.sectionsByWord, { [word]: section })[word];
+Weave.application.tourStart = () => Weave.library.composition.first(Weave.library.composition.first(Weave.application.panels));
 Weave.application.sections = () => [Weave.application.bar(), Weave.application.hero()].concat(Weave.application.panels.map(Weave.application.panelFor), [Weave.application.foot()]);
 Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: Weave.application.sections() });
 Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));

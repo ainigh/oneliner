@@ -9,10 +9,12 @@ Weave.library.query.byClass = name => Weave.library.query.all(Weave.library.brow
 Weave.library.query.byTag = name => Weave.library.query.all(name);
 Weave.library.query.byName = name => Weave.library.browser.getElementsByName(name);
 Weave.library.query.byData = (key, value) => Weave.library.query.all(Weave.library.query.dataSelector(key, value));
-Weave.library.query.attributeSelector = (name, value) => Weave.library.query.openBracket + name + Weave.library.composition.queryAssign + Weave.library.composition.escapeSelector(value) + Weave.library.query.closeBracket;
+Weave.library.query.attributeSelector = (name, value) => Weave.library.query.openBracket + Weave.library.composition.escapeSelector(name) + Weave.library.composition.queryAssign + Weave.library.query.quoted(value) + Weave.library.query.closeBracket;
+Weave.library.query.quoted = value => Weave.library.query.quote + Weave.library.composition.escapeString(value) + Weave.library.query.quote;
 Weave.library.query.dataSelector = (key, value) => Weave.library.query.attributeSelector(Weave.library.browser.keywords.dataPrefix + Weave.library.composition.kebabCase(key), value);
 Weave.library.query.openBracket = '[';
 Weave.library.query.closeBracket = ']';
+Weave.library.query.quote = '"';
 Weave.library.query.find = selector => el => Weave.library.browser.querySelectorAll(el, selector);
 Weave.library.query.findOne = selector => el => Weave.library.browser.querySelector(el, selector);
 Weave.library.query.closest = selector => el => Weave.library.browser.closest(el, selector);

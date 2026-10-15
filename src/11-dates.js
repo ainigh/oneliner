@@ -79,12 +79,19 @@ Weave.library.dates.twoDigits = value => Weave.library.dates.pad(value, Weave.li
 Weave.library.dates.isoParts = date => [Weave.library.dates.pad(Weave.library.browser.dateReaders.year(date), Weave.library.dates.yearSize), Weave.library.dates.twoDigits(Weave.library.browser.dateReaders.month(date) + 1), Weave.library.dates.twoDigits(Weave.library.browser.dateReaders.day(date))];
 Weave.library.dates.iso = date => Weave.library.dates.isoParts(date).join(Weave.library.dates.marks.separator);
 Weave.library.dates.monthKey = date => Weave.library.dates.iso(date).slice(0, Weave.library.dates.monthSize);
-Weave.library.dates.isoPattern = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?)?$/;
+Weave.library.dates.isoPattern = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+Weave.library.dates.zonePattern = /(Z|[+-]\d{2}:?\d{2})$/;
+Weave.library.dates.isZoned = text => Weave.library.dates.zonePattern.test(text);
 Weave.library.dates.isIsoText = text => Weave.library.control.and(Weave.library.predicates.isString(text), Weave.library.dates.isoPattern.test(String(text)));
 Weave.library.dates.numbersIn = text => Weave.library.control.defaultTo([])(text.match(/\d+/g)).map(Number);
-Weave.library.dates.fromNumbers = ([year, month, day, hours, minutes]) => Weave.library.browser.dateFromParts(year, month - 1, day, hours, minutes);
+Weave.library.dates.fromNumbers = ([year, month, day, hours, minutes, seconds]) => Weave.library.browser.dateFromParts(year, month - 1, day, hours, minutes, seconds);
+Weave.library.dates.clockLimits = [24, 60, 60];
+Weave.library.dates.isFaithful = (numbers, date) => Weave.library.control.and(Weave.library.dates.iso(date) === numbers.slice(0, 3).map(Weave.library.dates.twoDigits).join(Weave.library.dates.marks.separator), Weave.library.dates.isClockTime(numbers.slice(3, 6)));
+Weave.library.dates.isClockTime = clock => clock.every((value, index) => value < Weave.library.dates.clockLimits[index]);
 Weave.library.dates.validOrNull = date => Weave.library.control.either(Weave.library.dates.isValid, Weave.library.composition.identity, Weave.library.dates.none)(date);
-Weave.library.dates.parsed = text => Weave.library.dates.validOrNull(Weave.library.dates.fromNumbers(Weave.library.dates.numbersIn(text)));
+Weave.library.dates.parsed = text => Weave.library.control.either(Weave.library.dates.isZoned, found => Weave.library.dates.validOrNull(Weave.library.browser.createDate(found)), Weave.library.dates.parsedLocal)(text);
+Weave.library.dates.parsedLocal = text => Weave.library.dates.faithfulOrNull(Weave.library.dates.numbersIn(text), Weave.library.dates.fromNumbers(Weave.library.dates.numbersIn(text)));
+Weave.library.dates.faithfulOrNull = (numbers, date) => Weave.library.control.either(() => Weave.library.dates.isFaithful(numbers, date), Weave.library.dates.validOrNull, Weave.library.dates.none)(date);
 Weave.library.dates.parse = text => Weave.library.control.either(Weave.library.dates.isIsoText, Weave.library.dates.parsed, Weave.library.dates.none)(text);
 
 /* comparisons: every question one date can be asked about another, answered through the written form. */
@@ -93,7 +100,12 @@ Weave.library.dates.isSameMonth = (a, b) => Weave.library.dates.monthKey(a) === 
 Weave.library.dates.isToday = date => Weave.library.dates.isSameDay(date, Weave.library.dates.today());
 Weave.library.dates.isBefore = (a, b) => Weave.library.dates.milliseconds(a) < Weave.library.dates.milliseconds(b);
 Weave.library.dates.isAfter = (a, b) => Weave.library.dates.milliseconds(a) > Weave.library.dates.milliseconds(b);
-Weave.library.dates.diff = unit => (a, b) => Math.round((Weave.library.dates.milliseconds(b) - Weave.library.dates.milliseconds(a)) / Weave.library.dates.spans[unit]);
+Weave.library.dates.diff = unit => (a, b) => Weave.library.control.either(() => Weave.library.predicates.isDefined(Weave.library.control.ownValue(Weave.library.dates.adders, unit)), () => Weave.library.dates.calendarDiff(unit, a, b), () => Weave.library.dates.spanDiff(unit, a, b))(unit);
+Weave.library.dates.elapsed = (a, b) => Weave.library.dates.milliseconds(b) - Weave.library.dates.milliseconds(a);
+Weave.library.dates.spanDiff = (unit, a, b) => Math.trunc(Weave.library.dates.elapsed(a, b) / Weave.library.dates.spans[unit]);
+Weave.library.dates.calendarDiff = (unit, a, b) => Weave.library.control.either(() => Weave.library.dates.isBefore(b, a), () => -Weave.library.dates.wholeUnits(unit, b, a), () => Weave.library.dates.wholeUnits(unit, a, b))(unit);
+Weave.library.dates.wholeUnits = (unit, a, b) => Weave.library.dates.settleUnits(unit, a, b, Math.round(Weave.library.dates.elapsed(a, b) / Weave.library.dates.spans[unit]));
+Weave.library.dates.settleUnits = (unit, a, b, count) => count - Number(Weave.library.dates.isAfter(Weave.library.dates.add(unit, count)(a), b));
 
 /* grids: a week and a month laid out as plain arrays of days, built by range and chunk, never a loop. */
 Weave.library.dates.gridLength = 42;

@@ -104,21 +104,30 @@ Weave.application.basketTotal = state => Weave.library.components.spread({ child
 Weave.application.dueLabel = 'To pay';
 Weave.application.basketBody = (state, ignored) => Weave.library.components.stack({ children: Weave.application.basketParts(state).concat([Weave.application.basketTotal(state)]) });
 Weave.application.basketView = () => Weave.library.patterns.connect(Weave.application.store)(Weave.application.basketBody);
-Weave.application.openBasket = () => Weave.application.basketWith(Weave.application.basketView(), Weave.application.checkoutForm());
+Weave.application.layers = { basket: undefined };
+Weave.application.openBasket = () => Object.assign(Weave.application.layers, { basket: Weave.application.basketWith(Weave.application.basketView(), Weave.application.checkoutForm()) }).basket;
+Weave.application.closeBasket = () => Weave.library.control.maybe(handle => handle.close())(Weave.application.layers.basket);
 Weave.application.basketWith = (view, checkout) => Weave.application.basketOpener()({ title: Weave.application.basketTitle, body: [view.element, checkout.element], onClose: () => (view.stop(), checkout.stop()) });
 Weave.application.basketTitle = 'Your order';
 
 /* checkout: three fields the library's own validators guard, and the failing one takes the focus. */
 Weave.application.checkoutFields = {};
 Weave.application.checkoutFields.diner = { label: 'Name', rules: { required: true } };
-Weave.application.checkoutFields.phone = { label: 'Phone', rules: { pattern: '^[0-9 +]{7,}$' } };
-Weave.application.checkoutFields.address = { label: 'Where to', rules: { minLength: 8 } };
+Weave.application.checkoutFields.phone = { label: 'Phone', rules: { required: true, pattern: '^[0-9 +]{7,}$' } };
+Weave.application.checkoutFields.address = { label: 'Where to', rules: { required: true, minLength: 8 } };
 Weave.application.checkoutRows = () => Weave.library.composition.pairs(Weave.application.checkoutFields).map(([name, row]) => Weave.library.composition.merge(row, { name }));
 Weave.application.checkoutForm = () => Weave.library.patterns.entryForm({ fields: Weave.application.checkoutRows(), submit: Weave.application.payLabel, onSubmit: Weave.application.placeOrder });
 Weave.application.payLabel = 'Place the order';
-Weave.application.placeOrder = order => Weave.application.startCooking(Weave.application.store.state.lines.length, order);
-Weave.application.startCooking = (count, order) => Weave.library.control.when(() => count > 0, () => Weave.application.beginOrder(order))(count);
-Weave.application.beginOrder = order => (Weave.application.store.update(() => ({ stage: 0, order })), Weave.application.advanceLater());
+Weave.application.isCooking = state => Weave.library.control.and(state.stage >= 0, state.stage < Weave.application.stages.length - 1);
+Weave.application.placeOrder = order => Weave.application.judgeOrder(Weave.application.store.state, order);
+Weave.application.judgeOrder = (state, order) => Weave.library.control.either(Weave.application.isCooking, Weave.application.refuseBusy, () => Weave.application.startCooking(state, order))(state);
+Weave.application.startCooking = (state, order) => Weave.library.control.either(() => state.lines.length > 0, () => Weave.application.beginOrder(order), Weave.application.refuseEmpty)(state);
+Weave.application.beginOrder = order => (Weave.application.store.update(() => ({ stage: 0, order, lines: [] })), Weave.application.closeBasket(), Weave.application.toasts.push(Weave.application.placedText, Weave.library.components.toneNames.success), Weave.application.advanceLater());
+Weave.application.refuseEmpty = () => Weave.application.toasts.push(Weave.application.emptyOrderText, Weave.library.components.toneNames.warning);
+Weave.application.refuseBusy = () => Weave.application.toasts.push(Weave.application.busyText, Weave.library.components.toneNames.warning);
+Weave.application.placedText = 'Order placed. Follow it at the top of the page.';
+Weave.application.emptyOrderText = 'There is nothing to order yet. Choose a dish first.';
+Weave.application.busyText = 'Your last order is still on its way. Order again once it arrives.';
 Weave.application.stageDelay = 60;
 Weave.application.advanceLater = () => Weave.library.timing.after(Weave.application.stageDelay, Weave.application.advance);
 Weave.application.advance = () => Weave.application.stepOn(Weave.application.store.state.stage + 1);

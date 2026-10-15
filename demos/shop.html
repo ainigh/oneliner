@@ -28,6 +28,7 @@ Weave.application.words.total = 'To pay';
 Weave.application.words.added = ' is in the basket.';
 Weave.application.words.paid = 'Thank you. It leaves the depot in the morning.';
 Weave.application.words.search = 'Jump to a shelf';
+Weave.application.words.filtered = ' is hidden by the filters on the shelf.';
 Weave.application.words.home = 'Shop';
 Weave.application.words.orders = 'Orders';
 Weave.application.words.help = 'Help';
@@ -51,7 +52,14 @@ Weave.application.pricing = item => Weave.library.components.spread({ children: 
 Weave.application.taker = item => Weave.library.components.actionButton({ label: Weave.application.words.add, variant: Weave.library.components.markNames.variant.primary, width: Weave.library.components.markNames.width.full, onAction: () => Weave.application.take(item) });
 Weave.application.tile = item => Weave.library.components.card({ data: { key: item.key }, children: [Weave.application.picture(item), Weave.library.components.strong({ text: item.label }), Weave.application.pricing(item), Weave.application.taker(item)] });
 Weave.application.shelf = state => Weave.library.components.tiles({ children: Weave.application.shown(state).map(Weave.application.tile) });
-Weave.application.shelfView = () => Weave.library.patterns.connect(Weave.application.shop)(Weave.application.shelf).element;
+/* places: the parts of the page a jump can land on, held once they are drawn. */
+Weave.application.places = { shelf: undefined };
+Weave.application.shelfView = () => Object.assign(Weave.application.places, { shelf: Weave.library.patterns.connect(Weave.application.shop)(Weave.application.shelf).element }).shelf;
+Weave.application.tileFor = key => Weave.library.query.oneWithin(Weave.library.query.dataSelector(Weave.application.keyData, key))(Weave.application.places.shelf);
+Weave.application.keyData = 'key';
+Weave.application.showTile = tile => Weave.library.interaction.focusFirst(tile);
+Weave.application.hiddenTile = option => Weave.kit.say(option.label + Weave.application.words.filtered, Weave.library.components.toneNames.info);
+Weave.application.jumpTo = option => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.application.showTile, () => Weave.application.hiddenTile(option))(Weave.application.tileFor(option.value));
 
 /* taking something: the basket rows, the count on the navbar, and the sheet that shows both. */
 Weave.application.take = item => (Weave.application.shop.update(state => ({ rows: state.rows.concat([item]) })), Weave.kit.cheer(item.label + Weave.application.words.added));
@@ -77,7 +85,7 @@ Weave.application.offer = row => Weave.library.components.stack({ children: [Wea
 Weave.application.carousel = () => Weave.library.patterns.carousel({ slides: Weave.application.offers, slide: Weave.application.offer }).element;
 Weave.application.refilter = keys => Weave.application.shop.update(() => ({ keys }));
 Weave.application.chips = () => Weave.library.patterns.chipFilter({ items: Weave.application.filters, onChange: Weave.application.refilter }).element;
-Weave.application.jump = () => Weave.library.patterns.combobox({ options: Weave.application.stock.map(item => ({ label: item.label, value: item.key })), onPick: Weave.application.take }).element;
+Weave.application.jump = () => Weave.library.patterns.combobox({ options: Weave.application.stock.map(item => ({ label: item.label, value: item.key })), onPick: Weave.application.jumpTo }).element;
 
 /* the page: four sections over one store, so the shelf and the basket count can never fall out of step. */
 Weave.application.offerSection = () => Weave.kit.section({ title: Weave.application.words.offers, children: [Weave.application.carousel()] });

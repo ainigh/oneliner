@@ -1,13 +1,19 @@
 #!/usr/bin/env node
 /* check-flagships: drive the two flagship applications in jsdom, the way a person would use them. */
 const path = require('path');
-const { JSDOM } = require('jsdom');
+const { JSDOM, ResourceLoader } = require('jsdom');
 
 const root = path.join(__dirname, '..');
 const failures = [];
 
-function open(file) {
-  return JSDOM.fromFile(path.join(root, file), { runScripts: 'dangerously', resources: 'usable', pretendToBeVisual: true });
+/* the pages are served from an http origin, so history and hash routing behave as they do in a browser; every request is read from disk. */
+const origin = 'http://weave.test/';
+class DiskLoader extends ResourceLoader {
+  fetch(url, options) { return super.fetch(url.startsWith(origin) ? 'file://' + path.join(root, url.slice(origin.length)) : url, options); }
+}
+
+function open(file, hash = '') {
+  return JSDOM.fromFile(path.join(root, file), { url: origin + file + hash, runScripts: 'dangerously', resources: new DiskLoader(), pretendToBeVisual: true });
 }
 
 function settle(dom, ms = 800) {
@@ -44,12 +50,24 @@ open('apps/relay.html').then(settle).then(dom => {
   const inboxRows = it.count('.weave-list-row');
   it.click(it.all('.weave-pane[data-pane=rail] .weave-row-button')[2]);
   expect('relay switches folder from the rail', it.Weave.application.store.state.folder === 'sent', it.Weave.application.store.state.folder);
+  expect('relay writes the folder into the address', dom.window.location.hash === '#/f/sent', dom.window.location.hash);
+  it.click(it.all('.weave-pane[data-pane=rail] .weave-row-button')[1]);
+  const starred = it.Weave.application.visible(it.Weave.application.store.state);
+  const everyStar = (it.Weave.application.store.state.threads || it.Weave.application.threads).filter(thread => thread.starred).length;
+  expect('relay gathers every starred thread under Starred', starred.length === everyStar && starred.length > 0 && starred.every(thread => thread.starred), `${starred.filter(thread => thread.starred).length} starred of ${starred.length} shown, ${everyStar} starred in all`);
   it.click(it.all('.weave-pane[data-pane=rail] .weave-row-button')[0]);
+
+  const firstRow = it.one('.weave-pane[data-pane=list] .weave-list-row');
+  expect('relay keeps the row checkbox out of the row button', it.count('.weave-list-row .weave-row-button .weave-check-mark') === 0 && it.count('.weave-list-row > .weave-check-mark') > 0, `${it.count('.weave-list-row .weave-row-button .weave-check-mark')} checkboxes inside a button`);
+  it.click(firstRow.querySelector('.weave-check-mark'));
+  expect('relay ticks a row without opening it', it.Weave.application.store.state.chosen === undefined && it.Weave.application.store.state.checked.length === 1, `chosen ${it.Weave.application.store.state.chosen}, ${it.Weave.application.store.state.checked.length} checked`);
+  it.click(it.one('.weave-pane[data-pane=list] .weave-list-row .weave-check-mark'));
 
   expect('relay opens nothing until asked', it.count('.weave-empty-state') === 1, it.text('.weave-empty-state'));
   it.click(it.one('.weave-pane[data-pane=list] .weave-list-row .weave-row-button'));
   expect('relay opens a thread into the reader', it.count('.weave-empty-state') === 0 && it.count('.weave-bubble') > 0, `${it.count('.weave-bubble')} messages`);
   expect('relay marks the opened thread read', it.Weave.application.threadById(it.Weave.application.store.state.chosen).unread === false, 'still unread');
+  expect('relay records the read in the store', Array.isArray(it.Weave.application.store.state.threads) && it.Weave.application.store.state.threads.find(thread => thread.id === it.Weave.application.store.state.chosen).unread === false, 'the store holds no threads');
 
   const firstChosen = it.Weave.application.store.state.chosen;
   it.press('j');
@@ -68,9 +86,25 @@ open('apps/relay.html').then(settle).then(dom => {
   const archived = it.Weave.application.store.state.checked.length;
   it.click(it.all('.weave-toolbar .weave-button')[0]);
   expect('relay moves the checked threads', it.Weave.application.visible(it.Weave.application.store.state).length === before - archived, String(it.Weave.application.visible(it.Weave.application.store.state).length));
+  const inboxBadge = () => it.all('.weave-pane[data-pane=rail] .weave-badge')[0].textContent;
+  const unreadLeft = () => String(it.Weave.application.unreadIn(it.Weave.application.store.state, 'inbox'));
+  expect('relay clears the selection once the move is made', it.Weave.application.store.state.checked.length === 0 && it.one('.weave-toolbar .weave-check-mark').checked === false, `${it.Weave.application.store.state.checked.length} still checked`);
+  expect('relay redraws the list, the count and the badges after a move', it.count('.weave-pane[data-pane=list] .weave-list-row') === 0 && it.text('.weave-sticky .weave-note') === '0 threads' && inboxBadge() === unreadLeft(), `${it.count('.weave-pane[data-pane=list] .weave-list-row')} rows, ${it.text('.weave-sticky .weave-note')}, badge ${inboxBadge()}`);
   expect('relay offers an undo in a pinned toast', it.count('.weave-toast-host .weave-alert') === 1 && it.text('.weave-toast-host .weave-actions').includes('Undo'), it.text('.weave-toast-host'));
   it.click(it.all('.weave-toast-host .weave-button')[0]);
   expect('relay dismisses the toast when undo is taken', it.count('.weave-toast-host .weave-alert') === 0, `${it.count('.weave-toast-host .weave-alert')} left`);
+  expect('relay puts the threads back on undo', it.Weave.application.visible(it.Weave.application.store.state).length === before && it.count('.weave-pane[data-pane=list] .weave-list-row') > 0 && inboxBadge() === unreadLeft(), `${it.Weave.application.visible(it.Weave.application.store.state).length} of ${before}, badge ${inboxBadge()}`);
+  it.click(it.all('.weave-toolbar .weave-button')[0]);
+  expect('relay moves nothing when nothing is ticked', it.Weave.application.visible(it.Weave.application.store.state).length === before && !it.text('.weave-toast-host').includes('threads moved'), it.text('.weave-toast-host'));
+
+  it.toggle('.weave-toolbar .weave-check-mark');
+  it.type('.weave-search-box', 'northwind');
+  const narrowed = it.Weave.application.visible(it.Weave.application.store.state).length;
+  expect('relay reflects only the shown threads in the header checkbox', it.one('.weave-toolbar .weave-check-mark').checked === true && it.one('.weave-toolbar .weave-check-mark').indeterminate === false, `checked ${it.one('.weave-toolbar .weave-check-mark').checked}, partial ${it.one('.weave-toolbar .weave-check-mark').indeterminate}`);
+  it.click(it.all('.weave-toolbar .weave-button')[1]);
+  it.type('.weave-search-box', '');
+  expect('relay moves only the threads the search shows', it.Weave.application.visible(it.Weave.application.store.state).length === before - narrowed && it.text('.weave-toast-host').includes('threads moved: ' + narrowed), `${it.Weave.application.visible(it.Weave.application.store.state).length} left of ${before}, ${narrowed} shown`);
+  it.click(it.all('.weave-toast-host .weave-button').find(button => button.textContent === 'Undo'));
 
   it.press('c');
   expect('relay opens compose over the page', it.count('.weave-dialog-box') === 1 && it.count('.weave-scrim') === 1, `${it.count('.weave-dialog-box')} dialogs`);
@@ -90,14 +124,34 @@ open('apps/relay.html').then(settle).then(dom => {
 
   it.press('k', { ctrlKey: true });
   expect('relay opens the command palette', it.count('.weave-dialog-box .weave-menu') === 1, `${it.count('.weave-dialog-box')} dialogs`);
+  it.Weave.application.palette();
+  expect('relay opens the palette only once', it.count('.weave-dialog-box') === 1, `${it.count('.weave-dialog-box')} dialogs`);
+  it.click(it.all('.weave-dialog-box .weave-menu .weave-button').find(button => button.textContent === 'Sent'));
+  expect('relay closes the palette before a command runs', it.count('.weave-dialog-box') === 0 && it.Weave.application.store.state.folder === 'sent', `${it.count('.weave-dialog-box')} dialogs, folder ${it.Weave.application.store.state.folder}`);
+  it.press('k', { ctrlKey: true });
+  it.click(it.all('.weave-dialog-box .weave-menu .weave-button').find(button => button.textContent === 'Compose'));
+  it.Weave.application.compose();
+  expect('relay opens compose from the palette without stacking dialogs', it.count('.weave-dialog-box') === 1 && it.count('.weave-dialog-box input[name=to]') === 1, `${it.count('.weave-dialog-box')} dialogs`);
   it.press('Escape');
-  it.press('?');
+  expect('relay leaves nothing open after the palette and compose', it.count('.weave-dialog-box') === 0 && it.Weave.library.interaction.scrollLocks.depth === 0, `${it.count('.weave-dialog-box')} dialogs`);
+  it.press('?', { shiftKey: true });
   expect('relay shows the keyboard sheet', it.count('.weave-sheet-box .weave-kbd') === 4, `${it.count('.weave-sheet-box .weave-kbd')} keys`);
+  const caps = it.all('.weave-sheet-box .weave-kbd').map(keys => [...keys.querySelectorAll('kbd')].map(cap => cap.textContent).join(' '));
+  expect('relay names the palette keys as they are pressed', caps.includes('Ctrl K') && !caps.some(words => words.includes('k2')), caps.join(' | '));
   it.press('Escape');
 
   expect('relay passes its own accessibility audit', it.audit().length === 0, JSON.stringify(it.audit()));
   expect('relay leaves no overlay behind', it.Weave.library.overlays.openCount() === 1, `${it.Weave.library.overlays.openCount()} children in the host`);
   expect('relay counts its threads in words a person reads', /^[\d,]+ threads$/.test(it.text('.weave-sticky .weave-note')), it.text('.weave-sticky .weave-note'));
+  dom.window.location.hash = '#/f/spam';
+  return settle(dom, 100);
+}).then(dom => {
+  const it = driver(dom);
+  expect('relay opens the folder the address names', it.Weave.application.store.state.folder === 'spam', it.Weave.application.store.state.folder);
+  return open('apps/relay.html', '#/f/archive').then(settle);
+}).then(dom => {
+  const it = driver(dom);
+  expect('relay starts in the folder a link names', it.Weave.application.store.state.folder === 'archive' && it.one('.weave-pane[data-pane=rail] .weave-row-button[aria-selected=true]').textContent.startsWith('Archive'), it.Weave.application.store.state.folder);
   return open('apps/pantry.html').then(settle);
 }).then(dom => {
   const it = driver(dom);
@@ -131,21 +185,41 @@ open('apps/relay.html').then(settle).then(dom => {
   it.type('.weave-drawer-box input[name=diner]', 'Ada Okonkwo');
   it.type('.weave-drawer-box input[name=phone]', '020 7946 0100');
   it.type('.weave-drawer-box input[name=address]', '12 Rosewood Terrace');
+  it.click(it.all('.weave-drawer-box .weave-button').find(button => button.textContent === 'Remove'));
+  expect('pantry keeps what the diner typed while the basket changes', it.one('.weave-drawer-box input[name=diner]').value === 'Ada Okonkwo', JSON.stringify(it.one('.weave-drawer-box input[name=diner]').value));
+  expect('pantry empties the basket back to an empty state', it.count('.weave-drawer-box .weave-empty-state') === 1, `${it.count('.weave-empty-state')} empty states`);
   it.click(it.one('.weave-drawer-box .weave-button[type=submit]'));
+  expect('pantry says so when an empty basket is ordered', it.Weave.application.store.state.stage === -1 && it.text('.weave-toast-host').includes('nothing to order'), it.text('.weave-toast-host'));
+  it.press('Escape');
+  expect('pantry closes the basket on escape', it.count('.weave-drawer-box') === 0 && it.Weave.library.interaction.scrollLocks.depth === 0, `depth ${it.Weave.library.interaction.scrollLocks.depth}`);
+  expect('pantry stops watching the store once the basket closes', it.Weave.application.store.watchers.length === watchers, `${it.Weave.application.store.watchers.length} watchers, ${watchers} before`);
+
+  const order = () => {
+    it.click(it.one('.weave-card .weave-button'));
+    it.click(it.all('.weave-dialog-box .weave-actions .weave-button').pop());
+    it.click(it.all('.weave-page-header .weave-button')[0]);
+    it.type('.weave-drawer-box input[name=diner]', 'Ada Okonkwo');
+    it.type('.weave-drawer-box input[name=phone]', '020 7946 0100');
+    it.type('.weave-drawer-box input[name=address]', '12 Rosewood Terrace');
+    it.click(it.one('.weave-drawer-box .weave-button[type=submit]'));
+  };
+  const stages = [];
+  it.Weave.application.store.watch(state => state.stage < 0 || stages[stages.length - 1] === state.stage || stages.push(state.stage));
+  order();
   expect('pantry accepts a complete order', it.Weave.application.store.state.stage === 0, String(it.Weave.application.store.state.stage));
   expect('pantry keeps who and where the order is for', it.text('.weave-page').includes('12 Rosewood Terrace'), JSON.stringify(it.Weave.application.store.state.order));
-  dom.watchers = watchers;
+  expect('pantry empties and closes the basket once the order is placed', it.Weave.application.store.state.lines.length === 0 && it.count('.weave-drawer-box, .weave-sheet-box') === 0 && it.Weave.library.interaction.scrollLocks.depth === 0, `${it.Weave.application.store.state.lines.length} lines, ${it.count('.weave-drawer-box')} drawers`);
+  expect('pantry lets go of the basket it placed from', it.Weave.application.store.watchers.length === watchers + 1, `${it.Weave.application.store.watchers.length} watchers, ${watchers + 1} expected`);
+  order();
+  expect('pantry refuses a second order while the first is on its way', it.Weave.application.store.state.stage === 0 && it.Weave.application.store.state.lines.length === 1 && it.text('.weave-toast-host').includes('still on its way'), `stage ${it.Weave.application.store.state.stage}, ${it.Weave.application.store.state.lines.length} lines`);
+  it.press('Escape');
+  dom.stages = stages;
   return settle(dom, 400);
 }).then(dom => {
   const it = driver(dom);
   expect('pantry walks the order through its stages', it.Weave.application.store.state.stage > 0, String(it.Weave.application.store.state.stage));
+  expect('pantry runs one delivery at a time', dom.stages.join() === '0,1,2,3', dom.stages.join());
   expect('pantry marks exactly one step as current', it.count('.weave-step[aria-current=true]') === 1, `${it.count('.weave-step[aria-current=true]')} current steps`);
-  it.click(it.all('.weave-drawer-box .weave-button').find(button => button.textContent === 'Remove'));
-  expect('pantry keeps what the diner typed while the basket changes', it.one('.weave-drawer-box input[name=diner]').value === 'Ada Okonkwo', JSON.stringify(it.one('.weave-drawer-box input[name=diner]').value));
-  expect('pantry empties the basket back to an empty state', it.count('.weave-drawer-box .weave-empty-state') === 1, `${it.count('.weave-empty-state')} empty states`);
-  it.press('Escape');
-  expect('pantry closes the basket on escape', it.count('.weave-drawer-box') === 0 && it.Weave.library.interaction.scrollLocks.depth === 0, `depth ${it.Weave.library.interaction.scrollLocks.depth}`);
-  expect('pantry stops watching the store once the basket closes', it.Weave.application.store.watchers.length === dom.watchers, `${it.Weave.application.store.watchers.length} watchers, ${dom.watchers} before`);
   expect('pantry passes its own accessibility audit', it.audit().length === 0, JSON.stringify(it.audit()));
   return null;
 }).then(() => process.exit(failures.length === 0 ? 0 : 1)).catch(error => { console.error(error); process.exit(1); });
