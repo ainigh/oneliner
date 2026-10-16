@@ -35,41 +35,62 @@ Weave.application.words.sure = 'Send this payment?';
 Weave.application.words.once = 'It leaves straight away and cannot be pulled back.';
 Weave.application.words.sent = 'Sent. The statement has it already.';
 Weave.application.words.today = 'Today';
+Weave.application.words.noAmount = 'Say how much to send: an amount above £0.';
+Weave.application.words.transferKind = 'Transfer';
 Weave.application.words.statement = 'This month';
 
 /* the money: one row per account and one per line of the statement. Amounts are in pence, always. */
 Weave.application.accounts = [{ key: 'current', label: 'Current account', note: '20-44-19 · 6011 4478', held: 482630, spare: 482630 }, { key: 'saver', label: 'Instant saver', note: '20-44-19 · 6011 4479', held: 1250000, spare: 1250000 }, { key: 'card', label: 'Kestrel credit card', note: '4462 ·· ·· 1180', held: -87415, spare: 412585 }];
 Weave.application.lines = [{ when: 'Fri', label: 'Northern Rail', note: 'Travel', amount: -4850 }, { when: 'Thu', label: 'Salary — Acme Ltd', note: 'Pay', amount: 264000 }, { when: 'Wed', label: 'Pantry, Leeds', note: 'Groceries', amount: -3720 }, { when: 'Tue', label: 'Card repayment', note: 'Transfer', amount: -25000 }];
 Weave.application.payees = [{ key: 'ana', label: 'Ana Ferreira' }, { key: 'wren', label: 'Wren Ashby' }, { key: 'dae', label: 'Dae-ho Lim' }];
+
+/* transferRules: one row per field the transfer reads, holding the rules it must pass before anything is asked. */
+Weave.application.transferRules = {};
+Weave.application.transferRules.pounds = { required: true, number: true, min: 0.01 };
+Weave.application.amountName = Weave.library.composition.first(Weave.library.composition.keys(Weave.application.transferRules));
+
+/* the books: one store for the balances and the statement, so a payment lands on both at once. */
+Weave.application.books = Weave.library.patterns.store({ accounts: Weave.application.accounts, lines: Weave.application.lines });
 Weave.application.money = amount => Weave.kit.pence(Weave.application.words.currency)(amount);
-Weave.application.held = () => Weave.application.accounts.filter(row => row.held > 0).reduce((total, row) => total + row.held, 0);
-Weave.application.owed = () => Weave.application.accounts.filter(row => row.held < 0).reduce((total, row) => total - row.held, 0);
-Weave.application.spare = () => Weave.library.composition.first(Weave.application.accounts).spare;
+Weave.application.held = state => state.accounts.filter(row => row.held > 0).reduce((total, row) => total + row.held, 0);
+Weave.application.owed = state => state.accounts.filter(row => row.held < 0).reduce((total, row) => total - row.held, 0);
+Weave.application.spare = state => Weave.library.composition.first(state.accounts).spare;
 Weave.application.stat = (label, amount) => ({ label, value: Weave.application.money(amount) });
-Weave.application.stats = () => [Weave.application.stat(Weave.application.words.holding, Weave.application.held()), Weave.application.stat(Weave.application.words.owing, Weave.application.owed()), Weave.application.stat(Weave.application.words.available, Weave.application.spare())];
+Weave.application.statRows = [['holding', 'held'], ['owing', 'owed'], ['available', 'spare']];
+Weave.application.stats = state => Weave.application.statRows.map(([word, reading]) => Weave.application.stat(Weave.application.words[word], Weave.application[reading](state)));
 
 /* the accounts tab: a list group of what is held, and the details of whichever one is open. */
 Weave.application.accountRow = row => ({ key: row.key, label: row.label, note: row.note, aside: Weave.library.components.value({ text: Weave.application.money(row.held) }) });
-Weave.application.accountList = () => Weave.library.components.listGroup({ items: Weave.application.accounts.map(Weave.application.accountRow) });
+Weave.application.accountList = () => Weave.library.components.listGroup({ items: Weave.application.books.state.accounts.map(Weave.application.accountRow) });
 Weave.application.facts = [{ label: Weave.application.words.sortCode, value: '20-44-19' }, { label: Weave.application.words.number, value: '6011 4478' }, { label: Weave.application.words.branch, value: Weave.application.words.branchName }];
 Weave.application.details = () => Weave.kit.section({ title: Weave.application.words.details, children: [Weave.library.components.descriptions({ rows: Weave.application.facts })] });
 Weave.application.holdings = () => Weave.library.components.stack({ children: [Weave.application.accountList(), Weave.application.details()] });
 
 /* the transfer: a payee, an amount welded to its currency, and a confirm before anything leaves. */
 Weave.application.payeeField = () => Weave.library.components.selectBox({ label: Weave.application.words.payee, name: 'payee', options: Weave.application.payees.map(row => ({ value: row.key, label: row.label })) });
-Weave.application.amountField = () => Weave.library.components.inputGroup({ label: Weave.application.words.amount, name: 'amount', prefix: '£', suffix: '.00', type: Weave.library.elements.inputTypes.number });
+Weave.application.amountField = () => Weave.library.components.inputGroup({ label: Weave.application.words.amount, name: Weave.application.amountName, prefix: '£', suffix: '.00', type: Weave.library.elements.inputTypes.number });
 Weave.application.referenceField = () => Weave.library.components.field({ label: Weave.application.words.reference, name: 'reference', hint: 'It shows on both statements.' });
-Weave.application.sendButton = () => Weave.library.components.actionButton({ label: Weave.application.words.send, variant: Weave.library.components.markNames.variant.primary, onAction: Weave.application.askFirst });
-Weave.application.askFirst = () => Weave.kit.askThen({ title: Weave.application.words.sure, note: Weave.application.words.once }, Weave.application.paid);
-Weave.application.paid = () => Weave.kit.cheer(Weave.application.words.sent);
-Weave.application.transfer = () => Weave.library.components.stack({ children: [Weave.application.payeeField(), Weave.application.amountField(), Weave.application.referenceField(), Weave.application.sendButton()] });
+Weave.application.problemsIn = values => Weave.library.composition.keys(Weave.application.transferRules).flatMap(Weave.library.forms.checkControl(values, Weave.application.transferRules));
+Weave.application.tryTransfer = (values, event) => Weave.application.judge(values, Weave.library.browser.currentTargetOf(event));
+Weave.application.judge = (values, form) => Weave.library.control.either(problems => problems.length > 0, () => Weave.application.refuse(form), () => Weave.application.askFirst(values, form))(Weave.application.problemsIn(values));
+Weave.application.refuse = form => (Weave.kit.say(Weave.application.words.noAmount, Weave.library.components.toneNames.danger), Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.forms.control(Weave.application.amountName)(form)));
+Weave.application.askFirst = (values, form) => Weave.kit.askThen({ title: Weave.application.words.sure, note: Weave.application.words.once }, () => Weave.application.pay(values, form));
+Weave.application.pay = (values, form) => (Weave.application.books.update(state => Weave.application.paidFrom(state, values)), Weave.library.forms.reset(form), Weave.kit.cheer(Weave.application.words.sent));
+Weave.application.pence = values => Math.round(Weave.library.composition.number(values[Weave.application.amountName]) * Weave.kit.sizes.minorUnits);
+Weave.application.paidFrom = (state, values) => ({ accounts: state.accounts.map(Weave.application.debited(Weave.application.pence(values))), lines: [Weave.application.lineFor(values)].concat(state.lines) });
+Weave.application.fromKey = () => Weave.library.composition.first(Weave.application.accounts).key;
+Weave.application.debited = amount => row => Weave.library.control.either(() => row.key === Weave.application.fromKey(), () => Weave.library.composition.merge(row, { held: row.held - amount, spare: row.spare - amount }), () => row)(row);
+Weave.application.payeeName = key => Weave.application.payees.find(row => row.key === key).label;
+Weave.application.kindOf = values => Weave.library.control.either(Weave.library.predicates.isEmpty, () => Weave.application.words.transferKind, Weave.library.composition.identity)(values.reference);
+Weave.application.lineFor = values => ({ when: Weave.application.words.today, label: Weave.application.payeeName(values.payee), note: Weave.application.kindOf(values), amount: -Weave.application.pence(values) });
+Weave.application.transfer = () => Weave.library.components.form({ submit: Weave.application.words.send, fields: [Weave.application.payeeField(), Weave.application.amountField(), Weave.application.referenceField()], onSubmit: Weave.application.tryTransfer });
 
 /* the statement: the same lines twice, once as a table and once as a timeline, from one row set. */
 Weave.application.signed = amount => Weave.application.money(amount);
 Weave.application.columns = [{ key: 'label', label: 'Paid to' }, { key: 'note', label: 'Kind' }, { key: 'amount', label: 'Amount', format: Weave.application.signed }];
-Weave.application.statement = () => Weave.library.components.table({ grid: Weave.library.components.markNames.grid.bordered, columns: Weave.application.columns, rows: Weave.application.lines });
+Weave.application.statement = () => Weave.library.components.table({ grid: Weave.library.components.markNames.grid.bordered, columns: Weave.application.columns, rows: Weave.application.books.state.lines });
 Weave.application.moment = row => ({ when: row.when, label: row.label, note: Weave.application.money(row.amount) });
-Weave.application.recent = () => Weave.library.components.timeline({ items: Weave.application.lines.map(Weave.application.moment) });
+Weave.application.recent = () => Weave.library.components.timeline({ items: Weave.application.books.state.lines.map(Weave.application.moment) });
 Weave.application.activityParts = () => [Weave.kit.section({ title: Weave.application.words.statement, children: [Weave.application.statement()] }), Weave.kit.section({ title: Weave.application.words.today, children: [Weave.application.recent()] })];
 Weave.application.activity = () => Weave.library.components.stack({ children: Weave.application.activityParts() });
 
@@ -77,9 +98,10 @@ Weave.application.activity = () => Weave.library.components.stack({ children: We
 Weave.application.tab = (key, label, body) => ({ key, label, body });
 Weave.application.tabRows = [['holdings', 'accounts', 'holdings'], ['transfer', 'move', 'transfer'], ['statement', 'activity', 'activity']];
 Weave.application.tabs = () => Weave.application.tabRows.map(([key, word, pane]) => Weave.application.tab(key, Weave.application.words[word], Weave.application[pane]));
-Weave.application.tiles = () => Weave.library.components.tiles({ children: Weave.application.stats().map(Weave.library.components.statTile) });
+Weave.application.tiles = state => Weave.library.components.tiles({ children: Weave.application.stats(state).map(Weave.library.components.statTile) });
+Weave.application.tilesView = () => Weave.library.patterns.connect(Weave.application.books)(Weave.application.tiles).element;
 Weave.application.desk = () => Weave.library.patterns.tabsView({ items: Weave.application.tabs() }).element;
-Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.tiles(), Weave.application.desk()] });
+Weave.application.page = () => Weave.kit.shell({ title: Weave.application.words.title, note: Weave.application.words.blurb, children: [Weave.application.tilesView(), Weave.application.desk()] });
 Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.page()])(Weave.library.browser.body()));
 Weave.library.events.ready(Weave.application.start);
 </script>

@@ -207,7 +207,7 @@ Weave.application.draws.diffStat = () => Weave.library.components.diffStat({ add
 Weave.application.draws.comment = () => Weave.library.components.comment({ name: Weave.application.words.person, when: Weave.application.words.remarkTime, text: Weave.application.words.remarkText });
 Weave.application.draws.commentThread = () => Weave.library.components.commentThread({ items: Weave.application.data.remarks });
 Weave.application.draws.dropzone = () => Weave.library.components.dropzone({ glyph: Weave.application.words.dropGlyph, title: Weave.application.words.dropTitle, note: Weave.application.words.dropNote, action: { label: Weave.application.words.dropButton, onAction: Weave.library.composition.noop } });
-Weave.application.draws.tooltip = () => Weave.library.components.tooltip({ label: 'Retry', note: 'Runs the job again from the top' });
+Weave.application.draws.tooltip = () => Weave.library.components.tooltip({ text: 'Retry', hint: 'Runs the job again from the top' });
 
 /* calls: the line under each card. One row per draw, so a card can never show a call that is not the one above it. */
 Weave.application.calls = {};
@@ -298,7 +298,7 @@ Weave.application.calls.diffStat = 'components.diffStat({ added, removed })';
 Weave.application.calls.comment = 'components.comment({ name, when, text })';
 Weave.application.calls.commentThread = 'components.commentThread({ items, reply })';
 Weave.application.calls.dropzone = 'components.dropzone({ glyph, title, note, action, onDrop })';
-Weave.application.calls.tooltip = 'components.tooltip({ label, note })';
+Weave.application.calls.tooltip = 'components.tooltip({ text, hint })';
 Weave.application.calls.hero = 'components.hero({ eyebrow, title, highlight, note, actions, aside, wash })';
 Weave.application.calls.sectionIntro = 'components.sectionIntro({ eyebrow, title, note, lay })';
 Weave.application.calls.eyebrow = 'components.eyebrow({ text, glyph })';

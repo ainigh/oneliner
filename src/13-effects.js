@@ -31,7 +31,7 @@ Weave.library.effects.msSuffix = 'ms';
 Weave.library.effects.opacityFrames = (from, to) => ({ [Weave.library.browser.properties.opacity]: [from, to] });
 Weave.library.effects.opaque = 1;
 Weave.library.effects.clear = 0;
-Weave.library.effects.fadeIn = options => el => Weave.library.effects.animate(Weave.library.effects.opacityFrames(Weave.library.effects.clear, Weave.library.effects.opaque), options)(Weave.library.style.show(el));
+Weave.library.effects.fadeIn = options => el => Weave.library.effects.animate(Weave.library.effects.opacityFrames(Weave.library.effects.clear, Weave.library.effects.opaque), options)(Weave.library.style.show(Weave.library.style.removeCss(Weave.library.browser.properties.opacity)(el)));
 Weave.library.effects.fadeOut = options => el => Weave.library.composition.then(Weave.library.style.hide)(Weave.library.effects.animate(Weave.library.effects.opacityFrames(Weave.library.effects.opaque, Weave.library.effects.clear), options)(el));
 Weave.library.effects.fadeToggle = options => el => Weave.library.control.either(Weave.library.style.isShown, Weave.library.effects.fadeOut(options), Weave.library.effects.fadeIn(options))(el);
 Weave.library.effects.fadeTo = (opacity, options) => el => Weave.library.effects.animate(Weave.library.effects.opacityFrames(Weave.library.effects.currentValue(Weave.library.browser.properties.opacity, el), opacity), Weave.library.effects.kept(options))(el);

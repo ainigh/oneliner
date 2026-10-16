@@ -60,7 +60,12 @@ open('index.html').then(dom => {
   expect('board draws every lane', count(dom, '.weave-panels > .weave-panel') === 4, `saw ${count(dom, '.weave-panels > .weave-panel')}`);
   const lane = () => document.querySelectorAll('.weave-panels > .weave-panel')[0].querySelectorAll('.weave-card').length;
   const before = lane();
-  document.querySelectorAll('.weave-panels > .weave-panel')[0].querySelectorAll('.weave-toolbar .weave-button')[1].click();
+  const firstMoves = [...document.querySelectorAll('.weave-panels > .weave-panel')[0].querySelectorAll('.weave-card')[0].querySelectorAll('.weave-toolbar .weave-button')].map(button => button.textContent);
+  expect('board offers no move off its first lane', firstMoves.join() === 'Move right', firstMoves.join());
+  const lastLane = [...document.querySelectorAll('.weave-panels > .weave-panel')].pop().querySelector('.weave-card');
+  const lastMoves = lastLane ? [...lastLane.querySelectorAll('.weave-toolbar .weave-button')].map(button => button.textContent) : ['Move left'];
+  expect('board offers no move off its last lane', lastMoves.join() === 'Move left', lastMoves.join());
+  document.querySelectorAll('.weave-panels > .weave-panel')[0].querySelectorAll('.weave-toolbar .weave-button')[0].click();
   expect('board moves a card right', lane() === before - 1, `${before} then ${lane()}`);
   const palette = document.querySelector('input[name=query]');
   palette.value = 'shipped';
@@ -82,6 +87,11 @@ open('index.html').then(dom => {
   expect('helpdesk sends a reply', count(dom, '.weave-scroller .weave-bubble') === 3, `saw ${count(dom, '.weave-scroller .weave-bubble')}`);
   document.querySelectorAll('.weave-menu .weave-button')[1].click();
   expect('helpdesk switches thread', count(dom, '.weave-scroller .weave-bubble') === 1, `saw ${count(dom, '.weave-scroller .weave-bubble')}`);
+  document.querySelector('input[name=message]').value = 'Looking now.';
+  fire(dom, document.querySelector('form'), 'submit');
+  expect('helpdesk replies on a ticket it switched to', count(dom, '.weave-scroller .weave-bubble') === 2, `saw ${count(dom, '.weave-scroller .weave-bubble')}`);
+  document.querySelectorAll('.weave-menu .weave-button')[0].click();
+  expect('helpdesk keeps a sent reply on its ticket', count(dom, '.weave-scroller .weave-bubble') === 3 && document.querySelector('.weave-scroller').textContent.includes('On it.'), `saw ${count(dom, '.weave-scroller .weave-bubble')}`);
   return open('warehouse.html');
 }).then(dom => {
   const document = dom.window.document;
@@ -214,7 +224,7 @@ open('index.html').then(dom => {
   expect('account shows the gate while signed out', count(dom, '.weave-form') === 1 && document.querySelector('.weave-title').textContent === 'Sign in', document.querySelector('.weave-title').textContent);
   expect('account offers the other two screens', count(dom, '.weave-row > .weave-button[data-variant=link]') === 2, `saw ${count(dom, '.weave-row > .weave-button[data-variant=link]')}`);
   fire(dom, document.querySelector('.weave-form'), 'submit');
-  expect('account refuses an empty sign in', count(dom, '.weave-field-error') === 4, `saw ${count(dom, '.weave-field-error')}`);
+  expect('account refuses an empty sign in', count(dom, '.weave-field-error') === 2 && [...document.querySelectorAll('.weave-field-error')].every(error => error.textContent === 'This field is required'), `saw ${count(dom, '.weave-field-error')}`);
   document.querySelectorAll('.weave-row > .weave-button[data-variant=link]')[1].click();
   expect('account walks to the sign up screen', document.querySelector('.weave-title').textContent === 'Create an account', document.querySelector('.weave-title').textContent);
   expect('account meters the password it is about to take', count(dom, '.weave-progress-bar') === 1, `saw ${count(dom, '.weave-progress-bar')}`);
@@ -245,15 +255,26 @@ open('index.html').then(dom => {
   document.querySelectorAll('.weave-tab')[1].click();
   expect('bank welds the currency to the amount', document.querySelector('.weave-input-group-box .weave-addon').textContent === '£', 'no addon');
   document.querySelector('.weave-button[data-variant=primary]').click();
+  expect('bank refuses a transfer with no amount', count(dom, '.weave-dialog-box') === 0 && document.querySelector('.weave-toast-host').textContent.includes('Say how much'), `saw ${count(dom, '.weave-dialog-box')} dialogs`);
+  const amount = document.querySelector('.weave-input-group-box input');
+  amount.value = '-5';
+  document.querySelector('.weave-button[data-variant=primary]').click();
+  expect('bank refuses a transfer below nothing', count(dom, '.weave-dialog-box') === 0, `saw ${count(dom, '.weave-dialog-box')} dialogs`);
+  amount.value = '25';
+  document.querySelector('.weave-button[data-variant=primary]').click();
   expect('bank asks before it sends anything', count(dom, '.weave-dialog-box') === 1, `saw ${count(dom, '.weave-dialog-box')}`);
   [...document.querySelectorAll('.weave-dialog-box .weave-button')].find(button => button.textContent === 'Confirm').click();
   return new Promise(resolve => setTimeout(() => resolve(dom), 40));
 }).then(dom => {
   const document = dom.window.document;
-  expect('bank says it went', count(dom, '.weave-toast-host .weave-alert') === 1, `saw ${count(dom, '.weave-toast-host .weave-alert')}`);
+  const tiles = () => [...document.querySelectorAll('.weave-stat-tile')].map(tile => tile.textContent);
+  expect('bank says it went', document.querySelector('.weave-toast-host').textContent.includes('Sent.'), document.querySelector('.weave-toast-host').textContent);
+  expect('bank takes the payment off the balances', tiles()[0].includes('£17,301.30') && tiles()[2].includes('£4,801.30'), tiles().join(' | '));
+  expect('bank clears the transfer once it is sent', document.querySelector('.weave-input-group-box input').value === '', document.querySelector('.weave-input-group-box input').value);
   document.querySelectorAll('.weave-tab')[2].click();
-  expect('bank states the month as a table', count(dom, '.weave-table tbody tr') === 4, `saw ${count(dom, '.weave-table tbody tr')}`);
-  expect('bank states the same lines as a timeline', count(dom, '.weave-timeline-row') === 4, `saw ${count(dom, '.weave-timeline-row')}`);
+  expect('bank states the month as a table', count(dom, '.weave-table tbody tr') === 5, `saw ${count(dom, '.weave-table tbody tr')}`);
+  expect('bank puts the payment on the statement', document.querySelector('.weave-table tbody tr').textContent.includes('Ana Ferreira') && document.querySelector('.weave-table tbody tr').textContent.includes('25.00'), document.querySelector('.weave-table tbody tr').textContent);
+  expect('bank states the same lines as a timeline', count(dom, '.weave-timeline-row') === 5, `saw ${count(dom, '.weave-timeline-row')}`);
   return open('shop.html');
 }).then(dom => {
   const document = dom.window.document;
@@ -277,6 +298,16 @@ open('index.html').then(dom => {
   const document = dom.window.document;
   expect('shop empties the basket once it is paid for', document.querySelector('.weave-spread > .weave-button').textContent === 'Basket', document.querySelector('.weave-spread > .weave-button').textContent);
   expect('shop leaves no overlay behind', count(dom, '.weave-sheet-box') === 0, `saw ${count(dom, '.weave-sheet-box')}`);
+  const jump = word => {
+    const box = document.querySelector('input[name=query]');
+    box.value = word;
+    fire(dom, box, 'input');
+    [...document.querySelector('input[name=query]').closest('.weave-panel').querySelectorAll('.weave-menu .weave-button')].find(button => button.textContent.toLowerCase().includes(word)).click();
+  };
+  jump('lemons');
+  expect('shop jumps to the shelf item instead of buying it', document.querySelector('.weave-spread > .weave-button').textContent === 'Basket' && document.activeElement.closest('.weave-card[data-key=lemons]') !== null, `${document.querySelector('.weave-spread > .weave-button').textContent}, focus on ${document.activeElement.tagName} ${document.activeElement.className}`);
+  jump('cheese');
+  expect('shop says when the filters hide the shelf item', document.querySelector('.weave-spread > .weave-button').textContent === 'Basket' && document.querySelector('.weave-toast-host').textContent.includes('hidden by the filters'), document.querySelector('.weave-toast-host').textContent);
   return open('tailor.html');
 }).then(dom => {
   const document = dom.window.document;
@@ -306,6 +337,10 @@ open('index.html').then(dom => {
   expect('landing answers every question it asks', count(dom, '.weave-disclosure') === 3, `saw ${count(dom, '.weave-disclosure')}`);
   document.querySelector('.weave-banner-box .weave-button').click();
   expect('landing answers its own call to action', count(dom, '.weave-toast-host .weave-alert') === 1, `saw ${count(dom, '.weave-toast-host .weave-alert')}`);
+  const scrolled = [];
+  dom.window.HTMLElement.prototype.scrollIntoView = function () { scrolled.push(this); };
+  [...document.querySelectorAll('.weave-banner-box .weave-button')].find(button => button.textContent === 'Take the tour').click();
+  expect('landing takes the tour to the first section', scrolled.length === 1 && scrolled[0].textContent.includes('Why teams move'), `scrolled ${scrolled.length} times`);
   return open('travel.html');
 }).then(dom => {
   const document = dom.window.document;
@@ -348,7 +383,7 @@ open('index.html').then(dom => {
   expect('signal writes a tick under every point', count(dom, '.weave-axis-row .weave-axis-label') === 14, `saw ${count(dom, '.weave-axis-row .weave-axis-label')}`);
   document.querySelector('.weave-legend-button').click();
   expect('signal takes a series off the plot', lines() === 2 + 4, `saw ${lines()}`);
-  expect('signal marks the series it has taken off', count(dom, '.weave-legend-button[aria-selected=false]') === 1, 'none marked');
+  expect('signal marks the series it has taken off', count(dom, '.weave-legend-button[aria-pressed=false]') === 1, 'none marked');
   const survivor = () => document.querySelectorAll('.weave-chart-plot .weave-chart-line')[0].dataset.series;
   expect('signal leaves the survivors their own colour', survivor() === 'two', survivor());
   document.querySelector('.weave-legend-button').click();
@@ -513,6 +548,15 @@ open('index.html').then(dom => {
   expect('orbit gives the palette back', document.documentElement.style.getPropertyValue('--weave-accent') === '', document.documentElement.style.getPropertyValue('--weave-accent'));
   click(byText('.weave-button-group-box .weave-button', 'System'));
   expect('orbit hands the theme back to the system', document.documentElement.dataset.theme === undefined, String(document.documentElement.dataset.theme));
+  const workspaceName = () => document.querySelector('input[name=workspace]').value;
+  const railName = () => document.querySelector('.weave-nav-head').textContent;
+  document.querySelector('input[name=workspace]').value = 'Orbit Studio';
+  fire(dom, document.querySelector('input[name=workspace]'), 'input');
+  app.tick();
+  expect('orbit keeps a settings edit through a live tick', workspaceName() === 'Orbit Studio' && app.store.state.tick === 4, `${JSON.stringify(workspaceName())} at tick ${app.store.state.tick}`);
+  expect('orbit leaves the saved name alone until save', railName().includes('Orbit Labs'), railName());
+  click(byText('.weave-button', 'Save changes'));
+  expect('orbit commits the workspace name on save', railName().includes('Orbit Studio') && workspaceName() === 'Orbit Studio', railName());
   click(document.querySelector('.weave-icon-button-box[aria-label^=Notifications]'));
   expect('orbit opens its notifications in a drawer', count(dom, '.weave-drawer-box .weave-group-row') === 3, `saw ${count(dom, '.weave-drawer-box .weave-group-row')}`);
   expect('orbit marks them read', app.store.state.unread === 0, String(app.store.state.unread));

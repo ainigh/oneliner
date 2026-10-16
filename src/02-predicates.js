@@ -39,6 +39,11 @@ Weave.library.predicates.isEmptyString = value => Weave.library.composition.trim
 Weave.library.predicates.isEmpty = value => Weave.library.control.selectByKey(Weave.library.predicates.emptyTests, Weave.library.predicates.isNil)(typeof value)(value);
 Weave.library.predicates.isNil = value => Weave.library.control.or(value === null, value === undefined);
 Weave.library.predicates.isDefined = value => !Weave.library.predicates.isNil(value);
+Weave.library.predicates.isUnorderable = value => Weave.library.control.or(Weave.library.predicates.isNil(value), Number.isNaN(value));
+Weave.library.predicates.isNothing = value => Weave.library.control.or(Weave.library.predicates.isNil(value), Weave.library.predicates.isBoolean(value));
+Weave.library.predicates.isRecord = value => Weave.library.predicates.either(Weave.library.predicates.isNil, Weave.library.predicates.isPlainObject)(value);
+Weave.library.predicates.isEmptyInstance = value => Weave.library.control.either(Weave.library.predicates.isArray, Weave.library.predicates.isEmptyArray, Weave.library.predicates.isEmptySized)(value);
+Weave.library.predicates.isEmptySized = value => value.size === 0;
 Weave.library.predicates.isNumeric = value => Weave.library.control.and(Number.isFinite(parseFloat(value)), !Number.isNaN(Number(value)));
 Weave.library.predicates.isInteger = value => Number.isInteger(value);
 Weave.library.predicates.isPromise = value => Weave.library.predicates.both(Weave.library.predicates.isDefined, thing => Weave.library.predicates.isFunction(thing.then))(value);
@@ -58,9 +63,9 @@ Weave.library.predicates.isDisabled = el => Weave.library.browser.getProperty(el
 Weave.library.predicates.isChecked = el => Weave.library.browser.getProperty(el, Weave.library.attributes.booleanAttributes.checked) === true;
 Weave.library.predicates.isSelected = el => Weave.library.browser.getProperty(el, Weave.library.attributes.booleanAttributes.selected) === true;
 Weave.library.predicates.isFocused = el => Weave.library.browser.activeElement() === el;
-Weave.library.predicates.isFocusable = el => Weave.library.predicates.matches(Weave.library.browser.selectors.focusable + Weave.library.browser.selectors.enabled)(el);
+Weave.library.predicates.isFocusable = el => Weave.library.browser.selectors.focusable.split(', ').some(part => Weave.library.predicates.matches(part + Weave.library.browser.selectors.enabled)(el));
 Weave.library.predicates.isFormControl = el => Weave.library.predicates.matches(Weave.library.browser.selectors.formControl)(el);
-Weave.library.predicates.isMultiSelect = el => Weave.library.browser.getProperty(el, Weave.library.attributes.booleanAttributes.multiple) === true;
+Weave.library.predicates.isMultiSelect = el => Weave.library.browser.getProperty(el, Weave.library.browser.keywords.type) === Weave.library.attributes.selectMultipleType;
 Weave.library.predicates.isCheckable = el => Weave.library.attributes.checkableTypes.includes(Weave.library.browser.getProperty(el, Weave.library.browser.keywords.type));
 Weave.library.predicates.isFileInput = el => Weave.library.browser.getProperty(el, Weave.library.browser.keywords.type) === Weave.library.elements.inputTypes.file;
 Weave.library.predicates.isSubmitButton = el => Weave.library.browser.getProperty(el, Weave.library.browser.keywords.type) === Weave.library.elements.inputTypes.submit;
@@ -92,7 +97,7 @@ Weave.library.predicates.isOnline = () => Weave.library.browser.onLine();
 Weave.library.predicates.isSecure = () => Weave.library.browser.protocol() === Weave.library.navigation.protocols.secure;
 Weave.library.predicates.isSameOrigin = url => Weave.library.browser.createUrl(url, Weave.library.browser.href()).origin === Weave.library.browser.origin();
 Weave.library.predicates.isOk = response => Weave.library.browser.okOf(response);
-Weave.library.predicates.isJsonResponse = response => Weave.library.composition.trim(Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(Weave.library.browser.headerOf(response, Weave.library.browser.keywords.contentType))).startsWith(Weave.library.browser.mimeTypes.json);
+Weave.library.predicates.isJsonResponse = response => Weave.library.browser.jsonMimePattern.test(Weave.library.control.defaultTo(Weave.library.browser.keywords.empty)(Weave.library.browser.headerOf(response, Weave.library.browser.keywords.contentType)));
 Weave.library.predicates.not = predicate => value => !predicate(value);
 Weave.library.predicates.both = (first, second) => value => Weave.library.control.either(first, second, Weave.library.composition.never)(value);
 Weave.library.predicates.either = (first, second) => value => Weave.library.control.either(first, Weave.library.composition.always, second)(value);
@@ -102,4 +107,4 @@ Weave.library.predicates.any = list => value => list.some(predicate => predicate
 /* emptyTests: isEmpty dispatches on typeof rather than branching on shape. */
 Weave.library.predicates.emptyTests = {};
 Weave.library.predicates.emptyTests.string = Weave.library.predicates.isEmptyString;
-Weave.library.predicates.emptyTests.object = value => Weave.library.control.either(Weave.library.predicates.isArray, Weave.library.predicates.isEmptyArray, Weave.library.predicates.isEmptyObject)(value);
+Weave.library.predicates.emptyTests.object = value => Weave.library.control.either(Weave.library.predicates.isRecord, Weave.library.predicates.isEmptyObject, Weave.library.predicates.isEmptyInstance)(value);

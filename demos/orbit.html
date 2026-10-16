@@ -13,7 +13,6 @@ Weave.application = {};
 
 /* words: the only place this page writes something a reader will see. */
 Weave.application.words = {};
-Weave.application.words.brand = 'Orbit';
 Weave.application.words.planet = '🪐';
 Weave.application.words.search = 'Search or jump to…';
 Weave.application.words.paletteTitle = 'Jump to';
@@ -188,8 +187,9 @@ Weave.application.buttons.demo = { label: Weave.application.words.bookDemo, size
 Weave.application.buttons.save = { label: Weave.application.words.save, variant: Weave.library.components.markNames.variant.primary };
 /* fields: the two things the workspace form asks. */
 Weave.application.fields = {};
-Weave.application.fields.name = { label: Weave.application.words.workspaceName, name: 'workspace', value: Weave.application.words.workspaceValue };
-Weave.application.fields.address = { label: Weave.application.words.addressLabel, name: 'address', prefix: Weave.application.words.addressPrefix, value: Weave.application.words.addressValue };
+Weave.application.fields.name = { label: Weave.application.words.workspaceName, name: 'workspace' };
+Weave.application.fields.address = { label: Weave.application.words.addressLabel, name: 'address', prefix: Weave.application.words.addressPrefix };
+Weave.application.workspaceStart = { [Weave.application.fields.name.name]: Weave.application.words.workspaceValue, [Weave.application.fields.address.name]: Weave.application.words.addressValue };
 Weave.application.owner = { name: Weave.application.words.owner, note: Weave.application.words.ownerRole, status: Weave.library.components.toneNames.success };
 Weave.application.pulseOn = { text: Weave.application.words.live, tone: Weave.library.components.toneNames.success };
 Weave.application.pulseOff = { text: Weave.application.words.paused, tone: Weave.library.components.toneNames.warning };
@@ -317,7 +317,7 @@ Weave.application.densityChoices.roomy = 'Roomy';
 Weave.application.choiceNames = Weave.library.components.nameTable(Weave.library.composition.merge(Weave.application.themeChoices, Weave.library.composition.merge(Weave.application.paletteChoices, Weave.application.densityChoices)));
 
 /* state: where the reader is, what is switched off, what the customer list is narrowed to, and whether the desk is live. */
-Weave.application.startState = { view: Weave.application.viewNames.overview, span: Weave.application.spanNames.month, hidden: [], tick: 0, query: '', health: Weave.application.healthNames.everyone, sort: Weave.application.sortNames.mrr, live: true, digest: true, theme: Weave.application.choiceNames.system, palette: Weave.application.choiceNames.indigo, density: Weave.application.choiceNames.standard, unread: Weave.application.data.alerts.length };
+Weave.application.startState = { view: Weave.application.viewNames.overview, span: Weave.application.spanNames.month, hidden: [], tick: 0, query: '', health: Weave.application.healthNames.everyone, sort: Weave.application.sortNames.mrr, live: true, digest: true, theme: Weave.application.choiceNames.system, palette: Weave.application.choiceNames.indigo, density: Weave.application.choiceNames.standard, unread: Weave.application.data.alerts.length, draft: Weave.application.workspaceStart, saved: Weave.application.workspaceStart };
 Weave.application.store = Weave.library.patterns.linkTo('view')(Weave.library.patterns.store(Weave.application.startState));
 Weave.application.change = made => Weave.application.store.update(() => made);
 Weave.application.toasts = Weave.library.patterns.notifications({});
@@ -471,10 +471,13 @@ Weave.application.appearance = state => Weave.application.boxed(Weave.applicatio
 Weave.application.streamSwitch = state => Weave.library.components.switchField({ label: Weave.application.words.streamLabel, checked: state.live, onChoose: Weave.application.flipLive });
 Weave.application.digestSwitch = state => Weave.library.components.switchField({ label: Weave.application.words.digestLabel, checked: state.digest, onChoose: () => Weave.application.change({ digest: !state.digest }) });
 Weave.application.liveDesk = state => Weave.application.boxed(Weave.application.charts.liveDesk, [Weave.application.streamSwitch(state), Weave.application.digestSwitch(state)]);
-Weave.application.saved = () => Weave.application.toasts.push(Weave.application.words.saved, Weave.library.components.toneNames.success);
-Weave.application.saveButton = () => Weave.library.components.actions({ children: [Weave.library.components.actionButton(Weave.application.withAction(Weave.application.buttons.save, Weave.application.saved))] });
-Weave.application.workspaceForm = () => Weave.application.boxed(Weave.application.charts.workspace, [Weave.library.components.field(Weave.application.fields.name), Weave.library.components.inputGroup(Weave.application.fields.address), Weave.application.saveButton()]);
-Weave.application.settingsMain = state => Weave.library.components.column({ span: Weave.library.components.markNames.span.twoThirds, children: [Weave.application.appearance(state), Weave.application.workspaceForm()] });
+Weave.application.drafted = name => event => Weave.application.store.update(state => ({ draft: Weave.library.composition.merge(state.draft, { [name]: Weave.library.events.valueOfTarget(event) }) }));
+Weave.application.draftField = (state, row) => Weave.library.composition.merge(row, { value: state.draft[row.name], onEdit: Weave.application.drafted(row.name) });
+Weave.application.save = () => (Weave.application.store.update(state => ({ saved: state.draft })), Weave.application.toasts.push(Weave.application.words.saved, Weave.library.components.toneNames.success));
+Weave.application.saveButton = () => Weave.library.components.actions({ children: [Weave.library.components.actionButton(Weave.application.withAction(Weave.application.buttons.save, Weave.application.save))] });
+Weave.application.workspaceFields = state => [Weave.library.components.field(Weave.application.draftField(state, Weave.application.fields.name)), Weave.library.components.inputGroup(Weave.application.draftField(state, Weave.application.fields.address))];
+Weave.application.workspaceForm = state => Weave.application.boxed(Weave.application.charts.workspace, Weave.application.workspaceFields(state).concat([Weave.application.saveButton()]));
+Weave.application.settingsMain = state => Weave.library.components.column({ span: Weave.library.components.markNames.span.twoThirds, children: [Weave.application.appearance(state), Weave.application.workspaceForm(state)] });
 Weave.application.settingsSide = state => Weave.library.components.column({ span: Weave.library.components.markNames.span.third, children: [Weave.application.liveDesk(state)] });
 Weave.application.settings = state => [Weave.library.components.columns({ children: [Weave.application.settingsMain(state), Weave.application.settingsSide(state)] })];
 
@@ -484,7 +487,7 @@ Weave.application.countFor = key => Weave.library.control.either(() => key === W
 Weave.application.railItem = key => Weave.library.composition.merge(Weave.application.views[key], { key, onAction: Weave.application.go(key), count: Weave.application.countFor(key) });
 Weave.application.railGroup = group => ({ label: group.label, items: group.keys.map(Weave.application.railItem) });
 Weave.application.railFoot = () => [Weave.library.components.person(Weave.application.owner), Weave.library.components.statusPill({ text: Weave.application.words.systems, tone: Weave.application.tone.good })];
-Weave.application.rail = state => Weave.library.components.sideNav({ title: Weave.application.words.brand, glyph: Weave.application.words.planet, active: state.view, groups: Weave.application.railGroups.map(Weave.application.railGroup), footer: Weave.application.railFoot() });
+Weave.application.rail = state => Weave.library.components.sideNav({ title: state.saved[Weave.application.fields.name.name], glyph: Weave.application.words.planet, active: state.view, groups: Weave.application.railGroups.map(Weave.application.railGroup), footer: Weave.application.railFoot() });
 Weave.application.pulse = state => Weave.library.components.statusPill(Weave.library.control.either(() => state.live, () => Weave.application.pulseOn, () => Weave.application.pulseOff)(state));
 Weave.application.bellLabel = state => Weave.application.words.bellLabel + ', ' + String(state.unread) + Weave.application.words.unread;
 Weave.application.finderButton = () => Weave.library.components.searchTrigger({ label: Weave.application.words.search, keys: Weave.application.data.paletteKeys, onAction: Weave.application.openPalette });

@@ -43,16 +43,19 @@ Weave.library.navigation.captured = (carried, expected, actual) => Weave.library
 Weave.library.navigation.compared = (carried, expected, actual) => Weave.library.control.guard(() => expected === actual)(carried);
 Weave.library.navigation.route = pattern => path => Weave.library.navigation.matchRoute(Weave.library.navigation.segments(pattern), Weave.library.navigation.segments(path));
 Weave.library.navigation.matchRoute = (expected, actual) => Weave.library.control.either(() => expected.length === actual.length, () => Weave.library.control.nullable(Weave.library.composition.zip(expected, actual).reduce(Weave.library.navigation.matchSegment, {})), () => null)(expected);
+/* routeModes: one row per way a router can read the address. A router takes the row or its name. */
 Weave.library.navigation.routeModes = {};
-Weave.library.navigation.routeModes.path = () => Weave.library.navigation.path();
-Weave.library.navigation.routeModes.hash = () => Weave.library.browser.keywords.slash + Weave.library.navigation.hashValue().replace(/^\//, Weave.library.browser.keywords.empty);
-Weave.library.navigation.currentPath = mode => Weave.library.control.selectByKey(Weave.library.navigation.routeModes, Weave.library.navigation.routeModes.path)(mode)();
+Weave.library.navigation.routeModes.path = { current: () => Weave.library.navigation.path(), address: Weave.library.composition.identity, event: Weave.library.events.types.popstate };
+Weave.library.navigation.routeModes.hash = { current: () => Weave.library.navigation.hashPath(), address: url => Weave.library.browser.keywords.hash + url, event: Weave.library.events.types.hashchange };
+Weave.library.navigation.hashPath = () => Weave.library.browser.keywords.slash + Weave.library.composition.first(Weave.library.navigation.hashValue().split(Weave.library.navigation.questionMark)).replace(/^\//, Weave.library.browser.keywords.empty);
+Weave.library.navigation.modeOf = mode => Weave.library.control.either(Weave.library.predicates.isPlainObject, Weave.library.composition.identity, Weave.library.control.selectByKey(Weave.library.navigation.routeModes, Weave.library.navigation.routeModes.path))(mode);
+Weave.library.navigation.currentPath = mode => Weave.library.navigation.modeOf(mode).current();
 Weave.library.navigation.matchedRoute = (routes, path) => Weave.library.composition.keys(routes).map(pattern => [pattern, Weave.library.navigation.route(pattern)(path)]).find(([pattern, parameters]) => Weave.library.predicates.isDefined(parameters));
 Weave.library.navigation.dispatchRoute = (routes, path) => Weave.library.control.maybe(([pattern, parameters]) => routes[pattern](parameters, path))(Weave.library.navigation.matchedRoute(routes, path));
-Weave.library.navigation.routerGo = (routes, mode) => url => (Weave.library.navigation.push(url), Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)));
+Weave.library.navigation.routerGo = (routes, mode) => url => (Weave.library.navigation.push(Weave.library.navigation.modeOf(mode).address(url)), Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)));
 Weave.library.navigation.routerFor = (routes, mode, state) => Object.assign(state, { start: () => Weave.library.navigation.startRouter(routes, mode, state), go: Weave.library.navigation.routerGo(routes, mode) });
 Weave.library.navigation.startRouter = (routes, mode, state) => Weave.library.navigation.holdRouter(routes, mode, Object.assign(state, { stop: Weave.library.navigation.listenRoute(routes, mode) }));
-Weave.library.navigation.listenRoute = (routes, mode) => Weave.library.events.onTypes([Weave.library.events.types.popstate, Weave.library.events.types.hashchange], () => Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)))(Weave.library.browser.window());
+Weave.library.navigation.listenRoute = (routes, mode) => Weave.library.events.on(Weave.library.navigation.modeOf(mode).event, () => Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)))(Weave.library.browser.window());
 Weave.library.navigation.holdRouter = (routes, mode, state) => (Weave.library.navigation.dispatchRoute(routes, Weave.library.navigation.currentPath(mode)), state.stop);
 Weave.library.navigation.router = (routes, mode) => Weave.library.navigation.routerFor(routes, mode, { stop: Weave.library.composition.noop });
 Weave.library.navigation.interceptLinks = router => root => Weave.library.events.delegate(Weave.library.events.types.click, Weave.library.browser.selectors.anchor, Weave.library.navigation.linkHandler(router))(root);

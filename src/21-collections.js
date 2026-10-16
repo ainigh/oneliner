@@ -16,8 +16,10 @@ Weave.library.collections.lift = f => nodes => (nodes.forEach(f), nodes);
 Weave.library.collections.liftSetter = f => (...args) => nodes => (nodes.forEach(f(...args)), nodes);
 Weave.library.collections.liftGetter = f => nodes => nodes.map(f);
 Weave.library.collections.liftFirst = f => nodes => Weave.library.control.maybe(f)(Weave.library.composition.first(nodes));
-Weave.library.collections.liftPredicate = f => nodes => nodes.every(f);
+Weave.library.collections.liftPredicate = f => nodes => Weave.library.control.and(nodes.length > 0, nodes.every(f));
+Weave.library.collections.liftAny = f => (...args) => nodes => nodes.some(f(...args));
 Weave.library.collections.liftQuery = f => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(nodes.flatMap(f)));
+Weave.library.collections.liftNearestQuery = f => nodes => Weave.library.collections.liftQuery(f)(nodes).reverse();
 Weave.library.collections.liftQueryOne = f => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(Weave.library.composition.compact(nodes.map(f))));
 Weave.library.collections.liftEffect = f => nodes => Weave.library.composition.all(nodes.map(f));
 Weave.library.collections.liftCurriedEffect = f => (...args) => nodes => Weave.library.composition.all(nodes.map(f(...args)));
@@ -25,8 +27,9 @@ Weave.library.collections.liftSubscriber = f => nodes => Weave.library.events.co
 Weave.library.collections.liftCurriedSubscriber = f => (...args) => nodes => Weave.library.events.combine(nodes.map(f(...args)));
 Weave.library.collections.liftCurriedGetter = f => (...args) => nodes => nodes.map(f(...args));
 Weave.library.collections.liftCurriedFirst = f => (...args) => nodes => Weave.library.control.maybe(f(...args))(Weave.library.composition.first(nodes));
-Weave.library.collections.liftCurriedPredicate = f => (...args) => nodes => nodes.every(f(...args));
+Weave.library.collections.liftCurriedPredicate = f => (...args) => nodes => Weave.library.control.and(nodes.length > 0, nodes.every(f(...args)));
 Weave.library.collections.liftCurriedQuery = f => (...args) => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(nodes.flatMap(f(...args))));
+Weave.library.collections.liftCurriedNearestQuery = f => (...args) => nodes => Weave.library.collections.liftCurriedQuery(f)(...args)(nodes).reverse();
 Weave.library.collections.liftCurriedQueryOne = f => (...args) => nodes => Weave.library.collections.sortByDocument(Weave.library.collections.unique(Weave.library.composition.compact(nodes.map(f(...args)))));
 
 /* kinds: one row per lift. A lifts row names the kind, so adding a kind adds a way to lift. */
@@ -37,6 +40,7 @@ Weave.library.collections.kinds.getter = Weave.library.collections.liftGetter;
 Weave.library.collections.kinds.first = Weave.library.collections.liftFirst;
 Weave.library.collections.kinds.predicate = Weave.library.collections.liftPredicate;
 Weave.library.collections.kinds.query = Weave.library.collections.liftQuery;
+Weave.library.collections.kinds.nearestQuery = Weave.library.collections.liftNearestQuery;
 Weave.library.collections.kinds.queryOne = Weave.library.collections.liftQueryOne;
 Weave.library.collections.kinds.effect = Weave.library.collections.liftEffect;
 Weave.library.collections.kinds.curriedEffect = Weave.library.collections.liftCurriedEffect;
@@ -46,13 +50,15 @@ Weave.library.collections.kinds.curriedGetter = Weave.library.collections.liftCu
 Weave.library.collections.kinds.curriedFirst = Weave.library.collections.liftCurriedFirst;
 Weave.library.collections.kinds.curriedPredicate = Weave.library.collections.liftCurriedPredicate;
 Weave.library.collections.kinds.curriedQuery = Weave.library.collections.liftCurriedQuery;
+Weave.library.collections.kinds.curriedNearestQuery = Weave.library.collections.liftCurriedNearestQuery;
 Weave.library.collections.kinds.curriedQueryOne = Weave.library.collections.liftCurriedQueryOne;
+Weave.library.collections.kinds.curriedAny = Weave.library.collections.liftAny;
 
 /* lifts: one row per layer, naming which functions are lifted and how. This table is the whole layer. */
 Weave.library.collections.lifts = {};
-Weave.library.collections.lifts.elements = { action: ['remove', 'empty', 'clone', 'cloneWithListeners', 'unwrap'], setter: ['append', 'prepend', 'before', 'after', 'appendTo', 'prependTo', 'insertBefore', 'insertAfter', 'replaceWith', 'replaceAll', 'wrap', 'wrapInner', 'setText', 'setHtml', 'morph', 'morphInner'], getter: ['textOf', 'outerHtmlOf'], first: ['htmlOf'] };
-Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'parents', 'contents', 'walk', 'nextAll', 'previousAll'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], curriedQuery: ['find', 'allWithin', 'childrenMatching', 'parentsMatching', 'parentsUntil', 'nextUntil', 'previousUntil', 'descendantsMatching'], curriedQueryOne: ['findOne', 'oneWithin', 'closest', 'nextMatching', 'previousMatching'], getter: ['indexOf'] };
-Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'], curriedFirst: ['attribute', 'property', 'data', 'aria'], curriedPredicate: ['hasClass', 'booleanAttribute'] };
+Weave.library.collections.lifts.elements = { action: ['remove', 'empty'], setter: ['append', 'prepend', 'before', 'after', 'appendTo', 'prependTo', 'insertBefore', 'insertAfter', 'replaceWith', 'replaceAll', 'wrap', 'wrapInner', 'setText', 'setHtml', 'morph', 'morphInner'], getter: ['textOf', 'outerHtmlOf', 'clone', 'cloneWithListeners'], first: ['htmlOf'] };
+Weave.library.collections.lifts.query = { query: ['children', 'siblings', 'contents', 'walk', 'nextAll'], nearestQuery: ['parents', 'previousAll'], queryOne: ['parent', 'next', 'previous', 'firstChild', 'lastChild', 'offsetParent'], curriedQuery: ['find', 'allWithin', 'childrenMatching', 'nextUntil', 'descendantsMatching'], curriedNearestQuery: ['parentsMatching', 'parentsUntil', 'previousUntil'], curriedQueryOne: ['findOne', 'oneWithin', 'closest', 'nextMatching', 'previousMatching'], getter: ['indexOf'] };
+Weave.library.collections.lifts.attributes = { setter: ['setAttribute', 'setAttributes', 'removeAttribute', 'removeAttributes', 'toggleAttribute', 'setProperty', 'setProperties', 'removeProperty', 'setData', 'setDataAll', 'removeData', 'addClass', 'removeClass', 'toggleClass', 'replaceClass', 'setClasses', 'setValue', 'setAria', 'setAriaAll', 'setRole', 'setId', 'setName', 'setBooleanAttribute'], getter: ['classes', 'dataAll', 'attributes', 'tagName'], first: ['value', 'id', 'name', 'role'], curriedFirst: ['attribute', 'property', 'data', 'aria'], curriedPredicate: ['booleanAttribute'], curriedAny: ['hasClass'] };
 Weave.library.collections.lifts.style = { action: ['show', 'hide'], setter: ['setCss', 'setCssAll', 'removeCss', 'setCssVariable', 'setWidth', 'setHeight', 'setOffset', 'setScrollTop', 'setScrollLeft', 'scrollIntoView', 'toggle'], getter: ['width', 'height', 'outerWidth', 'outerHeight', 'offset', 'position', 'rect', 'dimensions'], curriedFirst: ['css', 'inlineCss', 'cssVariable', 'cssAll'], predicate: ['isShown'] };
 Weave.library.collections.lifts.events = { action: ['offAll'], curriedSubscriber: ['on', 'once', 'delegate', 'onAll', 'onTypes', 'delegateAll', 'onKey', 'hover', 'onWithOptions'], setter: ['off', 'trigger', 'triggerNative'] };
 Weave.library.collections.lifts.effects = { action: ['stop', 'finish', 'pause', 'resume'], effect: ['whenAnimationEnds', 'whenTransitionEnds'], curriedEffect: ['animate', 'transition', 'fadeIn', 'fadeOut', 'fadeToggle', 'fadeTo', 'slideDown', 'slideUp', 'slideToggle', 'showAnimated', 'hideAnimated', 'toggleAnimated', 'pulse', 'shake', 'flash', 'delay', 'queue', 'parallel'], predicate: ['isAnimating'] };
@@ -69,9 +75,11 @@ Weave.library.collections.assignLift = (target, layer, kind) => name => target[n
 Weave.library.collections.fillLayer = (target, layer, rows) => (Weave.library.composition.eachPair(([kind, names]) => names.forEach(Weave.library.collections.assignLift(target, layer, kind)))(rows), target);
 Weave.library.collections.byLayer = (rows, layer) => Weave.library.collections.fillLayer({}, layer, rows);
 Weave.library.composition.defineEach(Weave.library.collections, Weave.library.collections.byLayer)(Weave.library.collections.lifts);
+Weave.library.collections.elements.unwrap = nodes => Weave.library.elements.unwrapAll(nodes);
 Weave.library.collections.each = f => nodes => Weave.library.collections.lift(f)(nodes);
 Weave.library.collections.map = f => nodes => Weave.library.composition.compact(Weave.library.composition.flatten(nodes.map(f)));
-Weave.library.collections.testOf = value => Weave.library.control.either(Weave.library.predicates.isFunction, Weave.library.composition.identity, Weave.library.predicates.matches)(value);
+Weave.library.collections.testOf = value => Weave.library.control.either(Weave.library.predicates.isFunction, Weave.library.composition.identity, Weave.library.collections.elementMatches)(value);
+Weave.library.collections.elementMatches = selector => node => Weave.library.control.either(Weave.library.predicates.isElement, Weave.library.predicates.matches(selector), Weave.library.composition.never)(node);
 Weave.library.collections.filter = value => nodes => nodes.filter(Weave.library.collections.testOf(value));
 Weave.library.collections.not = value => nodes => nodes.filter(Weave.library.predicates.not(Weave.library.collections.testOf(value)));
 Weave.library.collections.is = value => nodes => nodes.some(Weave.library.collections.testOf(value));

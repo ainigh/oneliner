@@ -25,6 +25,7 @@ Weave.library.control.errors.timeout = { name: 'TimeoutError', message: 'The ope
 Weave.library.control.errors.abort = { name: 'AbortError', message: 'The operation was aborted' };
 Weave.library.control.errors.http = { name: 'HttpError', message: 'The request failed' };
 Weave.library.control.errors.network = { name: 'NetworkError', message: 'The network request could not be made' };
+Weave.library.control.errors.parse = { name: 'ParseError', message: 'The response body could not be parsed' };
 Weave.library.control.errors.cancelled = { name: 'CancelledError', message: 'The effect was cancelled' };
 Weave.library.control.errors.invalidSpec = { name: 'InvalidSpecError', message: 'The spec names no tag' };
 Weave.library.control.errors.depthExceeded = { name: 'DepthError', message: 'The recursion limit was reached' };
@@ -37,6 +38,7 @@ Weave.library.control.attemptOr = (f, fallback) => x => Weave.library.control.at
 /* constants: the bounds the recursive combinators respect. The budget stays under the smallest engine call stack, so a runaway loop fails with a named error and not a RangeError. */
 Weave.library.control.constants = {};
 Weave.library.control.constants.maxDepth = 1000;
+Weave.library.control.constants.maxDelay = 2147483647;
 Weave.library.control.unfold = step => seed => Weave.library.control.unfoldFrom(step, step(seed), [], Weave.library.control.constants.maxDepth);
 Weave.library.control.unfoldFrom = (step, value, collected, budget) => Weave.library.control.either(Weave.library.predicates.isDefined, next => Weave.library.control.unfoldStep(step, next, collected, budget), () => collected)(value);
 Weave.library.control.unfoldStep = (step, next, collected, budget) => Weave.library.control.either(() => budget > 0, () => Weave.library.control.unfoldFrom(step, step(next), (collected.push(next), collected), budget - 1), Weave.library.control.exceedDepth)(next);
@@ -52,8 +54,10 @@ Weave.library.control.after = promise => f => promise.then(f);
 Weave.library.control.recover = promise => f => promise.catch(f);
 Weave.library.control.finally = promise => f => promise.finally(f);
 Weave.library.control.sequence = makers => makers.reduce((chain, make) => chain.then(results => make().then(value => results.concat([value]))), Weave.library.composition.resolved([]));
-Weave.library.control.retry = (count, make) => Weave.library.control.recover(make())(reason => Weave.library.control.either(() => count > 1, () => Weave.library.control.retry(count - 1, make), () => Weave.library.composition.rejected(reason))(reason));
-Weave.library.control.armTimeout = (ms, handle) => Object.assign(handle, { cancel: Weave.library.timing.after(ms, () => handle.reject(Weave.library.control.error(Weave.library.control.errors.timeout, { ms }))) });
+Weave.library.control.retry = (count, make) => Weave.library.control.recover(make())(reason => Weave.library.control.either(() => Weave.library.control.canRetry(count, reason), () => Weave.library.control.retry(count - 1, make), () => Weave.library.composition.rejected(reason))(reason));
+Weave.library.control.canRetry = (count, reason) => Weave.library.control.and(count > 1, Weave.library.predicates.not(value => Weave.library.control.isError(Weave.library.control.errors.abort, value))(reason));
+Weave.library.control.armTimeout = (ms, handle) => Object.assign(handle, { cancel: Weave.library.control.either(Number.isFinite, Weave.library.control.armClock(ms, handle), () => Weave.library.composition.noop)(ms) });
+Weave.library.control.armClock = (ms, handle) => () => Weave.library.timing.after(Math.min(ms, Weave.library.control.constants.maxDelay), () => handle.reject(Weave.library.control.error(Weave.library.control.errors.timeout, { ms })));
 Weave.library.control.rejectAfter = ms => Weave.library.control.armTimeout(ms, Weave.library.composition.deferred());
 Weave.library.control.raceTimeout = (promise, handle) => Weave.library.control.finally(Weave.library.composition.race([promise, handle.promise]))(handle.cancel);
 Weave.library.control.timeout = (ms, promise) => Weave.library.control.raceTimeout(promise, Weave.library.control.rejectAfter(ms));

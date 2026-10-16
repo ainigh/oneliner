@@ -25,8 +25,12 @@ Weave.library.forms.invalidControls = form => Weave.library.forms.controls(form)
 Weave.library.forms.validationMessage = el => Weave.library.browser.validationMessageOf(el);
 Weave.library.forms.setCustomValidity = message => el => Weave.library.browser.setCustomValidity(el, message);
 Weave.library.forms.focusFirstInvalid = form => (Weave.library.control.maybe(Weave.library.browser.focus)(Weave.library.composition.first(Weave.library.forms.invalidControls(form))), form);
-Weave.library.forms.disable = form => (Weave.library.forms.controls(form).forEach(Weave.library.interaction.disable), form);
-Weave.library.forms.enable = form => (Weave.library.forms.controls(form).forEach(Weave.library.interaction.enable), form);
+Weave.library.forms.allControls = form => Weave.library.query.allWithin(Weave.library.browser.selectors.formControl)(form);
+Weave.library.forms.enabledControls = form => Weave.library.forms.allControls(form).filter(Weave.library.predicates.not(Weave.library.predicates.isDisabled));
+Weave.library.forms.disableEach = controls => (controls.forEach(Weave.library.interaction.disable), controls);
+Weave.library.forms.enableEach = (controls, form) => (controls.forEach(Weave.library.interaction.enable), form);
+Weave.library.forms.disable = form => (Weave.library.forms.disableEach(Weave.library.forms.enabledControls(form)), form);
+Weave.library.forms.enable = form => Weave.library.forms.enableEach(Weave.library.forms.allControls(form), form);
 Weave.library.forms.snapshotKey = 'weaveSnapshot';
 Weave.library.forms.snapshot = form => Weave.library.attributes.setData(Weave.library.forms.snapshotKey, Weave.library.forms.values(form))(form);
 Weave.library.forms.dirty = form => Weave.library.composition.json(Weave.library.forms.values(form)) !== Weave.library.composition.json(Weave.library.control.defaultTo({})(Weave.library.attributes.data(Weave.library.forms.snapshotKey)(form)));
@@ -34,8 +38,14 @@ Weave.library.forms.onSubmit = handler => form => Weave.library.events.on(Weave.
 Weave.library.forms.submitHandler = (handler, form) => event => handler(Weave.library.forms.values(form), form, Weave.library.browser.preventDefault(event));
 Weave.library.forms.onSubmitAsync = handler => form => Weave.library.events.on(Weave.library.events.types.submit, Weave.library.forms.asyncHandler(handler, form))(form);
 Weave.library.forms.asyncHandler = (handler, form) => event => Weave.library.forms.whileDisabled(form, handler(Weave.library.forms.values(form), form, Weave.library.browser.preventDefault(event)));
-Weave.library.forms.whileDisabled = (form, promise) => Weave.library.control.finally(Weave.library.composition.resolved(Weave.library.forms.disable(form)).then(() => promise))(() => Weave.library.forms.enable(form));
-Weave.library.forms.onChange = handler => form => Weave.library.events.onTypes([Weave.library.events.types.input, Weave.library.events.types.change], event => handler(Weave.library.forms.values(form), form, event))(form);
+Weave.library.forms.whileDisabled = (form, promise) => Weave.library.forms.whileDisabledFrom(Weave.library.browser.activeElement(), form, promise);
+Weave.library.forms.whileDisabledFrom = (focused, form, promise) => Weave.library.forms.holdDisabled(focused, form, Weave.library.forms.disableEach(Weave.library.forms.enabledControls(form)), promise);
+Weave.library.forms.holdDisabled = (focused, form, held, promise) => Weave.library.control.finally(Weave.library.composition.resolved(held).then(() => promise))(() => Weave.library.forms.refocus(focused, Weave.library.forms.enableEach(held, form)));
+Weave.library.forms.refocus = (focused, form) => Weave.library.control.when(el => Weave.library.control.and(Weave.library.predicates.contains(form, el), Weave.library.forms.hasLostFocus()), Weave.library.browser.focus)(focused);
+Weave.library.forms.hasLostFocus = () => Weave.library.control.or(Weave.library.predicates.isNil(Weave.library.browser.activeElement()), Weave.library.browser.activeElement() === Weave.library.browser.body());
+Weave.library.forms.onChange = handler => form => Weave.library.forms.watchValues(handler, form, { last: Weave.library.composition.json(Weave.library.forms.values(form)) });
+Weave.library.forms.watchValues = (handler, form, state) => Weave.library.events.onTypes([Weave.library.events.types.input, Weave.library.events.types.change], event => Weave.library.forms.reportChange(handler, form, state, event))(form);
+Weave.library.forms.reportChange = (handler, form, state, event) => Weave.library.control.when(text => text !== state.last, text => (Object.assign(state, { last: text }), handler(Weave.library.forms.values(form), form, event)))(Weave.library.composition.json(Weave.library.forms.values(form)));
 
 /* validators and messages: one row each, so a rule and its wording live side by side. */
 Weave.library.forms.validators = {};
@@ -61,7 +71,9 @@ Weave.library.forms.messages.min = 'This value is too small';
 Weave.library.forms.messages.max = 'This value is too large';
 Weave.library.forms.messages.matches = 'These values do not match';
 Weave.library.forms.messages.sameAs = 'These two do not match';
-Weave.library.forms.checkRule = (value, [rule, parameter], values) => Weave.library.control.either(() => Weave.library.forms.validators[rule](parameter)(value, values), () => Weave.library.forms.messages[rule], () => Weave.library.browser.keywords.empty)(value);
+Weave.library.forms.isWaived = (value, rule, parameter) => Weave.library.control.or(parameter === false, Weave.library.control.and(Weave.library.forms.validators[rule] !== Weave.library.forms.validators.required, Weave.library.predicates.isEmpty(value)));
+Weave.library.forms.isBroken = (value, [rule, parameter], values) => Weave.library.control.and(!Weave.library.forms.isWaived(value, rule, parameter), Weave.library.forms.validators[rule](parameter)(value, values));
+Weave.library.forms.checkRule = (value, [rule, parameter], values) => Weave.library.control.either(() => Weave.library.forms.isBroken(value, [rule, parameter], values), () => Weave.library.forms.messages[rule], () => Weave.library.browser.keywords.empty)(value);
 Weave.library.forms.checkControl = (values, rules) => name => Weave.library.composition.pairs(Weave.library.control.defaultTo({})(rules[name])).map(pair => Weave.library.forms.checkRule(values[name], pair, values)).filter(message => message.length > 0);
 Weave.library.forms.problemsFor = (form, values, rules) => name => Weave.library.forms.checkControl(values, rules)(name).map(message => ({ el: Weave.library.forms.control(name)(form), message }));
 Weave.library.forms.validateWith = rules => form => Weave.library.composition.keys(rules).flatMap(Weave.library.forms.problemsFor(form, Weave.library.forms.values(form), rules));

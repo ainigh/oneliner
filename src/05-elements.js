@@ -1,9 +1,14 @@
 /* elements: builders, spec appliers, insertion, removal, cloning and wrapping. All table driven. */
 Weave.library.elements = {};
 Weave.library.elements.applyAll = reducer => value => el => Weave.library.composition.pairs(value).reduce(reducer, el);
-Weave.library.elements.setAttributePair = (el, [name, value]) => Weave.library.control.either(Weave.library.predicates.isNil, () => Weave.library.browser.removeAttribute(el, name), given => Weave.library.browser.setAttribute(el, [name, given]))(value);
-Weave.library.elements.setStylePair = (el, [property, value]) => Weave.library.browser.setStyle(el, [property, Weave.library.style.toCssValue(property, value)]);
-Weave.library.elements.setAriaPair = (el, [key, value]) => Weave.library.browser.setAttribute(el, [Weave.library.browser.keywords.ariaPrefix + Weave.library.composition.kebabCase(key), value]);
+Weave.library.elements.setAttributePair = (el, [name, value]) => Weave.library.control.either(() => Weave.library.elements.isRemoval(name, value), () => Weave.library.browser.removeAttribute(el, name), given => Weave.library.browser.setAttribute(el, [name, given]))(value);
+Weave.library.elements.isRemoval = (name, value) => Weave.library.control.or(Weave.library.predicates.isNil(value), Weave.library.control.and(value === false, !Weave.library.elements.isAriaName(name)));
+Weave.library.elements.isAriaName = name => String(name).startsWith(Weave.library.browser.keywords.ariaPrefix);
+Weave.library.elements.setStylePair = (el, [property, value]) => Weave.library.style.writeStyle(el, [property, Weave.library.style.toCssValue(property, value)]);
+Weave.library.elements.ariaName = key => Weave.library.browser.keywords.ariaPrefix + String(key).toLowerCase();
+Weave.library.elements.setAriaPair = (el, [key, value]) => Weave.library.elements.setAttributePair(el, [Weave.library.elements.ariaName(key), value]);
+Weave.library.elements.encodeData = value => Weave.library.control.either(Weave.library.predicates.isString, Weave.library.composition.identity, Weave.library.composition.json)(value);
+Weave.library.elements.setDataPair = (el, [key, value]) => Weave.library.browser.setDataset(el, [key, Weave.library.elements.encodeData(value)]);
 Weave.library.elements.setListenerPair = (el, [type, handler]) => (Weave.library.events.on(type, handler)(el), el);
 Weave.library.elements.classNames = value => Weave.library.composition.words(Weave.library.composition.listOf(value).join(Weave.library.browser.keywords.space));
 Weave.library.elements.addClasses = value => el => Weave.library.elements.classNames(value).reduce(Weave.library.browser.addClass, el);
@@ -13,18 +18,18 @@ Weave.library.elements.setText = value => el => Weave.library.browser.setTextCon
 Weave.library.elements.setHtml = value => el => Weave.library.browser.setInnerHtml(el, value);
 Weave.library.elements.callRef = value => el => (value(el), el);
 
-/* setters: one row per spec part, applied in table order. Adding a row adds the part everywhere. */
+/* setters: one row per spec part, applied in table order. Adding a row adds the part everywhere. Properties come after the content, so a select's value finds its options. */
 Weave.library.elements.setters = {};
 Weave.library.elements.setters.attributes = Weave.library.elements.applyAll(Weave.library.elements.setAttributePair);
-Weave.library.elements.setters.properties = Weave.library.elements.applyAll(Weave.library.browser.setProperty);
 Weave.library.elements.setters.styles = Weave.library.elements.applyAll(Weave.library.elements.setStylePair);
 Weave.library.elements.setters.classes = Weave.library.elements.addClasses;
-Weave.library.elements.setters.data = Weave.library.elements.applyAll(Weave.library.browser.setDataset);
+Weave.library.elements.setters.data = Weave.library.elements.applyAll(Weave.library.elements.setDataPair);
 Weave.library.elements.setters.aria = Weave.library.elements.applyAll(Weave.library.elements.setAriaPair);
 Weave.library.elements.setters.listeners = Weave.library.elements.applyAll(Weave.library.elements.setListenerPair);
 Weave.library.elements.setters.children = Weave.library.elements.appendChildren;
 Weave.library.elements.setters.text = Weave.library.elements.setText;
 Weave.library.elements.setters.html = Weave.library.elements.setHtml;
+Weave.library.elements.setters.properties = Weave.library.elements.applyAll(Weave.library.browser.setProperty);
 Weave.library.elements.setters.ref = Weave.library.elements.callRef;
 
 /* apply: the part appliers, one per setters row, so builders and callers share one path. */
@@ -230,15 +235,21 @@ Weave.library.elements.nodeRules.fromString = [Weave.library.predicates.isString
 Weave.library.elements.nodeRules.fromNumber = [Weave.library.predicates.isNumber, value => Weave.library.browser.createText(String(value))];
 Weave.library.elements.nodeRules.fromNode = [Weave.library.predicates.isNode, Weave.library.composition.identity];
 Weave.library.elements.nodeRules.fromList = [Weave.library.predicates.isArray, value => Weave.library.elements.toFragment(value)];
+Weave.library.elements.nodeRules.fromNodeList = [Weave.library.predicates.isNodeList, value => Weave.library.elements.toFragment(Weave.library.composition.toArray(value))];
 Weave.library.elements.nodeRules.fromSpec = [Weave.library.predicates.isSpec, value => Weave.library.elements.fromSpec(value)];
+Weave.library.elements.nodeRules.fromNil = [Weave.library.predicates.isNothing, () => Weave.library.browser.createFragment()];
+Weave.library.elements.nodeRules.fromMisspelt = [Weave.library.predicates.isPlainObject, value => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.invalidSpec, { spec: value }))];
 Weave.library.elements.nodeRules.fromAnything = [Weave.library.composition.always, Weave.library.composition.identity];
 Weave.library.elements.nodeSteps = Object.values(Weave.library.elements.nodeRules);
 Weave.library.elements.toNode = value => Weave.library.control.select(Weave.library.elements.nodeSteps)(value);
 Weave.library.elements.toFragment = list => Weave.library.composition.listOf(list).map(Weave.library.elements.toNode).reduce(Weave.library.browser.appendChild, Weave.library.browser.createFragment());
 Weave.library.elements.fallbacks = {};
 Weave.library.elements.fallbacks.builder = Weave.library.elements.div;
-Weave.library.elements.rejectTag = tag => () => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.invalidSpec, { tag }));
-Weave.library.elements.builderFor = tag => Weave.library.control.either(() => tag in Weave.library.elements.tags, () => Weave.library.elements[tag], () => Weave.library.elements.rejectTag(tag))(tag);
+Weave.library.elements.unknownTag = 'The spec names an unknown tag: ';
+Weave.library.elements.rejectTag = tag => () => Weave.library.control.fail(Weave.library.control.error(Weave.library.control.errors.invalidSpec, { tag, message: Weave.library.elements.unknownTag + tag }));
+Weave.library.elements.htmlBuilder = tag => Weave.library.control.either(() => Object.hasOwn(Weave.library.elements.tags, tag), () => Weave.library.elements[tag], Weave.library.composition.noop)(tag);
+Weave.library.elements.svgBuilder = tag => Weave.library.control.ownValue(Weave.library.elements.svg, tag);
+Weave.library.elements.builderFor = tag => Weave.library.control.defaultTo(Weave.library.elements.rejectTag(tag))(Weave.library.control.nullish(Weave.library.elements.htmlBuilder(tag), Weave.library.elements.svgBuilder(tag)));
 Weave.library.elements.makerOf = spec => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.library.elements.builderFor, () => Weave.library.elements.fallbacks.builder)(spec[Weave.library.elements.tagKey]);
 Weave.library.elements.fromSpec = spec => Weave.library.elements.makerOf(spec)(Weave.library.composition.omit([Weave.library.elements.tagKey])(spec));
 Weave.library.elements.fromHtml = html => Weave.library.browser.childNodesOf(Weave.library.browser.parseHtml(html));
@@ -263,12 +274,16 @@ Weave.library.elements.empty = el => Weave.library.browser.setInnerHtml(el, Weav
 Weave.library.elements.clone = el => Weave.library.browser.cloneNode(el, true);
 Weave.library.elements.cloneWithListeners = el => Weave.library.events.copyListeners(el)(Weave.library.elements.clone(el));
 Weave.library.elements.wrapWith = (node, el) => (Weave.library.browser.insertBefore(el, node), Weave.library.browser.appendChild(node, el), el);
-Weave.library.elements.wrap = wrapper => el => Weave.library.elements.wrapWith(Weave.library.elements.toNode(wrapper), el);
+Weave.library.elements.wrap = wrapper => el => Weave.library.elements.wrapWith(Weave.library.elements.wrapperNode(wrapper), el);
+Weave.library.elements.wrapperNode = wrapper => Weave.library.control.either(Weave.library.predicates.isNode, Weave.library.elements.cloneWithListeners, Weave.library.elements.toNode)(wrapper);
 Weave.library.elements.wrapNodes = (node, nodes) => (Weave.library.browser.insertBefore(Weave.library.composition.first(nodes), node), nodes.reduce(Weave.library.browser.appendChild, node));
-Weave.library.elements.wrapAll = wrapper => nodes => Weave.library.elements.wrapNodes(Weave.library.elements.toNode(wrapper), nodes);
-Weave.library.elements.wrapInner = wrapper => el => (Weave.library.elements.wrapAll(wrapper)(Weave.library.browser.childNodesOf(el)), el);
+Weave.library.elements.wrapAll = wrapper => nodes => Weave.library.control.unless(Weave.library.predicates.isEmpty, () => Weave.library.elements.wrapNodes(Weave.library.elements.toNode(wrapper), nodes))(nodes);
+Weave.library.elements.wrapInner = wrapper => el => (Weave.library.control.either(Weave.library.predicates.isEmpty, () => Weave.library.browser.appendChild(el, Weave.library.elements.toNode(wrapper)), Weave.library.elements.wrapAll(wrapper))(Weave.library.browser.childNodesOf(el)), el);
 Weave.library.elements.unwrapInto = parent => (Weave.library.browser.childNodesOf(parent).forEach(child => Weave.library.browser.insertBefore(parent, child)), Weave.library.browser.removeChild(parent));
-Weave.library.elements.unwrap = el => (Weave.library.elements.unwrapInto(Weave.library.browser.parentOf(el)), el);
+Weave.library.elements.unwrap = el => (Weave.library.elements.unwrapAll([el]), el);
+Weave.library.elements.unwrapAll = nodes => (Weave.library.elements.distinctParents(nodes).forEach(Weave.library.elements.unwrapInto), nodes);
+Weave.library.elements.distinctParents = nodes => Weave.library.composition.unique(nodes.map(Weave.library.browser.parentOf)).filter(Weave.library.elements.isUnwrappable);
+Weave.library.elements.isUnwrappable = parent => Weave.library.control.and(Weave.library.predicates.isDefined(parent), parent !== Weave.library.browser.body());
 
 /* insertionPositions: maps each insertion verb to the platform position keyword. */
 Weave.library.elements.insertionPositions = {};
@@ -287,9 +302,9 @@ Weave.library.elements.isSameKind = (a, b) => Weave.library.elements.kindOf(a) =
 Weave.library.elements.isMatch = (a, b) => Weave.library.control.and(Weave.library.elements.isSameKind(a, b), Weave.library.elements.keyOf(a) === Weave.library.elements.keyOf(b));
 Weave.library.elements.childAt = (target, index) => Weave.library.browser.childNodesOf(target)[index];
 Weave.library.elements.matchingCandidate = child => candidate => Weave.library.control.guard(found => Weave.library.elements.isMatch(found, child))(candidate);
-Weave.library.elements.keyedCandidate = (target, child) => Weave.library.control.maybe(Weave.library.elements.matchingCandidate(child))(Weave.library.browser.childNodesOf(target).find(old => Weave.library.elements.keyOf(old) === Weave.library.elements.keyOf(child)));
+Weave.library.elements.keyedCandidate = (target, child, index) => Weave.library.control.maybe(Weave.library.elements.matchingCandidate(child))(Weave.library.browser.childNodesOf(target).slice(index).find(old => Weave.library.elements.keyOf(old) === Weave.library.elements.keyOf(child)));
 Weave.library.elements.positionalCandidate = (target, child, index) => Weave.library.control.maybe(Weave.library.elements.matchingCandidate(child))(Weave.library.elements.childAt(target, index));
-Weave.library.elements.candidateFor = (target, child, index) => Weave.library.control.either(Weave.library.elements.hasKey, () => Weave.library.elements.keyedCandidate(target, child), () => Weave.library.elements.positionalCandidate(target, child, index))(child);
+Weave.library.elements.candidateFor = (target, child, index) => Weave.library.control.either(Weave.library.elements.hasKey, () => Weave.library.elements.keyedCandidate(target, child, index), () => Weave.library.elements.positionalCandidate(target, child, index))(child);
 Weave.library.elements.insertNodeAt = (target, node, index) => Weave.library.control.either(Weave.library.predicates.isDefined, reference => Weave.library.browser.insertBefore(reference, node), () => Weave.library.browser.appendChild(target, node))(Weave.library.elements.childAt(target, index));
 Weave.library.elements.moveTo = (target, node, index) => Weave.library.control.when(() => Weave.library.elements.childAt(target, index) !== node, () => Weave.library.elements.insertNodeAt(target, node, index))(node);
 Weave.library.elements.morphInto = (target, old, child, index) => (Weave.library.elements.moveTo(target, old, index), Weave.library.elements.morphNode(old, child));

@@ -24,6 +24,9 @@ Weave.application.folders.starred = 'Starred';
 Weave.application.folders.sent = 'Sent';
 Weave.application.folders.archive = 'Archive';
 Weave.application.folders.spam = 'Spam';
+/* gathered: one row per folder that files no thread of its own and gathers every thread carrying a flag instead. */
+Weave.application.gathered = {};
+Weave.application.gathered.starred = 'starred';
 
 /* tags: one row per label a thread may carry, each borrowing a tone the library already owns. */
 Weave.application.tags = {};
@@ -35,51 +38,66 @@ Weave.application.tags.sales = Weave.library.components.toneNames.info;
 /* threads: twelve hundred of them, generated from the tables above so every row is deterministic. */
 Weave.application.threadCount = 1200;
 Weave.application.folderKeys = Weave.library.composition.keys(Weave.application.folders);
+Weave.application.isGathered = key => Weave.library.composition.keys(Weave.application.gathered).includes(key);
+Weave.application.placeKeys = Weave.application.folderKeys.filter(key => !Weave.application.isGathered(key));
 Weave.application.tagKeys = Weave.library.composition.keys(Weave.application.tags);
 Weave.application.chance = (index, salt) => Weave.library.composition.noise(index + salt);
 Weave.application.pickFrom = (list, index, stride) => list[Weave.library.composition.noisyIndex(list.length, index + stride)];
 Weave.application.momentAt = index => Weave.library.dates.add(Weave.library.dates.names.day, -Weave.library.composition.noisyIndex(60, index + 29) - 1)(Weave.library.dates.today());
 Weave.application.threadWords = index => ({ from: Weave.application.pickFrom(Weave.application.people, index, 3), subject: Weave.application.pickFrom(Weave.application.subjects, index, 5), snippet: Weave.application.pickFrom(Weave.application.snippets, index, 11) });
-Weave.application.threadFiling = index => ({ folder: Weave.application.pickFrom(Weave.application.folderKeys, index, 7), tag: Weave.application.pickFrom(Weave.application.tagKeys, index, 13) });
+Weave.application.threadFiling = index => ({ folder: Weave.application.pickFrom(Weave.application.placeKeys, index, 7), tag: Weave.application.pickFrom(Weave.application.tagKeys, index, 13) });
 Weave.application.threadFlags = index => ({ id: index + 1, unread: Weave.application.chance(index, 41) < 0.34, starred: Weave.application.chance(index, 97) < 0.12, at: Weave.application.momentAt(index), replies: Weave.library.composition.noisyIndex(4, index + 53) });
 Weave.application.threadFacts = index => Weave.library.composition.merge(Weave.application.threadFiling(index), Weave.application.threadFlags(index));
 Weave.application.threadAt = index => Weave.library.composition.merge(Weave.application.threadWords(index), Weave.application.threadFacts(index));
 Weave.application.threads = Weave.library.composition.range(Weave.application.threadCount).map(Weave.application.threadAt);
-Weave.application.threadById = id => Weave.application.threads.find(thread => thread.id === id);
+Weave.application.threadIn = (state, id) => state.threads.find(thread => thread.id === id);
+Weave.application.threadById = id => Weave.application.threadIn(Weave.application.store.state, id);
 
-/* store: one state for the whole application, so three panes and a dialog never disagree. */
+/* store: one state for the whole application, threads included, so three panes and a dialog never disagree. */
 Weave.application.firstFolder = Weave.library.composition.first(Weave.application.folderKeys);
-Weave.application.store = Weave.library.patterns.store({ folder: Weave.application.firstFolder, chosen: undefined, checked: [], query: Weave.library.browser.keywords.empty });
+Weave.application.store = Weave.library.patterns.store({ threads: Weave.application.threads, folder: Weave.application.firstFolder, chosen: undefined, checked: [], query: Weave.library.browser.keywords.empty });
 
 /* reading the store: every question the panes ask about the current state is answered exactly once. */
-Weave.application.inFolder = state => Weave.application.threads.filter(thread => thread.folder === state.folder);
+Weave.application.isIn = key => thread => Weave.library.control.either(() => Weave.application.isGathered(key), () => thread[Weave.application.gathered[key]] === true, () => thread.folder === key)(thread);
+Weave.application.inFolder = state => state.threads.filter(Weave.application.isIn(state.folder));
 Weave.application.visible = state => Weave.library.patterns.search(state.query, Weave.application.inFolder(state));
-Weave.application.unreadIn = key => Weave.application.threads.filter(thread => Weave.library.control.and(thread.folder === key, thread.unread)).length;
+Weave.application.unreadIn = (state, key) => state.threads.filter(thread => Weave.library.control.and(Weave.application.isIn(key)(thread), thread.unread)).length;
 Weave.application.isChecked = (state, thread) => state.checked.includes(thread.id);
-Weave.application.chosenThread = state => Weave.library.control.maybe(Weave.application.threadById)(state.chosen);
+Weave.application.targets = state => Weave.application.visible(state).filter(thread => Weave.application.isChecked(state, thread));
+Weave.application.chosenThread = state => Weave.library.control.maybe(id => Weave.application.threadIn(state, id))(state.chosen);
 
 /* writing to the store: one named move per thing the reader can do, and nothing else touches update. */
 Weave.application.showFolder = key => Weave.application.store.update(() => ({ folder: key, chosen: undefined, checked: [] }));
-Weave.application.openThread = id => (Weave.application.markRead(id), Weave.application.store.update(() => ({ chosen: id })));
-Weave.application.markRead = id => Object.assign(Weave.application.threadById(id), { unread: false });
+Weave.application.openThread = id => (Weave.application.store.update(state => ({ chosen: id, threads: Weave.application.markRead(state, id) })), Weave.application.bringIntoView(Weave.application.readerView));
+/* phone: the shell lays its panes side by side to swipe between, so the pane being used is brought into view. */
+Weave.application.isPhone = () => Weave.library.style.matchesMedia(Weave.library.components.breakpoints.compact);
+Weave.application.bringIntoView = view => Weave.library.control.when(Weave.application.isPhone, () => Weave.library.style.scrollIntoView({ inline: Weave.library.components.values.snapStart })(Weave.library.query.firstChild(view.element)))(view);
+Weave.application.markRead = (state, id) => state.threads.map(Weave.application.revise([{ id }], () => ({ unread: false })));
+Weave.application.placeOf = (places, thread) => places.find(place => place.id === thread.id);
+Weave.application.revise = (places, change) => thread => Weave.library.control.either(Weave.library.predicates.isDefined, place => Weave.library.composition.merge(thread, change(place)), () => thread)(Weave.application.placeOf(places, thread));
 Weave.application.setQuery = value => Weave.application.store.update(() => ({ query: value }));
 Weave.application.toggleCheck = thread => () => Weave.application.store.update(state => ({ checked: Weave.application.nextChecked(state, thread) }));
 Weave.application.nextChecked = (state, thread) => Weave.library.control.either(() => Weave.application.isChecked(state, thread), () => state.checked.filter(id => id !== thread.id), () => state.checked.concat([thread.id]))(state);
 Weave.application.checkAll = state => () => Weave.application.store.update(() => ({ checked: Weave.application.allOrNone(state) }));
-Weave.application.allOrNone = state => Weave.library.control.either(() => state.checked.length > 0, () => [], () => Weave.application.visible(state).map(thread => thread.id))(state);
-Weave.application.moveChecked = (state, folder) => Weave.application.applyMove(Weave.application.placesOf(Weave.application.checkedThreads(state)), folder);
-Weave.application.checkedThreads = state => state.checked.map(Weave.application.threadById);
-Weave.application.placesOf = threads => threads.map(thread => ({ thread, folder: thread.folder }));
-Weave.application.applyMove = (places, folder) => (places.forEach(place => Object.assign(place.thread, { folder })), places);
-Weave.application.undoMove = places => () => Weave.application.restoreAll(places);
-Weave.application.restorePlace = place => Object.assign(place.thread, { folder: place.folder });
-Weave.application.restoreAll = places => (places.forEach(Weave.application.restorePlace), Weave.application.store.update(() => ({ checked: [] })));
+Weave.application.allOrNone = state => Weave.library.control.either(() => Weave.application.targets(state).length > 0, () => [], () => Weave.application.visible(state).map(thread => thread.id))(state);
+Weave.application.placesOf = threads => threads.map(thread => ({ id: thread.id, folder: thread.folder }));
+Weave.application.refile = (places, change) => Weave.application.store.update(state => ({ threads: state.threads.map(Weave.application.revise(places, change)), checked: [] }));
+Weave.application.applyMove = (places, folder) => (Weave.application.refile(places, () => ({ folder })), places);
+Weave.application.undoMove = places => () => Weave.application.refile(places, place => ({ folder: place.folder }));
+
+/* routes: the folder lives in the address, so a link or the back button opens the same mailbox. */
+Weave.application.folderRoute = '/f/';
+Weave.application.folderParameter = 'folder';
+Weave.application.routes = () => ({ [Weave.application.folderRoute + Weave.library.navigation.parameterPrefix + Weave.application.folderParameter]: parameters => Weave.application.enterFolder(parameters[Weave.application.folderParameter]) });
+Weave.application.navigator = Weave.library.navigation.router(Weave.application.routes(), Weave.library.navigation.routeModes.hash);
+Weave.application.enterFolder = key => Weave.library.control.when(() => Weave.application.folderKeys.includes(key), () => Weave.application.showFolder(key))(key);
+Weave.application.goFolder = key => Weave.application.navigator.go(Weave.application.folderRoute + key);
 
 /* the rail: one row per folder, with the unread count as a badge and the current one marked. */
 Weave.application.folderLabel = key => Weave.library.components.truncate({ text: Weave.application.folders[key] });
-Weave.application.folderBadge = key => Weave.library.components.badge({ count: Weave.application.unreadIn(key) });
-Weave.application.folderParts = key => [Weave.application.folderLabel(key), Weave.library.components.fill({}), Weave.application.folderBadge(key)];
-Weave.application.folderButton = state => key => Weave.library.components.rowButton({ children: Weave.application.folderParts(key), aria: { selected: String(state.folder === key), label: Weave.application.folders[key] }, onAction: () => Weave.application.showFolder(key) });
+Weave.application.folderBadge = (state, key) => Weave.library.components.badge({ count: Weave.application.unreadIn(state, key) });
+Weave.application.folderParts = (state, key) => [Weave.application.folderLabel(key), Weave.library.components.fill({}), Weave.application.folderBadge(state, key)];
+Weave.application.folderButton = state => key => Weave.library.components.rowButton({ children: Weave.application.folderParts(state, key), aria: { selected: String(state.folder === key), label: Weave.application.folders[key] }, onAction: () => Weave.application.goFolder(key) });
 Weave.application.composeAction = () => Weave.library.components.actionButton({ label: Weave.application.composeLabel, variant: Weave.library.components.markNames.variant.primary, onAction: () => Weave.application.compose() });
 Weave.application.composeLabel = 'Compose';
 Weave.application.railParts = state => [Weave.library.components.display({ text: Weave.application.title }), Weave.application.composeAction()].concat(Weave.application.folderKeys.map(Weave.application.folderButton(state)));
@@ -101,10 +119,11 @@ Weave.application.rowDot = thread => Weave.library.components.statusDot({ tone: 
 Weave.application.rowStar = thread => Weave.library.control.either(() => thread.starred, () => Weave.library.components.icon({ glyph: Weave.application.starGlyph }), Weave.library.composition.noop)(thread);
 Weave.application.starGlyph = '★';
 Weave.application.rowFace = thread => Weave.library.components.portrait({ name: thread.from });
-Weave.application.rowWho = (state, thread) => [Weave.application.rowCheck(state, thread), Weave.application.rowDot(thread), Weave.application.rowFace(thread), Weave.application.rowSender(thread)];
+Weave.application.rowWho = thread => [Weave.application.rowDot(thread), Weave.application.rowFace(thread), Weave.application.rowSender(thread)];
 Weave.application.rowWhat = thread => [Weave.application.rowSubject(thread), Weave.application.rowStar(thread), Weave.application.rowTag(thread), Weave.application.rowTime(thread)];
-Weave.application.rowParts = (state, thread) => Weave.library.composition.compact(Weave.application.rowWho(state, thread).concat(Weave.application.rowWhat(thread)));
-Weave.application.threadRow = state => thread => Weave.library.components.rowButton({ children: Weave.application.rowParts(state, thread), aria: { selected: String(state.chosen === thread.id) }, onAction: () => Weave.application.openThread(thread.id) });
+Weave.application.rowParts = thread => Weave.library.composition.compact(Weave.application.rowWho(thread).concat(Weave.application.rowWhat(thread)));
+Weave.application.threadButton = (state, thread) => Weave.library.components.rowButton({ children: Weave.application.rowParts(thread), aria: { selected: String(state.chosen === thread.id) }, onAction: () => Weave.application.openThread(thread.id) });
+Weave.application.threadRow = state => thread => [Weave.application.rowCheck(state, thread), Weave.library.components.fill({ children: [Weave.application.threadButton(state, thread)] })];
 Weave.application.rowMarks = state => thread => ({ aria: { selected: String(state.chosen === thread.id) } });
 Weave.application.liveRow = thread => Weave.application.threadRow(Weave.application.store.state)(thread);
 Weave.application.liveRowSpec = thread => Weave.application.rowMarks(Weave.application.store.state)(thread);
@@ -113,14 +132,17 @@ Weave.application.listHandle = Weave.library.patterns.virtualList({ items: [], f
 /* the toolbar above the list: select all, two moves and the search box, all driven by what is checked. */
 Weave.application.selectAll = state => Weave.library.components.checkMark({ checked: Weave.application.everyChecked(state), partial: Weave.application.someChecked(state), label: Weave.application.selectLabel, onChoose: Weave.application.checkAll(state) });
 Weave.application.selectLabel = 'Select every thread shown';
-Weave.application.everyChecked = state => Weave.library.control.and(state.checked.length > 0, state.checked.length === Weave.application.visible(state).length);
-Weave.application.someChecked = state => Weave.library.control.and(state.checked.length > 0, state.checked.length < Weave.application.visible(state).length);
+Weave.application.everyChecked = state => Weave.library.control.and(Weave.application.targets(state).length > 0, Weave.application.targets(state).length === Weave.application.visible(state).length);
+Weave.application.someChecked = state => Weave.library.control.and(Weave.application.targets(state).length > 0, Weave.application.targets(state).length < Weave.application.visible(state).length);
 /* moveLabels: one row per bulk move the toolbar offers. The key is the folder it moves into. */
 Weave.application.moveLabels = {};
 Weave.application.moveLabels.archive = 'Archive';
 Weave.application.moveLabels.spam = 'Report spam';
-Weave.application.moveButton = state => ([folder, label]) => Weave.library.components.actionButton({ label, size: Weave.library.components.markNames.size.small, onAction: () => Weave.application.runMove(state, folder, label) });
-Weave.application.runMove = (state, folder, label) => Weave.application.announceMove(Weave.application.moveChecked(state, folder), label);
+Weave.application.moveButton = state => ([folder, label]) => Weave.library.components.actionButton({ label, size: Weave.library.components.markNames.size.small, onAction: () => Weave.application.runMove(folder, label) });
+Weave.application.runMove = (folder, label) => Weave.library.control.either(places => places.length > 0, places => Weave.application.announceMove(Weave.application.applyMove(places, folder), label), Weave.application.nothingChecked)(Weave.application.checkedPlaces());
+Weave.application.checkedPlaces = () => Weave.application.placesOf(Weave.application.targets(Weave.application.store.state));
+Weave.application.nothingChecked = () => Weave.application.toasts.push(Weave.application.nothingCheckedText, Weave.library.components.toneNames.info);
+Weave.application.nothingCheckedText = 'Tick the threads to move first.';
 Weave.application.announceMove = (moved, label) => Weave.application.toasts.push(label + Weave.application.movedSuffix + moved.length, Weave.library.components.toneNames.success, { label: Weave.application.undoLabel, onAction: Weave.application.undoMove(moved) });
 Weave.application.movedSuffix = ' — threads moved: ';
 Weave.application.undoLabel = 'Undo';
@@ -157,7 +179,7 @@ Weave.application.readerBody = (state, ignored) => Weave.library.control.either(
 
 /* compose: a dialog with three fields, refusing to send until the library's own validators are happy. */
 Weave.application.composeFields = {};
-Weave.application.composeFields.to = { label: 'To', rules: { email: true } };
+Weave.application.composeFields.to = { label: 'To', rules: { required: true, email: true } };
 Weave.application.composeFields.subject = { label: 'Subject', rules: { required: true } };
 Weave.application.composeFields.body = { label: 'Message', rules: { required: true } };
 Weave.application.composeRows = () => Weave.library.composition.pairs(Weave.application.composeFields).map(([name, row]) => Weave.library.composition.merge(row, { name }));
@@ -166,30 +188,38 @@ Weave.application.sendLabel = 'Send';
 Weave.application.sent = values => Weave.application.afterSend(values.subject);
 Weave.application.afterSend = subject => (Weave.application.closeCompose(), Weave.application.toasts.push(Weave.application.sentPrefix + subject, Weave.library.components.toneNames.info));
 Weave.application.sentPrefix = 'Sent: ';
-Weave.application.openDialogs = { compose: undefined };
+/* layers: each dialog or sheet is open at most once, and forgets its handle the moment it closes. */
+Weave.application.openDialogs = { compose: undefined, palette: undefined, help: undefined };
+Weave.application.forget = name => () => Object.assign(Weave.application.openDialogs, { [name]: undefined });
+Weave.application.remember = (name, handle) => Object.assign(Weave.application.openDialogs, { [name]: handle })[name];
+Weave.application.openOnce = (name, open) => () => Weave.library.control.either(Weave.library.predicates.isDefined, Weave.library.composition.identity, () => Weave.application.remember(name, open(Weave.application.forget(name))))(Weave.application.openDialogs[name]);
 Weave.application.closeCompose = () => Weave.library.control.maybe(handle => handle.close())(Weave.application.openDialogs.compose);
-Weave.application.compose = () => Object.assign(Weave.application.openDialogs, { compose: Weave.library.patterns.dialog({ title: Weave.application.composeLabel, body: [Weave.application.composeForm().element] }) }).compose;
+Weave.application.compose = Weave.application.openOnce('compose', onClose => Weave.library.patterns.dialog({ title: Weave.application.composeLabel, body: [Weave.application.composeForm().element], onClose }));
 
-/* the command palette, the help sheet and the keyboard map they are both reached from. */
-Weave.application.folderCommand = key => ({ label: Weave.application.folders[key], onAction: () => Weave.application.showFolder(key) });
-Weave.application.composeCommand = () => ({ label: Weave.application.composeLabel, onAction: Weave.application.compose });
-Weave.application.commands = () => Weave.application.folderKeys.map(Weave.application.folderCommand).concat([Weave.application.composeCommand()]);
-Weave.application.palette = () => Weave.library.patterns.dialog({ title: Weave.application.paletteTitle, body: [Weave.library.patterns.commandPalette({ commands: Weave.application.commands() }).element] });
+/* the command palette, the help sheet and the keyboard map they are both reached from. A command closes the palette before it runs. */
+Weave.application.command = (label, run, close) => ({ label, onAction: () => (close(), run()) });
+Weave.application.folderCommand = close => key => Weave.application.command(Weave.application.folders[key], () => Weave.application.goFolder(key), close);
+Weave.application.composeCommand = close => Weave.application.command(Weave.application.composeLabel, Weave.application.compose, close);
+Weave.application.commands = close => Weave.application.folderKeys.map(Weave.application.folderCommand(close)).concat([Weave.application.composeCommand(close)]);
+Weave.application.paletteBody = close => [Weave.library.patterns.commandPalette({ commands: Weave.application.commands(close) }).element];
+Weave.application.palette = Weave.application.openOnce('palette', onClose => Weave.library.patterns.dialog({ title: Weave.application.paletteTitle, body: Weave.application.paletteBody, onClose }));
 Weave.application.paletteTitle = 'Go to';
-/* keyRows: one row per shortcut the help sheet lists, keyed by the key that runs it. */
+/* keyRows: one row per shortcut the help sheet lists: the combo the keyboard binds, drawn as the caps it is pressed with. */
 Weave.application.keyRows = {};
-Weave.application.keyRows.j = 'Next thread';
-Weave.application.keyRows.k = 'Previous thread';
-Weave.application.keyRows.c = 'Compose';
-Weave.application.keyRows.k2 = 'Command palette';
-Weave.application.helpRow = ([key, description]) => Weave.library.components.spread({ children: [Weave.library.components.kbd({ keys: [key] }), Weave.library.components.note({ text: description })] });
-Weave.application.help = () => Weave.library.patterns.sheet({ title: Weave.application.helpTitle, body: Weave.library.composition.pairs(Weave.application.keyRows).map(Weave.application.helpRow) });
+Weave.application.keyRows.next = { combo: 'j', note: 'Next thread' };
+Weave.application.keyRows.previous = { combo: 'k', note: 'Previous thread' };
+Weave.application.keyRows.compose = { combo: 'c', note: 'Compose' };
+Weave.application.keyRows.palette = { combo: 'Ctrl+K', note: 'Command palette' };
+Weave.application.capsOf = combo => combo.split(Weave.library.interaction.shortcutSeparator);
+Weave.application.helpRow = row => Weave.library.components.spread({ children: [Weave.library.components.kbd({ keys: Weave.application.capsOf(row.combo) }), Weave.library.components.note({ text: row.note })] });
+Weave.application.help = Weave.application.openOnce('help', onClose => Weave.library.patterns.sheet({ title: Weave.application.helpTitle, body: Weave.library.composition.values(Weave.application.keyRows).map(Weave.application.helpRow), onClose }));
 Weave.application.helpTitle = 'Keyboard';
 Weave.application.stepBy = step => () => Weave.application.stepTo(Weave.application.neighbour(Weave.application.store.state, step));
 Weave.application.neighbour = (state, step) => Weave.application.visible(state)[Weave.library.composition.clamp(0, Weave.application.visible(state).length - 1)(Weave.application.indexOfChosen(state) + step)];
 Weave.application.indexOfChosen = state => Weave.application.visible(state).findIndex(thread => thread.id === state.chosen);
 Weave.application.stepTo = thread => Weave.library.control.maybe(found => Weave.application.openThread(found.id))(thread);
-Weave.application.keyMap = () => ({ j: Weave.application.stepBy(1), k: Weave.application.stepBy(-1), c: Weave.application.compose, '?': Weave.application.help, 'ctrl+k': Weave.application.palette });
+Weave.application.keyRuns = () => ({ next: Weave.application.stepBy(1), previous: Weave.application.stepBy(-1), compose: Weave.application.compose, palette: Weave.application.palette });
+Weave.application.keyMap = () => Weave.library.composition.merge(Weave.library.composition.fromPairs(Weave.library.composition.pairs(Weave.application.keyRuns()).map(([name, run]) => [Weave.application.keyRows[name].combo, run])), { '?': Weave.application.help });
 
 /* start: mount the three panes, keep the list in step with the store, and answer the address bar. */
 Weave.application.panes = () => [Weave.application.railView.element, Weave.application.listView.element, Weave.application.readerView.element];
@@ -198,11 +228,10 @@ Weave.application.listView = Weave.library.patterns.connect(Weave.application.st
 Weave.application.readerView = Weave.library.patterns.connect(Weave.application.store)(Weave.application.readerBody);
 Weave.application.shell = () => Weave.library.components.shell({ children: Weave.application.panes() });
 Weave.application.refreshList = state => Weave.application.listHandle.show(Weave.application.visible(state));
-Weave.application.routes = () => ({ '/f/:folder': parameters => Weave.application.showFolder(parameters.folder) });
-Weave.application.router = () => Weave.library.navigation.router(Weave.application.routes(), Weave.library.navigation.routeModes.hash);
 Weave.application.toasts = Weave.library.patterns.notifications({});
 Weave.application.start = () => (Weave.library.components.installStyles(), Weave.library.elements.append([Weave.application.shell()])(Weave.library.browser.body()), Weave.application.wire());
-Weave.application.wire = () => (Weave.application.store.watch(Weave.application.refreshList), Weave.application.refreshList(Weave.application.store.state), Weave.library.patterns.shortcuts(Weave.application.keyMap()));
+Weave.application.wire = () => (Weave.application.bringIntoView(Weave.application.listView), Weave.application.listen());
+Weave.application.listen = () => (Weave.application.store.watch(Weave.application.refreshList), Weave.application.refreshList(Weave.application.store.state), Weave.library.patterns.shortcuts(Weave.application.keyMap()), Weave.application.navigator.start());
 Weave.library.events.ready(Weave.application.start);
 </script>
 </body>

@@ -14,12 +14,12 @@ Weave.library.observers.onAttributes = (names, handler) => el => Weave.library.o
 Weave.library.observers.onText = handler => el => Weave.library.observers.onMutation(Weave.library.observers.mutationOptions.text, handler)(el);
 Weave.library.observers.addedNodes = records => records.flatMap(record => Weave.library.composition.toArray(record.addedNodes)).filter(Weave.library.predicates.isElement);
 Weave.library.observers.removedNodes = records => records.flatMap(record => Weave.library.composition.toArray(record.removedNodes)).filter(Weave.library.predicates.isElement);
-Weave.library.observers.matchingWithin = (selector, nodes) => Weave.library.composition.unique(nodes.filter(Weave.library.predicates.matches(selector)).concat(nodes.flatMap(Weave.library.query.allWithin(selector))));
+Weave.library.observers.matchingWithin = (selector, nodes) => Weave.library.network.matchingIn(selector, nodes);
 Weave.library.observers.onAdded = (selector, handler) => root => Weave.library.observers.watchAdded(selector, handler, root);
 Weave.library.observers.watchAdded = (selector, handler, root) => (Weave.library.query.allWithin(selector)(root).forEach(handler), Weave.library.observers.onSubtree(records => Weave.library.observers.matchingWithin(selector, Weave.library.observers.addedNodes(records)).forEach(handler))(root));
 Weave.library.observers.onRemoved = (selector, handler) => root => Weave.library.observers.onSubtree(records => Weave.library.observers.matchingWithin(selector, Weave.library.observers.removedNodes(records)).forEach(handler))(root);
-Weave.library.observers.startIntersection = (observer, el) => (Weave.library.browser.observe(observer, el), () => Weave.library.browser.disconnect(observer));
-Weave.library.observers.onIntersect = (options, handler) => el => Weave.library.observers.startIntersection(Weave.library.browser.createIntersectionObserver(entries => entries.forEach(handler), options), el);
+Weave.library.observers.startObserving = (observer, el) => (Weave.library.browser.observe(observer, el), () => Weave.library.browser.disconnect(observer));
+Weave.library.observers.onIntersect = (options, handler) => el => Weave.library.observers.startObserving(Weave.library.browser.createIntersectionObserver(entries => entries.forEach(handler), options), el);
 Weave.library.observers.onEnterViewport = handler => el => Weave.library.observers.onIntersect({}, entry => Weave.library.control.when(() => entry.isIntersecting, () => handler(entry))(entry))(el);
 Weave.library.observers.onLeaveViewport = handler => el => Weave.library.observers.onIntersect({}, entry => Weave.library.control.when(() => !entry.isIntersecting, () => handler(entry))(entry))(el);
 Weave.library.observers.lazy = handler => el => Weave.library.observers.onceIntersecting(handler, el);
@@ -27,7 +27,7 @@ Weave.library.observers.onceIntersecting = (handler, el) => Weave.library.observ
 Weave.library.observers.holdUnsubscribe = state => make => Object.assign(state, { unsubscribe: make(state) }).unsubscribe;
 Weave.library.observers.onceVisible = el => Weave.library.observers.awaitVisible(Weave.library.composition.deferred(), el);
 Weave.library.observers.awaitVisible = (handle, el) => (Weave.library.observers.lazy(() => handle.resolve(el))(el), handle.promise);
-Weave.library.observers.onResize = handler => el => Weave.library.observers.startIntersection(Weave.library.browser.createResizeObserver(entries => entries.forEach(entry => handler(Weave.library.observers.sizeOf(entry)))), el);
+Weave.library.observers.onResize = handler => el => Weave.library.observers.startObserving(Weave.library.browser.createResizeObserver(entries => entries.forEach(entry => handler(Weave.library.observers.sizeOf(entry)))), el);
 Weave.library.observers.sizeOf = entry => ({ width: entry.contentRect.width, height: entry.contentRect.height });
 Weave.library.observers.onWindowResize = handler => Weave.library.events.on(Weave.library.events.types.resize, Weave.library.timing.throttleFrame(handler))(Weave.library.browser.window());
 Weave.library.observers.onScroll = handler => el => Weave.library.events.onWithOptions(Weave.library.events.types.scroll, handler, { passive: true })(el);
